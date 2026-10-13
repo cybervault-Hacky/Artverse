@@ -774,7 +774,7 @@ Executed in this repository:
 | Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 373 kB (≈ 115 kB gzip), CSS ≈ 69 kB (≈ 12 kB gzip) |
+| Production build | `npm run build` | Passes — `dist/` JS 415.85 kB (125.43 kB gzip), CSS 90.04 kB (14.52 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 24 swept URLs return HTTP 200 with the app shell — every destination, `/discover` with search, filter and sort parameters, all five workspace screens, and an unknown artwork, collection, artist or record id |
 | Route rendering | `npm run verify:routes` | 70 route cases (including every artwork, creator and collection id in the data layer, and every workspace screen), all assertions pass |
 | Internal links | included above | 940 links resolved against the route table and the data layer — no broken destinations |
