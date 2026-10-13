@@ -47,14 +47,16 @@ const PHASES = [
   },
   {
     label: 'Phase 4',
-    title: 'Catalogue filtering and search',
-    detail: 'Filtering, sorting, pagination and indexed search across the whole catalogue.',
-    status: 'Not started',
+    title: 'Smart explore, search and filters',
+    detail:
+      'Live search across the sample catalogue, discipline filtering, sorting and honest empty states — with every criterion carried in the address so a view can be shared and stepped back through.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 5',
     title: 'Collections and curation',
-    detail: 'Editorial collections, studio series and the curation tools behind them.',
+    detail:
+      'Editorial collections, studio series, pagination as the catalogue outgrows a single page, and the curation tools behind them.',
     status: 'Not started',
   },
   {

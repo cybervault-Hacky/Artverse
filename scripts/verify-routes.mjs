@@ -8,6 +8,12 @@
  * every internal link points at a destination that genuinely exists, resolving
  * artwork, collection and artist ids against the actual data layer.
  *
+ * It also drives the discovery catalogue the way a visitor does — searching,
+ * filtering by discipline, reordering, and landing on nothing at all — and
+ * asserts which records came back and in what order, so the search, filter and
+ * sort behaviour is tested through the real page rather than through a second
+ * implementation of it.
+ *
  * This is markup verification, not a browser test: it does not check paint,
  * scrolling or visual layout.
  *
@@ -36,6 +42,7 @@ const server = await createServer({
 try {
   const { AppRoutes } = await server.ssrLoadModule('/src/app/AppRoutes.tsx')
   const data = await server.ssrLoadModule('/src/data/index.ts')
+  const catalogue = await server.ssrLoadModule('/src/utils/catalogue.ts')
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -80,6 +87,17 @@ try {
       }
     }
     return { ok: false, reason: 'no route matches this path' }
+  }
+
+  /**
+   * The artwork cards the page actually rendered, in DOM order.
+   *
+   * Only the catalogue grid links to `/artwork/<id>` on these pages, so this is
+   * a faithful reading of what a visitor would see — and of the order they
+   * would see it in. Image preload tags point at `/artworks/…` and never match.
+   */
+  function renderedArtworkIds(html) {
+    return [...html.matchAll(/href="\/artwork\/([^"]+)"/g)].map((match) => match[1])
   }
 
   /** Each case asserts a marker that only the intended page renders. */
@@ -139,6 +157,201 @@ try {
   for (const creator of data.SAMPLE_CREATORS) {
     CASES.push({ path: `/artists/${creator.id}`, expect: creator.name })
   }
+
+  /*
+   * ── The catalogue engine, checked directly ──────────────────────────────
+   * Two rules cannot be seen in markup: that sorting never reorders the shared
+   * dataset, and that values arriving from the address bar are validated.
+   */
+  const curatedOrder = data.SAMPLE_ARTWORKS.map((artwork) => artwork.id).join(',')
+  catalogue.buildCatalogueView({ query: '', needle: '', discipline: 'all', sort: 'title-desc' })
+  catalogue.buildCatalogueView({ query: '', needle: '', discipline: 'all', sort: 'artist-asc' })
+  check(
+    data.SAMPLE_ARTWORKS.map((artwork) => artwork.id).join(',') === curatedOrder,
+    'catalogue: sorting mutated the shared artwork dataset',
+  )
+
+  const unknownValues = catalogue.parseCatalogueCriteria(
+    new URLSearchParams('discipline=sculpture&sort=price-asc'),
+  )
+  check(
+    unknownValues.discipline === 'all' && unknownValues.sort === 'curated',
+    'catalogue: an unknown discipline or sort key was not ignored',
+  )
+
+  const blankQuery = catalogue.parseCatalogueCriteria(new URLSearchParams('q=%20%20'))
+  check(
+    blankQuery.needle === '' &&
+      catalogue.buildCatalogueView(blankQuery).artworks.length === data.SAMPLE_ARTWORKS.length,
+    'catalogue: a whitespace-only query did not fall back to the whole catalogue',
+  )
+
+  /*
+   * ── Catalogue behaviour through the page ────────────────────────────────
+   * Each case names the exact records it expects, in order, so search, filter,
+   * sort, their combinations and the empty state are all really exercised.
+   */
+  const paintingWorks = ['sample-painting-01', 'sample-painting-02']
+  const ALL_IDS = data.SAMPLE_ARTWORKS.map((artwork) => artwork.id)
+  const catalogueCasesStart = CASES.length
+
+  CASES.push(
+    {
+      path: '/discover',
+      expect: 'Showing all 6 sample records',
+      expectAll: ['All Art', 'Curated order', 'Title: A to Z', 'Artist: A to Z'],
+      expectArtworks: ALL_IDS,
+      // Nothing is narrowed, so nothing offers to reset.
+      forbidAll: ['Clear all'],
+      expectEagerImages: 3,
+    },
+    // Search: title, medium, description, year, discipline and studio fields.
+    { path: '/discover?q=Layered', expect: '1 of 6 sample records match', expectArtworks: ['sample-painting-01'] },
+    {
+      path: '/discover?q=stoneware',
+      expect: '2 of 6 sample records match',
+      expectArtworks: ['sample-decor-01', 'sample-handmade-01'],
+    },
+    { path: '/discover?q=balance', expect: '1 of 6 sample records match', expectArtworks: ['sample-painting-02'] },
+    { path: '/discover?q=2023', expect: '1 of 6 sample records match', expectArtworks: ['sample-painting-02'] },
+    // A creator field, not an artwork field.
+    { path: '/discover?q=Oaxaca', expect: '1 of 6 sample records match', expectArtworks: ['sample-handmade-01'] },
+    {
+      path: '/discover?q=Digital%20Artwork',
+      expect: '1 of 6 sample records match',
+      expectArtworks: ['sample-digital-01'],
+    },
+    // Words match independently, so a non-adjacent pair still finds the work.
+    {
+      path: '/discover?q=ochre%20canvas',
+      expect: '1 of 6 sample records match',
+      expectArtworks: ['sample-painting-01'],
+    },
+    // Case and stray whitespace are both irrelevant.
+    {
+      path: '/discover?q=OCHRE',
+      expect: '2 of 6 sample records match',
+      expectArtworks: ['sample-painting-01', 'sample-painting-02'],
+    },
+    {
+      path: '/discover?q=%20%20ochre%20%20',
+      expect: '2 of 6 sample records match',
+      expectArtworks: ['sample-painting-01', 'sample-painting-02'],
+    },
+    // A query of nothing but spaces is no query at all.
+    {
+      path: '/discover?q=%20%20',
+      expect: 'Showing all 6 sample records',
+      expectArtworks: ALL_IDS,
+      forbidAll: ['Clear all'],
+    },
+    // Each discipline, filtered for real.
+    { path: '/discover?discipline=painting', expect: '2 of 6 sample records match', expectArtworks: paintingWorks },
+    { path: '/discover?discipline=digital', expect: '1 of 6 sample records match', expectArtworks: ['sample-digital-01'] },
+    { path: '/discover?discipline=decor', expect: '1 of 6 sample records match', expectArtworks: ['sample-decor-01'] },
+    {
+      path: '/discover?discipline=handmade',
+      expect: '1 of 6 sample records match',
+      expectArtworks: ['sample-handmade-01'],
+    },
+    { path: '/discover?discipline=custom', expect: '1 of 6 sample records match', expectArtworks: ['sample-custom-01'] },
+    // Unknown values fall back instead of emptying the catalogue.
+    { path: '/discover?discipline=sculpture', expect: 'Showing all 6 sample records', expectArtworks: ALL_IDS },
+    { path: '/discover?sort=price-asc', expect: 'Showing all 6 sample records', expectArtworks: ALL_IDS },
+    // Search and a discipline together: “light” alone finds three records.
+    {
+      path: '/discover?q=light',
+      expect: '3 of 6 sample records match',
+      expectArtworks: ['sample-painting-01', 'sample-digital-01', 'sample-decor-01'],
+    },
+    {
+      path: '/discover?q=light&discipline=painting',
+      expect: '1 of 6 sample records match',
+      expectArtworks: ['sample-painting-01'],
+    },
+    // Sorting, in both directions and by artist.
+    {
+      path: '/discover?sort=title-asc',
+      expect: 'Showing all 6 sample records',
+      expectArtworks: [
+        'sample-digital-01',
+        'sample-custom-01',
+        'sample-painting-01',
+        'sample-painting-02',
+        'sample-decor-01',
+        'sample-handmade-01',
+      ],
+    },
+    {
+      path: '/discover?sort=title-desc',
+      expect: 'Showing all 6 sample records',
+      expectArtworks: [
+        'sample-handmade-01',
+        'sample-decor-01',
+        'sample-painting-02',
+        'sample-painting-01',
+        'sample-custom-01',
+        'sample-digital-01',
+      ],
+    },
+    {
+      path: '/discover?sort=artist-asc',
+      expect: 'Showing all 6 sample records',
+      expectArtworks: [
+        'sample-handmade-01',
+        'sample-custom-01',
+        'sample-painting-01',
+        'sample-painting-02',
+        'sample-digital-01',
+        'sample-decor-01',
+      ],
+    },
+    // Sorting must not drop an active filter.
+    {
+      path: '/discover?discipline=painting&sort=title-desc',
+      expect: '2 of 6 sample records match',
+      expectArtworks: ['sample-painting-02', 'sample-painting-01'],
+    },
+    {
+      path: '/discover?q=light&discipline=digital&sort=title-asc',
+      expect: '1 of 6 sample records match',
+      expectArtworks: ['sample-digital-01'],
+    },
+    // Nothing matches: an honest empty state that keeps the controls in place.
+    {
+      path: '/discover?q=zzzz',
+      expect: 'No works match these filters',
+      expectAll: [
+        '0 of 6 sample records match',
+        'None of the 6 illustrative records match “zzzz”.',
+        'Clear search and filters',
+      ],
+      expectArtworks: [],
+      expectEagerImages: 0,
+    },
+    {
+      path: '/discover?q=light&discipline=handmade',
+      expect: 'No works match these filters',
+      expectAll: [
+        '0 of 6 sample records match',
+        'None of the 6 illustrative records match “light” in the Handmade Products discipline.',
+      ],
+      expectArtworks: [],
+    },
+    // Collection pages keep their own works, and only their own.
+    {
+      path: '/discover/quiet-landscapes',
+      expect: 'Quiet Landscapes',
+      expectArtworks: ['sample-painting-02', 'sample-painting-01', 'sample-digital-01'],
+      forbidArtworks: ['sample-decor-01', 'sample-handmade-01', 'sample-custom-01'],
+    },
+    {
+      path: '/discover/objects-for-living',
+      expect: 'Objects for Living',
+      expectArtworks: ['sample-handmade-01', 'sample-decor-01', 'sample-custom-01'],
+      forbidArtworks: paintingWorks,
+    },
+  )
 
   for (const testCase of CASES) {
     routesChecked += 1
@@ -208,6 +421,22 @@ try {
       )
     }
 
+    // Which records the catalogue returned, and in which order.
+    if (testCase.expectArtworks) {
+      const rendered = renderedArtworkIds(html)
+      check(
+        rendered.join(' | ') === testCase.expectArtworks.join(' | '),
+        `${testCase.path}: expected artworks [${testCase.expectArtworks.join(', ')}] ` +
+          `but rendered [${rendered.join(', ')}]`,
+      )
+    }
+    for (const id of testCase.forbidArtworks ?? []) {
+      check(
+        !renderedArtworkIds(html).includes(id),
+        `${testCase.path}: ${id} should not be listed here`,
+      )
+    }
+
     // Every internal *navigational* link must resolve to a real destination.
     // Only anchors are checked — image preload tags also carry href assets.
     const hrefs = [
@@ -240,6 +469,10 @@ try {
   console.log(
     `data layer: ${artworkIds.size} artworks · ${collectionIds.size} collections · ` +
       `${creatorIds.size} creators · ${disciplineCount} disciplines`,
+  )
+  console.log(
+    `catalogue: ${CASES.length - catalogueCasesStart} search, filter, sort and empty-state cases ` +
+      `(each naming the exact records it expects, in order)`,
   )
 
   await server.close()

@@ -1,5 +1,196 @@
+/*
+ * The catalogue control bar.
+ *
+ * Two rows on phones (search, then sort, then the result line) and a single
+ * row from 720px, where search takes the free space and the sort control keeps
+ * its natural width. Everything sits on one hairline so the controls read as a
+ * tool attached to the grid rather than as another section.
+ */
+.controls {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-7);
+  padding-top: var(--space-6);
+  border-top: var(--border-hairline);
+}
+
+.controlLabel {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+/* ── Search ──────────────────────────────────────────────────────────────── */
+
+.search {
+  min-width: 0;
+}
+
+.inputWrap {
+  position: relative;
+  display: block;
+  margin-top: var(--space-2);
+}
+
+.searchIcon {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: var(--space-4);
+  transform: translateY(-50%);
+  color: var(--color-ink-subtle);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 2.875rem;
+  padding-block: var(--space-2);
+  padding-inline: 2.5rem var(--space-4);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  /* 16px keeps iOS from zooming the page when the field takes focus. */
+  font-size: var(--text-body);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+/* Room for the clear control, which only exists once something is typed. */
+.inputWithClear {
+  padding-inline-end: 3rem;
+}
+
+.input::placeholder {
+  color: var(--color-ink-subtle);
+}
+
+.input:hover {
+  border-color: var(--color-ink-muted);
+}
+
+.input:focus-visible {
+  border-color: var(--color-ink);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Browsers draw their own clear affordance; the explicit one replaces it. */
+.input::-webkit-search-cancel-button {
+  display: none;
+  appearance: none;
+}
+
+.clearInput {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-1);
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  transform: translateY(-50%);
+  border-radius: var(--radius-sm);
+  color: var(--color-ink-muted);
+  transition:
+    color var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+.clearInput:hover {
+  background-color: var(--color-surface-muted);
+  color: var(--color-ink);
+}
+
+/* Keeps the ring inside the field instead of overflowing its border. */
+.clearInput:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* ── Sort ────────────────────────────────────────────────────────────────── */
+
+.sort {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.selectWrap {
+  position: relative;
+  display: block;
+  margin-top: var(--space-2);
+}
+
+.select {
+  appearance: none;
+  width: 100%;
+  min-height: 2.875rem;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4) calc(var(--space-4) + 1.125rem);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.select:hover {
+  border-color: var(--color-ink-muted);
+}
+
+.select:focus-visible {
+  border-color: var(--color-ink);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.chevron {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-3);
+  transform: translateY(-50%);
+  color: var(--color-ink-muted);
+  pointer-events: none;
+}
+
+/* ── Result line ─────────────────────────────────────────────────────────── */
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+}
+
+.resultsCount {
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 720px) {
+  .controls {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    column-gap: var(--space-6);
+  }
+
+  /* The result line belongs to the whole bar, not to one control. */
+  .status {
+    grid-column: 1 / -1;
+  }
+
+  .select {
+    min-width: 12rem;
+  }
+}
+
 .catalogue {
-  margin-top: var(--space-8);
+  margin-top: var(--space-7);
 }
 
 /* A single quiet line under the grid, holding the crop and studio notes. */

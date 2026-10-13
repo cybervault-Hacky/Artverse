@@ -48,7 +48,7 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     page: 'DiscoverPage',
     status: 'implemented',
     purpose:
-      'Explore Art — discipline index, the whole sample catalogue and the collection groupings.',
+      'Explore Art — live search, discipline filters and sorting over the whole sample catalogue, plus the collection groupings. Criteria live in the query string: ?q, ?discipline, ?sort.',
   },
   {
     pattern: '/discover/:collectionId',
@@ -96,7 +96,8 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     pattern: '/search',
     page: 'SearchPage',
     status: 'foundation',
-    purpose: 'Search over the illustrative sample records.',
+    purpose:
+      'Direct search destination over the illustrative sample records; Explore Art carries the fuller search and filtering experience.',
   },
   {
     pattern: '/design-system',

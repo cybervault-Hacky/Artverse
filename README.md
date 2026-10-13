@@ -5,11 +5,11 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 3 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 4 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
-signature floating-art hero, and the immersive Explore Art discovery catalogue. It is still a
-frontend build: there is no backend, no database, no authentication, no payments and no real
-listings.
+signature floating-art hero, and the immersive Explore Art discovery catalogue — now with live
+search, discipline filtering, sorting and honest empty states. It is still a frontend build: there
+is no backend, no database, no authentication, no payments and no real listings.
 
 ---
 
@@ -21,6 +21,7 @@ listings.
 - [Getting started](#getting-started)
 - [The homepage](#the-homepage)
 - [The discovery catalogue](#the-discovery-catalogue)
+- [Search, filtering and sorting](#search-filtering-and-sorting)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -70,9 +71,26 @@ listings.
 - Phase references realigned across the site so nothing misstates the plan: filtering and indexed
   search are Phase 4, not Phase 3.
 
+**Phase 4 — smart explore, search and filters**
+
+- Live, unsubmitted search across the sample catalogue, matching word by word over the fields the
+  data really carries: title, medium, dimensions, year, description, discipline and the creator's
+  name, practice and location. Case and stray whitespace are ignored.
+- The `DisciplineNav` row became the discipline filter: the same artwork covers, now six toggles
+  (the five disciplines plus **All Art**) that narrow the catalogue for real, each carrying
+  `aria-pressed` and a per-discipline count of what the current search can find.
+- A polished control bar holding the search field, the sort control, the live result count and a
+  single **Clear all**. Everything stays available in the empty state, so a dead end is always
+  recoverable in one step.
+- Sorting limited to what the data supports: the curated order, title A–Z and Z–A, and artist A–Z.
+  Sorting works on a copy, so the shared dataset is never reordered.
+- All criteria live in the address (`?q`, `?discipline`, `?sort`), parsed and validated: an unknown
+  discipline or sort key falls back to the default instead of emptying the catalogue. Views are
+  shareable, and back and forward step through them.
+
 ## What is deliberately not included
 
-Catalogue browsing with filters, sorting and pagination; indexed search; editorial curation tools;
+Catalogue pagination, medium/size/material filters and indexed search; editorial curation tools;
 artwork commerce (prices, availability, certificates, purchase); seller accounts, verification,
 listing tools, orders and payouts. There is no backend, database, authentication, payment or AI
 service anywhere in this repository, and no page simulates one.
@@ -143,34 +161,25 @@ rendering a broken image.
 1. **Introduction** — one `h1` (*Explore Art*), a two-sentence editorial introduction naming all five
    disciplines and disclosing that every record is an illustrative placeholder. It stays short so the
    first artwork appears quickly on a phone.
-2. **Explore by discipline** — a navigation row for the five disciplines. Phones get a snap-scrolling
-   strip so the catalogue stays close; from 768px the same five items align into one row. Each entry
-   opens a real, working destination and names the work it opens.
-3. **The catalogue** — every valid record in the data layer, not a curated subset: one column on
-   phones, two on tablets, three from 900px, all cropped to a consistent 4:5 frame. A quiet note
-   underneath explains the crop and links to the studio directory.
+2. **Explore by discipline** — the filter row: five disciplines plus **All Art**. Phones get a
+   snap-scrolling strip so the catalogue stays close; from 768px the same six tiles align into one
+   row. Each tile is a toggle that narrows the catalogue, and each carries the number of records the
+   current search would find in it.
+3. **The catalogue** — the control bar, then the matching records: one column on phones, two on
+   tablets, three from 900px, all cropped to a consistent 4:5 frame. A quiet note underneath explains
+   the crop and links to the studio directory.
 4. **Collections to start from** — the same four collections the homepage introduces, each linking to
    its own collection page, with a link on to the full collections directory.
-5. **Honest closure** — a note stating why there are no filter or sort controls yet, and what arrives
-   with them.
+5. **Honest closure** — a note stating exactly what still needs a real catalogue behind it:
+   medium and material filters, pagination, saved searches and indexed search.
 
-### The routing decision behind the discipline row
+### From index to filter
 
-ArtVerse has no per-discipline route, and the catalogue cannot be filtered by discipline until Phase
-4. Rather than send all five disciplines to the same placeholder, or invent a query parameter that
-silently does nothing, each discipline links to the artwork page of the work that represents it — and
-the link is labelled with that work's title, so the destination is never a surprise:
-
-| Discipline | Opens |
-| --- | --- |
-| Fine Paintings | *Layered Light, Study I* |
-| Digital Artwork | *Arc of Quiet Light* |
-| Decorative Lamps | *Sandstone Table Lamp* |
-| Handmade Products | *Speckled Stoneware Vessel* |
-| Custom Creations | *Carved Oak Relief Panel* |
-
-The section says plainly that filtering arrives with the later phase, so nothing here implies a
-filter that does not exist. Full functional filtering is Phase 4.
+Phase 3's discipline row had to be an index: with no per-discipline route and no filtering, each
+entry linked to the artwork that represented it rather than implying a filter that would silently do
+nothing. The catalogue can now filter, so the row became the control itself — same covers, same
+rhythm, now six real toggles — and **no representative-artwork link remains**. The section wording
+was rewritten to match what the tiles actually do.
 
 ### Collection pages
 
@@ -179,12 +188,86 @@ same consistent crop, and two clear routes onward — **Back to Explore Art** an
 An unknown id renders the shared not-found experience with the requested id shown back to the
 visitor, so a stale link is never mistaken for a real page.
 
+## Search, filtering and sorting
+
+The catalogue engine is pure and lives in `src/utils/catalogue.ts`; the URL binding lives in
+`src/hooks/useCatalogueParams.ts`. The page component only renders the result, which is what keeps
+the behaviour testable without a browser.
+
+### What search actually matches
+
+| Field | Source | Example query that finds it |
+| --- | --- | --- |
+| Title | `artwork.title` | `Layered` |
+| Medium | `artwork.medium` | `stoneware` (2 records) |
+| Dimensions | `artwork.dimensions` | `60 × 90` |
+| Year | `artwork.year` | `2023` |
+| Description | `artwork.description` | `balance` |
+| Discipline | label and id | `Digital Artwork` |
+| Creator name | `creator.name` | `Illustrative Maker E` |
+| Creator practice | `creator.discipline` | `Ceramics` |
+| Creator location | `creator.location` | `Oaxaca` |
+
+Matching is case-insensitive and word by word, so `ochre canvas` finds *Layered Light, Study I* —
+a canvas described as ochre — even though the two words never sit next to each other. Leading and
+trailing spaces are ignored, and a query of nothing but spaces is treated as no query at all.
+There is deliberately no stemming, synonym expansion, fuzzy matching or ranking: a six-record sample
+set does not justify pretending to that kind of intelligence, and a wrong confident match would be
+worse than a plain one. Pasting a term with a missing optional metadata field anywhere cannot throw —
+every field is read defensively.
+
+### Filters and sort orders
+
+- **Disciplines** — the five categories plus **All Art**. Selecting one filters the catalogue;
+  the selection is shown by a ring, a check badge and an underlined label, and exposed as
+  `aria-pressed`. Counts describe what the *current search* can find in each discipline, so a term
+  with no hits in a category says so before you click.
+- **Sort orders** — Curated order (the order the catalogue is written in), Title: A to Z,
+  Title: Z to A, Artist: A to Z. There is no price, popularity, rating or "recently added" option,
+  because the records carry no price, no sales and no engagement data to sort by.
+- Sorting never mutates the shared dataset: `sortArtworks` sorts a copy, and the verification script
+  asserts the curated order is intact after every sort path runs.
+
+### Address state
+
+| Parameter | Values | Default | Unknown values |
+| --- | --- | --- | --- |
+| `q` | free text | omitted | — |
+| `discipline` | the five category ids | omitted (all) | ignored, falls back to all art |
+| `sort` | `title-asc`, `title-desc`, `artist-asc` | omitted (curated) | ignored, falls back to curated |
+
+An untouched catalogue keeps the clean `/discover` address. Typing writes with `replace`, so a search
+does not bury the previous page under one history entry per letter; choosing a discipline, changing
+the order or clearing pushes an entry, so the browser's back button walks those steps. Validation
+happens on read, so a hand-edited or truncated link can never empty the catalogue.
+
+### Reset behaviour
+
+Search, discipline and sort are independent, and resetting one never disturbs the others: clearing
+the search keeps the discipline, changing the discipline keeps the search, and re-sorting keeps both.
+**Clear all** — offered only when something is set — returns everything to the default view in one
+step, and does the same job from inside the empty state.
+
+### Empty results
+
+When nothing matches, the controls stay exactly where they are, the grid is replaced by the shared
+`EmptyState`, and the copy names what was actually asked for — *“None of the 6 illustrative records
+match “light” in the Handmade Products discipline.”* No fake results, no spinner, no dead end: one
+button clears the criteria. The default catalogue keeps showing all six records.
+
+### Why collection pages are unchanged
+
+`/discover/:collectionId` shows a collection's own works and nothing else — searching inside a
+three-work grouping would add a control that can only ever hide two of them. Phase 4's controls are
+therefore scoped to `/discover`, and the collection pages keep their Phase 3 behaviour, descriptions,
+links and back navigation untouched.
+
 ## Route architecture
 
 | Route | Page component | Status |
 | --- | --- | --- |
 | `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
-| `/discover` | `DiscoverPage` | Complete (Phase 3) — discipline index, full catalogue, collections |
+| `/discover` | `DiscoverPage` | Complete (Phase 4) — live search, discipline filters, sorting, full catalogue, collections |
 | `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 3) — collection, its works, route back |
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Foundation — full metadata, no commerce |
 | `/artists` | `ArtistsPage` | Foundation — editorial directory list |
@@ -192,7 +275,7 @@ visitor, so a stale link is never mistaken for a real page.
 | `/collections` | `CollectionsPage` | Foundation — collection directory |
 | `/sell` | `SellPage` | Foundation — seller intent, no form or account |
 | `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
-| `/search` | `SearchPage` | Foundation — URL-driven search over sample records |
+| `/search` | `SearchPage` | Foundation — direct destination for a search; Explore Art carries the fuller experience |
 | `/design-system` | `DesignSystemPage` | Complete — internal token and component reference |
 | `/404`, any unknown path | `NotFoundPage` | Complete — also used for unknown artwork, collection and artist ids |
 
@@ -207,12 +290,12 @@ src/
 ├── app/          Application shell: route tree, path registry, navigation config, scroll handling
 ├── components/   Reusable UI, each with a colocated CSS Module (incl. DisciplineNav)
 ├── data/         Illustrative sample records, homepage curation, design-system documentation
-├── hooks/        useDocumentTitle, useReducedMotion
+├── hooks/        useDocumentTitle, useReducedMotion, useCatalogueParams
 ├── layouts/      MainLayout — skip link, header, routed page, footer
 ├── pages/        One folder per destination; the homepage is split into five section files
 ├── styles/       tokens.css, base.css and the global entry point
 ├── types/        Shared domain types
-└── utils/        Small helpers: cn, aspect ratios, text formatting
+└── utils/        Small helpers: cn, aspect ratios, text formatting, and the catalogue engine
 public/
 ├── artworks/     Six project-generated sample images
 ├── favicon.svg   Brand symbol
@@ -300,10 +383,14 @@ represented anywhere in this repository.
 ## Responsive behaviour
 
 Designed and checked against 360, 390, 430, 768, 1024 and 1440 pixel widths. Grid columns step at
-540px (artwork), 640px (disciplines), 700px (collections), 900px and 1140px (disciplines, five up);
+540px (artwork), 640px (homepage disciplines), 700px (collections), 900px (artwork, three up) and
+1140px (homepage disciplines, five up); the discovery filter row becomes a row of six at 768px; the
+catalogue control bar becomes a single line of search plus sort at 720px and stacks below that;
 desktop navigation appears at 1024px; the content container caps at 1200px so line length stays
 readable on large screens. No layout uses `100vw`, every viewport-relative value sits inside a
 `clamp()` with a minimum and maximum, and no element sets a fixed width wider than a 360px viewport.
+The narrowest discipline tile is 104px at 768px — enough for the longest label to wrap to two lines —
+and every control keeps a touch target of at least 44px.
 
 ## Verification
 
@@ -311,21 +398,31 @@ Executed in this repository:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Dependency install | `npm install` | 166 packages, no vulnerabilities reported by npm |
+| Dependency install | `npm ci` | 168 packages, no vulnerabilities reported by npm |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 351 kB (≈ 109 kB gzip), CSS ≈ 55 kB (≈ 10 kB gzip) |
-| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200 |
-| Route rendering | `npm run verify:routes` | 30 route cases (including every artwork and creator id in the data layer), all assertions pass |
-| Internal links | included above | 300 links resolved against the route table and the data layer — no broken destinations |
-| Catalogue completeness | included above | All 6 artwork titles and all 4 collection titles render on `/discover` |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 357 kB (≈ 111 kB gzip), CSS ≈ 59 kB (≈ 11 kB gzip) |
+| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including `/discover` with search, filter and sort parameters |
+| Route rendering | `npm run verify:routes` | 59 route cases (including every artwork and creator id in the data layer), all assertions pass |
+| Internal links | included above | 713 links resolved against the route table and the data layer — no broken destinations |
+| Catalogue behaviour | included above | 29 search, filter, sort and empty-state cases, each naming the exact records it expects and the order it expects them in |
+| Search matching | included above | Title, medium, description, year, discipline, creator practice and creator location each find the right records; `OCHRE` and `  ochre  ` return the same two as `ochre` |
+| Word-by-word search | included above | `ochre canvas` finds *Layered Light, Study I*, whose two words are not adjacent |
+| Each discipline filter | included above | Painting 2, digital 1, decor 1, handmade 1, custom 1 — asserted from the rendered catalogue |
+| Sorting | included above | Title A–Z, title Z–A and artist A–Z each produce the exact expected order; sorting keeps an active filter intact |
+| URL validation | included above | Unknown discipline and sort keys fall back to the default; a whitespace-only query shows the whole catalogue; a default view writes no parameters at all |
+| Dataset integrity | included above | Sorting never reorders `SAMPLE_ARTWORKS` — asserted after both sort paths run |
+| Empty results | included above | `?q=zzzz` and `?q=light&discipline=handmade` render the empty state, drop to zero articles in the grid, and still render the search field and sort control |
+| Catalogue completeness | included above | The untouched catalogue renders all 6 records in curated order, and the controls offer no sort option the data cannot support |
 | Consistent crops | included above | `/discover` contains no square or 2:3 frames; the catalogue is uniformly 4:5 |
-| Eager loading | included above | The first 3 catalogue images load eagerly, every other image lazily |
+| Eager loading | included above | The first 3 catalogue images load eagerly, every other image lazily, and no image loads eagerly when nothing matches |
 | Empty and invalid ids | included above | Unknown artwork, collection and artist ids all reach the not-found experience |
+| Collection isolation | included above | `/discover/quiet-landscapes` and `/discover/objects-for-living` render their own three works and none of the other collection's |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
-| CSS Module integrity | script over `src/**` | 309 `styles.*` references resolve; no stale class names |
-| Heading outline | script over 8 routes | One `h1` per route, no skipped levels |
-| Layout geometry | computed from the stylesheets | Grid arithmetic at 360/390/430/768/1024/1440px: every grid fits its content box, no column below 115px |
+| CSS Module integrity | script over `src/**` | 44 modules, 367 `styles.*` references resolve; 3 unused rules remain, all pre-existing in untouched files |
+| Heading outline | script over 11 routes | One `h1` per route, no skipped levels — including the empty state and a filtered catalogue |
+| Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
+| Layout geometry | computed from the stylesheets | Control-bar and grid arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
 | Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
@@ -338,13 +435,25 @@ shared skip link and footer are present, and **every internal link resolves to a
 genuinely exists** — parameterised links are matched against the actual artwork, collection and
 creator records, so a link to a record that does not exist fails the build check.
 
+Phase 4 extended the same script rather than adding a parallel one. Twenty-nine of its cases are now
+catalogue queries, and each one names the exact records it expects **in the order it expects them**,
+read out of the rendered page by following the artwork links. That makes search, filtering, sorting,
+their combinations, the fallbacks and the empty state all testable without a browser — and it is how
+the sort-only copy bug was caught: a reordered catalogue was briefly claiming “6 of 6 records match”,
+which reads as though something had been hidden. The catalogue engine's two invisible rules are
+asserted directly as well: that sorting leaves `SAMPLE_ARTWORKS` in its curated order, and that
+unknown values from the address bar are ignored rather than emptied into the page.
+
 **Not executed — stated plainly:** there is still no browser binary in this environment (no Chromium,
 Firefox, Playwright or Puppeteer), so no screenshot, visual regression, Lighthouse or cross-browser
-pass was performed. Rendering is verified at the markup, link and layout-rule level, and the grid
-arithmetic above is computed from the stylesheet values rather than measured in a rendered page.
-Motion was verified by inspecting the generated CSS, not by watching it. A manual pass at the six
-widths — including scrolling the discipline strip on a phone and toggling the OS reduced-motion
-setting — remains the recommended next step.
+pass was performed, and no interaction was driven by hand. Rendering is verified at the markup, link
+and layout-rule level, and the layout arithmetic above is computed from the stylesheet values rather
+than measured in a rendered page. In particular the things a browser would prove and this environment
+cannot: that typing in the field feels immediate, that the clear button actually clears, that the
+browser's back button steps through filter changes, that focus rings are visible on every control and
+that the strip scrolls smoothly on a phone. The logic behind each of those is asserted at the level it
+can be — URL writing, parsing, validation and rendering — but the interaction itself was not watched.
+A manual pass at the six widths remains the recommended next step.
 
 One SPA characteristic worth knowing: every route returns HTTP 200 from the dev server, including
 unknown ids, because the not-found view renders client-side. A production deployment would need to
@@ -356,10 +465,12 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
   shells, design-system preview.
 - **Phase 2 — Homepage and floating art** _(delivered)_: the editorial homepage, the floating-art
   hero, the five disciplines, the artwork spotlight and the artist invitation.
-- **Phase 3 — Art universe and immersive discovery** _(delivered)_: the discovery catalogue, the
-  discipline index, the full sample catalogue and the collection groupings.
-- **Phase 4**: catalogue filtering, sorting, pagination and indexed search.
-- **Phase 5**: collections and curation — editorial collections, studio series, curation tools.
+- **Phase 3 — Art universe and immersive discovery** _(delivered)_: the discovery catalogue, the full
+  sample catalogue and the collection groupings.
+- **Phase 4 — Smart explore, search and filters** _(delivered)_: live search, discipline filtering,
+  sorting and honest empty states, with the criteria carried in the address.
+- **Phase 5**: collections and curation — editorial collections, studio series, pagination as the
+  catalogue grows, curation tools.
 - **Phase 6**: artwork detail and commerce — provenance, certificates, availability, purchase flow.
 - **Phase 7**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
 

@@ -55,3 +55,19 @@ export function CloseIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 12.5 9.5 17 19 7" />
+    </Icon>
+  )
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 9.5 12 15.5 18 9.5" />
+    </Icon>
+  )
+}

@@ -1,4 +1,5 @@
 import type { Artwork, Collection, Creator, Discipline } from '@/types'
+import { normaliseWhitespace } from '@/utils/text'
 import { ARTWORK_CATEGORIES, SAMPLE_CREATORS, categoryLabel } from './creators'
 import { SAMPLE_ARTWORKS } from './artworks'
 import { SAMPLE_COLLECTIONS } from './collections'
@@ -76,32 +77,63 @@ export function getDisciplineShowcases(): DisciplineShowcase[] {
 }
 
 /**
+ * The text one record is searchable by.
+ *
+ * Built only from fields the sample data actually carries — title, medium,
+ * dimensions, year, description, the category label and id, and the creator's
+ * name, practice and location. Nothing is invented to make search look wider
+ * than it is, missing optional fields are skipped rather than stringified, and
+ * the result is lower-cased once so matching never repeats the work.
+ */
+export function artworkSearchText(artwork: Artwork): string {
+  const creator = getCreatorForArtwork(artwork)
+
+  return [
+    artwork.title,
+    artwork.medium,
+    artwork.dimensions,
+    artwork.description,
+    String(artwork.year),
+    categoryLabel(artwork.category),
+    artwork.category,
+    creator?.name,
+    creator?.discipline,
+    creator?.location,
+  ]
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+    .join(' ')
+    .toLowerCase()
+}
+
+/**
+ * True when every word of `query` appears somewhere in the record's searchable
+ * text. Matching word by word means “ochre canvas” finds a canvas described as
+ * ochre even when the two words are not adjacent, and a query of nothing but
+ * spaces matches everything. It is a plain substring test — deliberately no
+ * stemming, synonyms or ranking, because the sample set does not justify
+ * pretending to more intelligence than that.
+ */
+export function matchesArtworkQuery(artwork: Artwork, query: string): boolean {
+  const tokens = normaliseWhitespace(query).toLowerCase().split(' ').filter(Boolean)
+  if (tokens.length === 0) return true
+
+  const haystack = artworkSearchText(artwork)
+  return tokens.every((token) => haystack.includes(token))
+}
+
+/**
  * Case-insensitive search across the sample records only.
  *
  * Phase 1 deliberately searches the placeholder set so the search route can be
- * built and reviewed honestly — it is not a marketplace search index.
+ * built and reviewed honestly — it is not a marketplace search index. An empty
+ * query returns nothing here, because the search route treats “nothing typed
+ * yet” as its own state; the catalogue, which shows everything until asked
+ * otherwise, calls `matchesArtworkQuery` directly.
  */
 export function searchSampleArtworks(query: string): Artwork[] {
-  const needle = query.trim().toLowerCase()
-  if (!needle) return []
+  if (!query.trim()) return []
 
-  return SAMPLE_ARTWORKS.filter((artwork) => {
-    const creator = getCreatorForArtwork(artwork)
-    const haystack = [
-      artwork.title,
-      artwork.medium,
-      artwork.dimensions,
-      artwork.description,
-      categoryLabel(artwork.category),
-      creator?.name ?? '',
-      creator?.discipline ?? '',
-      creator?.location ?? '',
-    ]
-      .join(' ')
-      .toLowerCase()
-
-    return haystack.includes(needle)
-  })
+  return SAMPLE_ARTWORKS.filter((artwork) => matchesArtworkQuery(artwork, query))
 }
 
 export {

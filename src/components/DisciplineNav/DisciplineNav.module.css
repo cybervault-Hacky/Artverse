@@ -4,7 +4,7 @@
 
 /*
  * Phones get a scroll strip so the catalogue stays close to the introduction;
- * from 768px the same five items align into a row that spans the container.
+ * from 768px the same six items align into one row that spans the container.
  * The strip only ever scrolls inside itself — the page never scrolls sideways.
  */
 .list {
@@ -13,8 +13,8 @@
   grid-auto-columns: 8.5rem;
   gap: var(--space-5);
   /*
-   * The inline padding gives focus rings and frame shadows room inside the
-   * scroll container; the equal negative margin pulls the first item back into
+   * The inline padding gives focus rings and cover shadows room inside the
+   * scroll container; the equal negative margin pulls the first tile back into
    * line with the page text, so the strip looks flush but the ring is never
    * clipped at the edges.
    */
@@ -25,7 +25,7 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
-  /* Phone overlays hide scrollbars anyway; the peeking next item is the cue. */
+  /* Phone overlays hide scrollbars anyway; the peeking next tile is the cue. */
   scrollbar-width: none;
 }
 
@@ -35,24 +35,64 @@
 
 .item {
   scroll-snap-align: start;
+  min-width: 0;
 }
 
-.link {
+.tile {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  color: inherit;
-  text-decoration: none;
+  width: 100%;
   text-align: center;
+  color: inherit;
 }
 
-.thumb {
+/*
+ * The cover is the lifting surface for every tile — artwork or the “All Art”
+ * mark — so the whole row shares one shadow, one radius and one hover.
+ */
+.cover {
+  position: relative;
+  display: block;
   width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow-frame);
   transition:
     transform var(--duration-base) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out);
+}
+
+.thumb {
+  width: 100%;
+}
+
+/* The reset tile mirrors a frame's 4:5 shape with a type-only mark. */
+.allMark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.check {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-accent-strong);
+  color: var(--color-surface);
 }
 
 .label {
@@ -63,32 +103,57 @@
   color: var(--color-ink);
 }
 
-.work {
-  /* The featured work is named so the link's destination is never a surprise. */
+.count {
   font-size: var(--text-meta);
   line-height: 1.4;
   color: var(--color-ink-muted);
 }
 
-.link:hover .label {
+/* ── Selected ────────────────────────────────────────────────────────────── */
+
+.tile[aria-pressed='true'] .cover {
+  box-shadow:
+    0 0 0 2px var(--color-accent-strong),
+    var(--shadow-lift);
+}
+
+.tile[aria-pressed='true'] .label {
   text-decoration: underline;
   text-decoration-color: var(--color-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22em;
 }
 
-.link:focus-visible {
+.tile[aria-pressed='true'] .count {
+  color: var(--color-ink);
+}
+
+.tile:focus-visible {
+  /* 4px + the 2px ring stays inside the strip's 8px bleed padding. */
   outline: 2px solid var(--color-focus);
-  outline-offset: 6px;
+  outline-offset: 4px;
   border-radius: var(--radius-xs);
+}
+
+@media (hover: hover) {
+  .tile:hover .cover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .tile[aria-pressed='true']:hover .cover {
+    box-shadow:
+      0 0 0 2px var(--color-accent-strong),
+      var(--shadow-lift);
+  }
 }
 
 @media (min-width: 768px) {
   .list {
     grid-auto-flow: row;
     grid-auto-columns: auto;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: var(--space-5);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--space-4);
     /* No scroll container from here up, so no need for bleed padding. */
     padding-inline: 0;
     margin-inline: 0;
@@ -97,8 +162,8 @@
     scroll-snap-type: none;
   }
 
-  /* An index row, not a gallery: modest thumbnails centred in their column. */
-  .link {
+  /* A filter row, not a gallery: modest covers centred in their column. */
+  .tile {
     max-width: 9.5rem;
     margin-inline: auto;
   }
@@ -106,23 +171,16 @@
 
 @media (min-width: 1024px) {
   .list {
-    gap: var(--space-6);
-  }
-}
-
-@media (hover: hover) {
-  .link:hover .thumb {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lift);
+    gap: var(--space-5);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .thumb {
+  .cover {
     transition: box-shadow var(--duration-fast) linear;
   }
 
-  .link:hover .thumb {
+  .tile:hover .cover {
     transform: none;
   }
 }
