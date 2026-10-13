@@ -1,0 +1,32 @@
+/*
+ * State markers: small, capitalised, always carrying words.
+ * Tone changes the border and text colour only — never the meaning.
+ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.18em 0.6em;
+  border: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.accent {
+  border-color: var(--border-accent);
+  color: var(--color-accent-ink);
+}
+
+.neutral {
+  border-color: var(--color-border-strong);
+  color: var(--color-ink-muted);
+}
+
+.quiet {
+  border-color: var(--color-border);
+  color: var(--color-ink-subtle);
+}

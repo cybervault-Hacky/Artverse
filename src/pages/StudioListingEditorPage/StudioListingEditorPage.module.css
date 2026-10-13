@@ -1,0 +1,281 @@
+/*
+ * The editor pairs the form with a live preview of the image and the record it
+ * would produce. On phones the preview follows the form, so the fields come
+ * first in reading order.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  margin-top: var(--space-6);
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+
+.form {
+  min-width: 0;
+}
+
+.formHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.formTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-tight);
+}
+
+.formNote {
+  margin-top: var(--space-3);
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-7);
+}
+
+/* ── Image chooser ───────────────────────────────────────────────────────── */
+
+.imageField {
+  min-width: 0;
+  margin-top: var(--space-8);
+  padding: var(--space-6);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.imageLegend {
+  padding-inline: var(--space-2);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.requiredMark {
+  color: var(--color-accent-ink);
+}
+
+.imageHint {
+  max-width: 40rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+.imageChoices {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.imageChoice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.imageChoice:hover {
+  border-color: var(--color-border-strong);
+}
+
+/* The chosen option is marked by the control itself and by the border, so the
+   state is never carried by colour alone. */
+.imageChoice:has(input:checked) {
+  border-color: var(--color-accent-strong);
+  background-color: var(--color-accent-soft);
+}
+
+.imageChoice:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.imageChoiceLabel {
+  min-width: 0;
+  color: var(--color-ink);
+}
+
+.imageError {
+  margin-top: var(--space-4);
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-accent-strong);
+  font-size: var(--text-meta);
+  color: var(--color-accent-ink);
+}
+
+/* ── Actions and verdict ─────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: var(--border-hairline);
+}
+
+.verdict {
+  margin-top: var(--space-5);
+  max-width: 46rem;
+}
+
+.verdictIdle,
+.verdictOk,
+.verdictWarn {
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.verdictOk,
+.verdictWarn {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+/* ── Preview column ──────────────────────────────────────────────────────── */
+
+.preview {
+  min-width: 0;
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.previewTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.previewNote {
+  margin-top: var(--space-2);
+  max-width: 30rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+.previewMedia {
+  margin-top: var(--space-5);
+  max-width: 22rem;
+}
+
+/* The empty preview keeps the frame's proportions, so choosing an image does
+   not move the layout underneath the reader. */
+.previewEmpty {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  padding: var(--space-5);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-muted);
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+  text-align: center;
+}
+
+.previewFacts {
+  margin-top: var(--space-6);
+  border-top: var(--border-hairline);
+  max-width: 30rem;
+}
+
+.previewFact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-small);
+}
+
+.previewFact dt {
+  flex: none;
+  min-width: 7.5rem;
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-subtle);
+}
+
+.previewFact dd {
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  color: var(--color-ink);
+}
+
+.priceNote {
+  margin-top: var(--space-6);
+  max-width: 30rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+/* ── Unknown record ──────────────────────────────────────────────────────── */
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* ── Wider viewports ─────────────────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fieldWide {
+    grid-column: 1 / -1;
+  }
+
+  .imageChoices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .preview {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-6));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imageChoice {
+    transition: none;
+  }
+}

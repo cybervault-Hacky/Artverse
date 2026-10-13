@@ -55,3 +55,18 @@
   color: var(--color-ink-muted);
   max-width: 46rem;
 }
+
+/* Two field specimens side by side, so the valid and invalid states can be
+   compared without scrolling. */
+.formSpecimen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+}
+
+@media (min-width: 768px) {
+  .formSpecimen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

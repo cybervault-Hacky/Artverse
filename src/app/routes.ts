@@ -12,6 +12,16 @@ export const NavRoutes = {
   artists: '/artists',
   artist: (artistId: string) => `/artists/${artistId}`,
   sell: '/sell',
+  /**
+   * The seller workspace preview. Every workspace destination sits under
+   * `/sell/studio` and never collides with the public studio profiles at
+   * `/artists/:artistId`, which are a different thing entirely.
+   */
+  studio: '/sell/studio',
+  studioListings: '/sell/studio/listings',
+  studioNewListing: '/sell/studio/listings/new',
+  studioListing: (artworkId: string) => `/sell/studio/listings/${artworkId}`,
+  studioProfile: '/sell/studio/profile',
   about: '/about',
   collections: '/collections',
   search: '/search',
@@ -81,8 +91,44 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
   {
     pattern: '/sell',
     page: 'SellPage',
-    status: 'foundation',
-    purpose: 'Become a Seller — seller intent only, no account or form.',
+    status: 'implemented',
+    purpose:
+      'For Artists — the workflow a seller will follow, what the studio workspace contains today, and an explicit statement that no account system exists yet.',
+  },
+  {
+    pattern: '/sell/studio',
+    page: 'StudioOverviewPage',
+    status: 'implemented',
+    purpose:
+      'The seller workspace preview: its navigation, the preview studio it is shown with, and the honest state of a workspace with no account, upload or storage behind it.',
+  },
+  {
+    pattern: '/sell/studio/listings',
+    page: 'StudioListingsPage',
+    status: 'implemented',
+    purpose:
+      'Artwork listings: only the records attributed to the preview studio, with an in-tab draft summarised beside them.',
+  },
+  {
+    pattern: '/sell/studio/listings/new',
+    page: 'StudioListingEditorPage',
+    status: 'implemented',
+    purpose:
+      'Listing editor — a new draft: the fields a listing needs, validated in the browser, uploaded and saved nowhere.',
+  },
+  {
+    pattern: '/sell/studio/listings/:artworkId',
+    page: 'StudioListingEditorPage',
+    status: 'implemented',
+    purpose:
+      'Listing editor — a draft prepared from an existing sample record. The record itself is never modified.',
+  },
+  {
+    pattern: '/sell/studio/profile',
+    page: 'StudioProfilePreviewPage',
+    status: 'implemented',
+    purpose:
+      'Studio profile preview: the public profile rendered from the same model the directory uses, with the editable version that seller accounts would bring.',
   },
   {
     pattern: '/about',

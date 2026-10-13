@@ -1,0 +1,217 @@
+/*
+ * The overview reads as an editorial spread rather than a dashboard: hairline
+ * panels, a definition list for the facts, and no oversized numbers anywhere.
+ */
+.panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  margin-top: var(--space-7);
+}
+
+.panel {
+  min-width: 0;
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.panelTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.panelIntro {
+  margin-top: var(--space-4);
+  max-width: 42rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.panelNote {
+  margin-top: var(--space-5);
+  max-width: 42rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/* ── Identity ────────────────────────────────────────────────────────────── */
+
+.identity {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.identityFrame {
+  flex: none;
+  width: 6.5rem;
+}
+
+.identityBody {
+  min-width: 0;
+}
+
+.identityName {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.identityPractice {
+  margin-top: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.identityCaption {
+  margin-top: var(--space-3);
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/* ── Facts and coverage ──────────────────────────────────────────────────── */
+
+.facts,
+.coverage {
+  margin-top: var(--space-6);
+  border-top: var(--border-hairline);
+}
+
+.factRow,
+.coverageRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding-block: var(--space-3);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-small);
+}
+
+.factLabel,
+.coverageLabel {
+  color: var(--color-ink-subtle);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.factValue {
+  margin: 0;
+  text-align: right;
+  color: var(--color-ink);
+}
+
+.coverageFull,
+.coveragePartial {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.coverageFull {
+  color: var(--color-ink);
+}
+
+.coveragePartial {
+  color: var(--color-ink-muted);
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+/* ── Sections and absences ───────────────────────────────────────────────── */
+
+.sections {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin-top: var(--space-7);
+  padding: 0;
+  list-style: none;
+}
+
+.section {
+  min-width: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.sectionText {
+  margin-top: var(--space-2);
+  max-width: 32rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.absent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.absentItem {
+  padding-left: var(--space-5);
+  position: relative;
+  max-width: 46rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+/* A rule rather than a decorative icon: it marks a stated absence. */
+.absentItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: var(--space-3);
+  height: 1px;
+  background-color: var(--color-border-strong);
+}
+
+.closing {
+  margin-top: var(--space-7);
+  max-width: 46rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 768px) {
+  .sections,
+  .absent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-9);
+  }
+
+  .sections {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

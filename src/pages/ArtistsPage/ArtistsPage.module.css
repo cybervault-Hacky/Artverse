@@ -62,3 +62,17 @@
   font-size: var(--text-meta);
   color: var(--color-ink-muted);
 }
+
+/*
+ * The one contextual route into the seller workspace, placed with the intro so
+ * it reads as part of the directory's own framing rather than as an
+ * advertisement beside it.
+ */
+.studioCallout {
+  margin-top: var(--space-5);
+  max-width: 52rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}

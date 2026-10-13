@@ -60,6 +60,16 @@ export function ArtistsPage() {
             rather than photographs of a person.
           </p>
 
+          {/* The one contextual route from the public directory into the seller
+              workspace: the people this directory serves are the people the
+              workspace is being built for. */}
+          <p className={styles.studioCallout}>
+            Running a studio rather than browsing one? The workspace preview shows how an artist
+            would prepare listings and keep a profile — with no account behind it yet.{' '}
+            <TextLink to={NavRoutes.sell}>See the artist experience</TextLink> or open the{' '}
+            <TextLink to={NavRoutes.studio}>studio workspace preview</TextLink>.
+          </p>
+
           {studios.length > 0 ? (
             <ul className={styles.grid}>
               {studios.map((entry) => (

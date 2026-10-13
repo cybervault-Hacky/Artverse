@@ -84,15 +84,15 @@ const PHASES = [
     label: 'Phase 9',
     title: 'Studio and seller accounts',
     detail:
-      'Seller onboarding with an honest verification step, and profiles the studios maintain themselves.',
-    status: 'Not started',
+      'Seller onboarding with an honest verification step, and profiles the studios maintain themselves. The workspace these will live in exists now as a frontend preview: it holds no account and stores nothing.',
+    status: 'Preview',
   },
   {
     label: 'Phase 10',
     title: 'Listings and inventory',
     detail:
-      'Listing tools for images, metadata, dimensions and availability, with drafts before anything is published.',
-    status: 'Not started',
+      'Listing tools for images, metadata, dimensions and availability, with drafts before anything is published. The listing draft editor exists as a preview — it validates every field and saves none of them.',
+    status: 'Preview',
   },
   {
     label: 'Phase 11',
@@ -176,7 +176,7 @@ export function AboutPage() {
             eyebrow="Roadmap"
             title="How the build is sequenced"
             id="about-phases"
-            description="Each phase ships something complete. This page reports the status plainly rather than implying that later phases already exist."
+            description="Each phase ships something complete. This page reports the status plainly rather than implying that later phases already exist. Preview means the frontend experience is in place — sometimes ahead of its place in the plan — and says so; the capability behind it is not built."
           />
 
           <div className={styles.phases}>

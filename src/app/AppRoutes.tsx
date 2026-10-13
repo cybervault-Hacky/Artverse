@@ -12,6 +12,11 @@ import { HomePage } from '@/pages/HomePage/HomePage'
 import { NotFoundPage } from '@/pages/NotFoundPage/NotFoundPage'
 import { SearchPage } from '@/pages/SearchPage/SearchPage'
 import { SellPage } from '@/pages/SellPage/SellPage'
+import { SellerStudioLayout } from '@/layouts/SellerStudioLayout'
+import { StudioListingEditorPage } from '@/pages/StudioListingEditorPage/StudioListingEditorPage'
+import { StudioListingsPage } from '@/pages/StudioListingsPage/StudioListingsPage'
+import { StudioOverviewPage } from '@/pages/StudioOverviewPage/StudioOverviewPage'
+import { StudioProfilePreviewPage } from '@/pages/StudioProfilePreviewPage/StudioProfilePreviewPage'
 
 /**
  * The route tree itself, kept separate from the router so it can be mounted
@@ -37,7 +42,19 @@ export function AppRoutes() {
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:artistId" element={<ArtistProfilePage />} />
         <Route path="collections" element={<CollectionsPage />} />
-        <Route path="sell" element={<SellPage />} />
+        {/* For Artists, and the seller workspace preview beneath it. The
+            workspace has its own layout, so its navigation and its in-tab draft
+            stay mounted while moving between its sections. */}
+        <Route path="sell">
+          <Route index element={<SellPage />} />
+          <Route path="studio" element={<SellerStudioLayout />}>
+            <Route index element={<StudioOverviewPage />} />
+            <Route path="listings" element={<StudioListingsPage />} />
+            <Route path="listings/new" element={<StudioListingEditorPage />} />
+            <Route path="listings/:artworkId" element={<StudioListingEditorPage />} />
+            <Route path="profile" element={<StudioProfilePreviewPage />} />
+          </Route>
+        </Route>
         <Route path="about" element={<AboutPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="design-system" element={<DesignSystemPage />} />

@@ -1,15 +1,45 @@
+/*
+ * For Artists: the workflow, the hand-off into the workspace, and the stated
+ * absences. Editorial columns and hairline rules — no cards, no icons.
+ */
+.sectionTitle {
+  font-size: var(--text-section);
+  letter-spacing: var(--tracking-tight);
+}
+
+.sectionIntro {
+  margin-top: var(--space-4);
+  max-width: 52rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
 .steps {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-7);
   margin-top: var(--space-8);
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
 }
 
 .step {
+  min-width: 0;
   padding-top: var(--space-5);
   border-top: var(--border-hairline);
 }
 
+.stepLabel {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-accent-ink);
+}
+
 .stepTitle {
+  margin-top: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--text-heading);
   line-height: var(--leading-heading);
@@ -22,6 +52,72 @@
   color: var(--color-ink-muted);
 }
 
+/* ── Hand-off ────────────────────────────────────────────────────────────── */
+
+.handoff {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-9);
+  padding: var(--space-7);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+.handoffBody {
+  min-width: 0;
+}
+
+.handoffTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.handoffText {
+  margin-top: var(--space-3);
+  max-width: 44rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.handoffActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── Absences ────────────────────────────────────────────────────────────── */
+
+.absent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.absentItem {
+  position: relative;
+  max-width: 46rem;
+  padding-left: var(--space-5);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.absentItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: var(--space-3);
+  height: 1px;
+  background-color: var(--color-border-strong);
+}
+
 .honestyNote {
   margin-top: var(--space-8);
   max-width: 46rem;
@@ -31,13 +127,26 @@
   color: var(--color-ink-muted);
 }
 
-.note {
-  margin-top: var(--space-8);
-}
-
 @media (min-width: 768px) {
   .steps {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-6);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-8);
+  }
+
+  .absent {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .handoff {
+    grid-template-columns: minmax(0, 1.4fr) auto;
+    align-items: center;
+    gap: var(--space-8);
   }
 }

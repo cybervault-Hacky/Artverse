@@ -98,8 +98,10 @@ export function SiteHeader() {
             </span>
           </NavLink>
 
+          {/* One seller entry point, leading to the page that explains the
+              artist workflow and what the workspace preview contains. */}
           <Button className={styles.sellerLink} to={NavRoutes.sell} variant="secondary" size="sm">
-            Become a Seller
+            For Artists
           </Button>
 
           <button

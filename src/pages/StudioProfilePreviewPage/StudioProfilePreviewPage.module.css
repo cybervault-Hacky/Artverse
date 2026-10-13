@@ -1,0 +1,158 @@
+/*
+ * The profile preview puts the two states side by side: the record as the site
+ * shows it, and the fields a seller would own. Both panels share one rhythm, so
+ * the difference between them reads as content rather than as decoration.
+ */
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8);
+  margin-top: var(--space-7);
+}
+
+.publicPanel,
+.editPanel {
+  min-width: 0;
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.panelHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.panelTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.panelNote {
+  margin-top: var(--space-4);
+  max-width: 40rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+/* ── Public record ───────────────────────────────────────────────────────── */
+
+.identity {
+  margin-top: var(--space-6);
+}
+
+.identityName {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.identityPractice {
+  margin-top: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.identityNote {
+  margin-top: var(--space-5);
+  max-width: 40rem;
+  padding-left: var(--space-5);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-body);
+  color: var(--color-ink-muted);
+}
+
+.identityEmpty {
+  margin-top: var(--space-5);
+  max-width: 40rem;
+  font-size: var(--text-small);
+  font-style: italic;
+  color: var(--color-ink-subtle);
+}
+
+.facts,
+.editable {
+  margin-top: var(--space-7);
+  border-top: var(--border-hairline);
+}
+
+.factRow,
+.editableRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding-block: var(--space-3);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-small);
+}
+
+.factLabel,
+.editableField {
+  color: var(--color-ink-subtle);
+  font-size: var(--text-meta);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.factValue {
+  margin: 0;
+  text-align: right;
+  color: var(--color-ink);
+}
+
+/* The editable list reads top-down: field, then what it would hold. */
+.editableRow {
+  display: block;
+}
+
+.editableField {
+  margin: 0;
+  font-weight: var(--weight-medium);
+}
+
+.editableDetail {
+  margin: var(--space-2) 0 0;
+  max-width: 40rem;
+  color: var(--color-ink-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+}
+
+.editClosing {
+  margin-top: var(--space-7);
+  max-width: 40rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/* ── Works ───────────────────────────────────────────────────────────────── */
+
+.works {
+  margin-top: var(--space-7);
+}
+
+.closing {
+  margin-top: var(--space-8);
+  max-width: 48rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 1024px) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-9);
+  }
+}

@@ -1,0 +1,189 @@
+/*
+ * The workspace shell: a masthead, then a sidebar beside the content.
+ *
+ * Below 1024px the sidebar becomes a block above the content and its list
+ * scrolls sideways as a row of tabs. Nothing depends on hover, and no column is
+ * allowed to grow wider than the page container.
+ */
+.workspace {
+  padding-block: var(--space-7) var(--space-section);
+}
+
+/* ── Masthead ────────────────────────────────────────────────────────────── */
+
+.masthead {
+  padding-bottom: var(--space-6);
+  border-bottom: var(--border-hairline);
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.studioName {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.mastheadNote {
+  margin-top: var(--space-3);
+  max-width: 46rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-7);
+  margin-top: var(--space-7);
+}
+
+.sidebar {
+  min-width: 0;
+}
+
+.content {
+  min-width: 0;
+}
+
+/* ── Navigation ──────────────────────────────────────────────────────────── */
+
+.nav {
+  min-width: 0;
+}
+
+.navList {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  list-style: none;
+  /*
+   * The row scrolls sideways rather than wrapping or overflowing the page.
+   * `min-width: 0` on the parents keeps the scroll inside this element.
+   */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.navList::-webkit-scrollbar {
+  display: none;
+}
+
+.navList > li {
+  flex: none;
+}
+
+.navLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: 2.75rem;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 2px solid transparent;
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.navLabel {
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+/* The one-line description is desktop-only: on a phone the row stays a row. */
+.navDescription {
+  display: none;
+  max-width: 18rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+.navLink:hover {
+  color: var(--color-ink);
+}
+
+.navLink:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.navLinkActive {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-ink);
+}
+
+.sidebarFoot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+  font-size: var(--text-meta);
+}
+
+/* ── Desktop: a sidebar beside the content ───────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .shell {
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-6));
+  }
+
+  .navList {
+    flex-direction: column;
+    gap: var(--space-1);
+    padding-bottom: 0;
+    overflow-x: visible;
+  }
+
+  .navLink {
+    padding: var(--space-3) 0 var(--space-3) var(--space-4);
+    border-bottom: none;
+    border-left: 2px solid var(--color-border);
+  }
+
+  .navLink:hover {
+    border-left-color: var(--color-border-strong);
+  }
+
+  .navLinkActive {
+    border-left-color: var(--color-accent);
+  }
+
+  .navDescription {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navLink {
+    transition: none;
+  }
+}

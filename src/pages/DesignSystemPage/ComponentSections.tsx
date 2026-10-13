@@ -7,8 +7,11 @@ import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb'
 import { Button } from '@/components/Button/Button'
 import { CollectionCard } from '@/components/CollectionCard/CollectionCard'
 import { EmptyState } from '@/components/EmptyState/EmptyState'
+import { FormField } from '@/components/FormField/FormField'
 import { LoadingIndicator } from '@/components/LoadingIndicator/LoadingIndicator'
+import { PreviewNotice } from '@/components/PreviewNotice/PreviewNotice'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
+import { StatusTag } from '@/components/StatusTag/StatusTag'
 import { StudioCard } from '@/components/StudioCard/StudioCard'
 import { TextLink } from '@/components/TextLink/TextLink'
 import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS } from '@/data'
@@ -225,6 +228,32 @@ export function ComponentSections() {
           <div className={styles.row}>
             <LoadingIndicator label="Loading route…" />
             <LoadingIndicator label="Preparing works…" />
+          </div>
+          <PreviewNotice>
+            The preview notice states what a screen is not, before anything on it is used. Every
+            seller workspace screen carries one.
+          </PreviewNotice>
+          <div className={styles.row}>
+            <StatusTag tone="accent">Preview</StatusTag>
+            <StatusTag tone="neutral">Draft in progress</StatusTag>
+            <StatusTag tone="quiet">Sample record</StatusTag>
+          </div>
+          <div className={styles.formSpecimen}>
+            <FormField
+              id="ds-field-plain"
+              label="Title"
+              hint="Hints explain the field before it is filled in."
+            >
+              <input type="text" defaultValue="A field with a hint" />
+            </FormField>
+            <FormField
+              id="ds-field-error"
+              label="Year"
+              hint="Optional fields stay optional."
+              error="Enter a four-digit year, e.g. 2024."
+            >
+              <input type="text" defaultValue="12" />
+            </FormField>
           </div>
           <p className={styles.caption}>
             The loading indicator is reserved for asynchronous moments such as a lazily loaded route

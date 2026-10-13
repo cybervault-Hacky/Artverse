@@ -41,10 +41,14 @@ const server = await createServer({
 
 try {
   const { AppRoutes } = await server.ssrLoadModule('/src/app/AppRoutes.tsx')
+  const routes = await server.ssrLoadModule('/src/app/routes.ts')
   const data = await server.ssrLoadModule('/src/data/index.ts')
   const catalogue = await server.ssrLoadModule('/src/utils/catalogue.ts')
   const detail = await server.ssrLoadModule('/src/utils/artworkDetail.ts')
   const studio = await server.ssrLoadModule('/src/utils/studioProfile.ts')
+  const collections = await server.ssrLoadModule('/src/utils/collections.ts')
+  const drafts = await server.ssrLoadModule('/src/utils/listingDraft.ts')
+  const workspace = await server.ssrLoadModule('/src/utils/sellerStudio.ts')
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -72,6 +76,17 @@ try {
     { pattern: /^\/artists\/([^/]+)$/, resolve: (id) => creatorIds.has(id), label: 'artist' },
     { pattern: /^\/collections$/, resolve: () => true, label: 'collections' },
     { pattern: /^\/sell$/, resolve: () => true, label: 'sell' },
+    { pattern: /^\/sell\/studio$/, resolve: () => true, label: 'studio workspace' },
+    { pattern: /^\/sell\/studio\/listings$/, resolve: () => true, label: 'studio listings' },
+    // Registered before the parameterised editor route, which would otherwise
+    // try to resolve “new” as an artwork id.
+    { pattern: /^\/sell\/studio\/listings\/new$/, resolve: () => true, label: 'new listing draft' },
+    {
+      pattern: /^\/sell\/studio\/listings\/([^/]+)$/,
+      resolve: (id) => artworkIds.has(id),
+      label: 'listing draft',
+    },
+    { pattern: /^\/sell\/studio\/profile$/, resolve: () => true, label: 'studio profile preview' },
     { pattern: /^\/about$/, resolve: () => true, label: 'about' },
     { pattern: /^\/search$/, resolve: () => true, label: 'search' },
     { pattern: /^\/design-system$/, resolve: () => true, label: 'design system' },
@@ -222,12 +237,42 @@ try {
             .find(Boolean)?.image.alt,
       ),
     },
-    { path: '/sell', expect: 'Bring your work to a wider room' },
+    {
+      path: '/sell',
+      expect: 'Bring your work to a wider room',
+      expectAll: [
+        'For Artists',
+        'The workflow this is being built for',
+        // The four steps of the artist workflow, in the order they are stated.
+        ...workspace.ARTIST_WORKFLOW.map((step) => step.step),
+        ...workspace.ARTIST_WORKFLOW.map((step) => step.title),
+        'See it in the workspace',
+        'What is not here yet',
+        ...workspace.WORKSPACE_NOT_INCLUDED,
+        // The preview state is stated before anything is offered.
+        'there is no seller account system to sign up to',
+      ],
+      expectLinks: ['/sell/studio', '/sell/studio/listings', '/artists', '/discover'],
+      // No sign-up, no application, no seller claim, no money.
+      forbidAll: ['Create account', 'Sign up', 'Apply now', 'Verified seller', 'Commission rate'],
+      forbidPatterns: [currencyPattern],
+    },
     { path: '/about', expect: 'A marketplace built calmly, in the open' },
     { path: '/search', expect: 'Find a work, a medium or a studio', maxImages: 0 },
     { path: '/search?q=ceramic', expect: 'for “ceramic”', minImages: 1 },
     { path: '/search?q=zzzz', expect: 'No sample records match', maxImages: 0 },
-    { path: '/design-system', expect: 'Floating-art prototype' },
+    {
+      path: '/design-system',
+      expect: 'Floating-art prototype',
+      // The architecture table is generated from ROUTE_ARCHITECTURE, so every
+      // declared route must appear on the page. A row added without a specimen
+      // — or a route left out of the table — fails here.
+      expectAll: [
+        'Nothing is simulated with tabs or in-page sections',
+        ...routes.ROUTE_ARCHITECTURE.map((row) => row.pattern),
+        ...routes.ROUTE_ARCHITECTURE.map((row) => row.page),
+      ],
+    },
     { path: '/404', expect: 'Error 404' },
     { path: '/this-route-does-not-exist', expect: 'Error 404' },
     { path: '/artwork/unknown-artwork-id', expect: 'We couldn’t find that artwork' },
@@ -777,6 +822,643 @@ try {
       forbidArtworks: paintingWorks,
     },  )
 
+  const catalogueCasesEnd = CASES.length
+
+  /*
+   * ── The collection model, checked directly ──────────────────────────────
+   * Rules markup cannot demonstrate: that a count always equals the works that
+   * actually resolved, that the representative work is one of the collection's
+   * own and has a requestable image, and that a missing id, a missing
+   * description or an empty membership degrades instead of breaking.
+   */
+  const directory = collections.buildCollectionDirectory()
+
+  check(
+    directory.length === data.SAMPLE_COLLECTIONS.length,
+    `collections: the directory lists ${directory.length} of ${data.SAMPLE_COLLECTIONS.length}`,
+  )
+
+  for (const collection of data.SAMPLE_COLLECTIONS) {
+    const entry = collections.buildCollectionEntry(collection)
+    const resolved = data.SAMPLE_ARTWORKS.filter((artwork) =>
+      collection.artworkIds.includes(artwork.id),
+    )
+
+    check(
+      entry.workCount === entry.works.length && entry.workCount === resolved.length,
+      `collections: ${collection.id} reports ${entry.workCount}, resolves ${entry.works.length}, ` +
+        `data holds ${resolved.length}`,
+    )
+    check(
+      entry.works.every((artwork) => collection.artworkIds.includes(artwork.id)),
+      `collections: ${collection.id} resolved a work it does not hold`,
+    )
+    check(entry.hasWorks === entry.workCount > 0, `collections: ${collection.id} hasWorks is wrong`)
+    check(
+      entry.href === `/discover/${collection.id}`,
+      `collections: ${collection.id} did not link to its own page`,
+    )
+    check(
+      entry.leadWork ? entry.leadWork.image.src.trim() !== '' : true,
+      `collections: ${collection.id} leads with a work that has no image path`,
+    )
+    check(
+      entry.leadWork ? entry.works.some((artwork) => artwork.id === entry.leadWork.id) : true,
+      `collections: ${collection.id} leads with a work that is not its own`,
+    )
+    check(
+      collections.leadArtworkFor(collection)?.id === entry.leadWork?.id,
+      `collections: ${collection.id} is not represented deterministically`,
+    )
+    check(entry.summary === collection.summary, `collections: ${collection.id} lost its summary`)
+    check(
+      entry.description === collection.description,
+      `collections: ${collection.id} lost its description`,
+    )
+  }
+
+  // A collection holding an id with no record: the unknown id is skipped, so
+  // the count cannot overstate what the page will render.
+  const partlyUnknown = {
+    id: 'collection-with-a-missing-work',
+    title: 'Partly Resolved',
+    summary: 'Summary',
+    description: 'Description',
+    artworkIds: ['sample-painting-01', 'no-such-artwork', 'sample-painting-02'],
+    sample: true,
+  }
+  const partlyUnknownEntry = collections.buildCollectionEntry(partlyUnknown)
+
+  check(
+    partlyUnknownEntry.workCount === 2,
+    `collections: an unresolvable artwork id was still counted (${partlyUnknownEntry.workCount})`,
+  )
+  check(
+    partlyUnknownEntry.works.every((artwork) => artwork.id !== 'no-such-artwork'),
+    'collections: an unresolvable artwork id reached the works list',
+  )
+
+  // A collection whose works carry no usable image: no representative work is
+  // offered, but the count is still reported, so the card degrades to text
+  // rather than to a broken frame.
+  const imagelessCollection = {
+    id: 'collection-without-images',
+    title: 'Imageless',
+    summary: 'Summary',
+    description: 'Description',
+    artworkIds: ['sample-painting-01'],
+    sample: true,
+  }
+  const originalSrc = data.SAMPLE_ARTWORKS[0].image.src
+  data.SAMPLE_ARTWORKS[0].image.src = ''
+  const imageless = collections.buildCollectionEntry(imagelessCollection)
+  data.SAMPLE_ARTWORKS[0].image.src = originalSrc
+
+  check(
+    imageless.leadWork === undefined,
+    'collections: a collection whose works have no image still offered a lead work',
+  )
+  check(
+    imageless.workCount === 1 && imageless.hasWorks,
+    'collections: an imageless collection lost its work count',
+  )
+  check(
+    collections.buildCollectionEntry(imagelessCollection).leadWork !== undefined,
+    'collections: the image check did not restore the dataset',
+  )
+
+  // A blank id and blank copy: no link, and nothing reported as a value.
+  const blankEntry = collections.buildCollectionEntry({
+    id: '   ',
+    title: 'No Route',
+    summary: '   ',
+    description: '',
+    artworkIds: [],
+    sample: true,
+  })
+
+  check(blankEntry.href === undefined, 'collections: a blank id still produced a link')
+  check(blankEntry.summary === undefined, 'collections: a blank summary was reported as a value')
+  check(
+    blankEntry.description === undefined,
+    'collections: a blank description was reported as a value',
+  )
+  check(
+    blankEntry.workCount === 0 && !blankEntry.hasWorks && blankEntry.leadWork === undefined,
+    'collections: an empty collection did not report itself as empty',
+  )
+
+  /*
+   * ── The listing draft model, checked directly ───────────────────────────
+   * The form itself cannot be driven without a browser, so its behaviour is
+   * verified where it lives: the pure draft, validator and reducer that the
+   * fields only dispatch into.
+   */
+  const blankDraft = drafts.emptyListingDraft()
+
+  check(
+    Object.values(blankDraft).every((value) => value === ''),
+    'drafts: a new draft did not start empty',
+  )
+  check(
+    Object.keys(blankDraft).length === drafts.LISTING_FIELDS.length,
+    `drafts: the draft carries ${Object.keys(blankDraft).length} fields, the form defines ${drafts.LISTING_FIELDS.length}`,
+  )
+
+  const blankErrors = drafts.validateListingDraft(blankDraft)
+  check(
+    Object.keys(blankErrors).sort().join(',') === 'description,discipline,imageId,medium,title',
+    `drafts: a blank draft reported [${Object.keys(blankErrors).sort().join(', ')}] instead of the five required fields`,
+  )
+  check(
+    !blankErrors.dimensions && !blankErrors.year && !blankErrors.collectionId,
+    'drafts: an optional field was treated as required',
+  )
+  check(
+    Object.values(blankErrors).every((message) => message.trim() !== ''),
+    'drafts: an error was reported without a message',
+  )
+
+  // Every record in the build is a valid starting point for a draft.
+  const firstArtwork = data.SAMPLE_ARTWORKS[0]
+  const validDraft = drafts.draftFromArtwork(firstArtwork)
+
+  check(
+    Object.keys(drafts.validateListingDraft(validDraft)).length === 0,
+    `drafts: a draft prepared from ${firstArtwork.id} was reported as incomplete`,
+  )
+
+  for (const artwork of data.SAMPLE_ARTWORKS) {
+    const prepared = drafts.draftFromArtwork(artwork)
+    check(prepared.title === artwork.title, `drafts: ${artwork.id} lost its title`)
+    check(prepared.discipline === artwork.category, `drafts: ${artwork.id} lost its discipline`)
+    check(prepared.medium === artwork.medium, `drafts: ${artwork.id} lost its medium`)
+    check(prepared.year === String(artwork.year), `drafts: ${artwork.id} lost its year`)
+    check(prepared.imageId === artwork.id, `drafts: ${artwork.id} did not preselect its own image`)
+    check(
+      Object.keys(drafts.validateListingDraft(prepared)).length === 0,
+      `drafts: a draft prepared from ${artwork.id} was reported as incomplete`,
+    )
+  }
+
+  // Invalid entries: each one is reported against its own field.
+  const invalidCases = [
+    [{ title: '   ' }, 'title', 'a whitespace-only title'],
+    [{ title: 'ab' }, 'title', 'a two-character title'],
+    [{ title: 'x'.repeat(91) }, 'title', 'a 91-character title'],
+    [{ discipline: 'not-a-discipline' }, 'discipline', 'an unknown discipline'],
+    [{ medium: 'x'.repeat(61) }, 'medium', 'a 61-character medium'],
+    [{ dimensions: 'wide' }, 'dimensions', 'dimensions without a measurement'],
+    [{ dimensions: `${'x'.repeat(41)}1` }, 'dimensions', 'dimensions beyond the limit'],
+    [{ year: '12' }, 'year', 'a two-digit year'],
+    [{ year: 'abcd' }, 'year', 'a year that is not a number'],
+    [{ year: '1799' }, 'year', 'a year before the range'],
+    [{ year: String(drafts.LISTING_YEAR_MAX + 1) }, 'year', 'a year in the future'],
+    [{ description: 'too short' }, 'description', 'a description below the minimum'],
+    [{ description: 'x'.repeat(601) }, 'description', 'a description beyond the maximum'],
+    [{ collectionId: 'no-such-collection' }, 'collectionId', 'an unknown collection'],
+    [{ imageId: 'no-such-artwork' }, 'imageId', 'an unknown image'],
+  ]
+
+  for (const [patch, field, label] of invalidCases) {
+    const errors = drafts.validateListingDraft({ ...validDraft, ...patch })
+    check(Boolean(errors[field]), `drafts: ${label} was accepted`)
+  }
+
+  // Optional fields may be left blank, and a record with nothing in it must not
+  // produce invented values.
+  check(
+    Object.keys(
+      drafts.validateListingDraft({ ...validDraft, dimensions: '', year: '', collectionId: '' }),
+    ).length === 0,
+    'drafts: blank optional fields made a complete draft invalid',
+  )
+
+  const bareDraft = drafts.draftFromArtwork({
+    id: 'bare-record',
+    title: '',
+    category: 'painting',
+    medium: '',
+    year: Number.NaN,
+    dimensions: '',
+    description: '',
+    image: { src: '', alt: '', width: 0, height: 0 },
+    aspect: 'portrait',
+    creatorId: '',
+    sample: true,
+  })
+
+  check(
+    bareDraft.title === '' &&
+      bareDraft.medium === '' &&
+      bareDraft.dimensions === '' &&
+      bareDraft.year === '' &&
+      bareDraft.imageId === '',
+    'drafts: a record without fields produced invented values',
+  )
+  // The record's discipline is the one field it does carry, so the draft is
+  // missing exactly these four.
+  check(
+    Object.keys(drafts.validateListingDraft(bareDraft)).sort().join(',') ===
+      'description,imageId,medium,title',
+    `drafts: a record with only a discipline reported [${Object.keys(
+      drafts.validateListingDraft(bareDraft),
+    )
+      .sort()
+      .join(', ')}]`,
+  )
+
+  // The reducer: editing, resetting, checking and origin switching.
+  const newState = drafts.initialListingDraftState({ kind: 'new' })
+
+  check(drafts.listingDraftFilledCount(newState.draft) === 0, 'drafts: a new draft counted fields')
+  check(drafts.listingDraftSummary(newState) === undefined, 'drafts: a new draft reported a status')
+  check(!drafts.listingDraftIsDirty(newState), 'drafts: an untouched draft reported changes')
+
+  const recordState = drafts.initialListingDraftState({
+    kind: 'artwork',
+    artworkId: firstArtwork.id,
+  })
+
+  check(
+    recordState.draft.title === firstArtwork.title,
+    'drafts: a record-backed draft did not start from the record',
+  )
+  check(
+    !drafts.listingDraftIsDirty(recordState),
+    'drafts: an untouched record-backed draft reported changes',
+  )
+
+  const edited = drafts.listingDraftReducer(recordState, {
+    type: 'setField',
+    field: 'title',
+    value: 'A different title',
+  })
+
+  check(edited.draft.title === 'A different title', 'drafts: editing did not reach the draft')
+  check(drafts.listingDraftIsDirty(edited), 'drafts: an edit was not reported as a change')
+  check(
+    edited.checked === false && edited.outcome === 'none',
+    'drafts: an edit left the previous verdict standing',
+  )
+
+  const reset = drafts.listingDraftReducer(edited, { type: 'reset' })
+
+  check(
+    reset.draft.title === recordState.draft.title,
+    'drafts: reset did not restore the values the draft started from',
+  )
+  check(!drafts.listingDraftIsDirty(reset), 'drafts: reset left the draft changed')
+
+  const incomplete = drafts.listingDraftReducer(newState, { type: 'check' })
+
+  check(
+    incomplete.checked && incomplete.outcome === 'incomplete',
+    'drafts: checking an empty draft did not report it incomplete',
+  )
+  check(
+    Object.keys(incomplete.errors).length === 5,
+    `drafts: an empty draft reported ${Object.keys(incomplete.errors).length} problems`,
+  )
+
+  const completeState = drafts.listingDraftReducer(
+    { ...newState, draft: { ...validDraft } },
+    { type: 'check' },
+  )
+
+  check(
+    completeState.outcome === 'complete' && Object.keys(completeState.errors).length === 0,
+    'drafts: a complete draft did not check out',
+  )
+  check(
+    drafts.listingDraftSummary(completeState)?.label === 'Every field checks out',
+    'drafts: the status did not reflect a passing check',
+  )
+  check(
+    drafts.listingDraftFilledCount(validDraft) === drafts.LISTING_FIELDS.length,
+    'drafts: a draft prepared from a full record did not count every field',
+  )
+
+  const fixing = drafts.listingDraftReducer(incomplete, {
+    type: 'setField',
+    field: 'title',
+    value: 'Now it has a title',
+  })
+
+  check(fixing.errors.title === undefined, 'drafts: an error survived an edit to its own field')
+  check(
+    Object.keys(fixing.errors).length === 4,
+    'drafts: editing one field cleared another field’s error',
+  )
+
+  // Reselecting the origin already held keeps the working draft.
+  check(
+    drafts.listingDraftReducer(edited, {
+      type: 'selectOrigin',
+      origin: { kind: 'artwork', artworkId: firstArtwork.id },
+    }) === edited,
+    'drafts: reselecting the same origin discarded the working draft',
+  )
+  check(
+    drafts.listingDraftReducer(edited, { type: 'selectOrigin', origin: { kind: 'new' } }).draft
+      .title === '',
+    'drafts: switching origin did not start from the new origin',
+  )
+
+  // Images: only real records with real files, and nothing from a blank id.
+  const imageOptions = drafts.listingImageOptions()
+
+  check(
+    imageOptions.length === data.SAMPLE_ARTWORKS.length,
+    `drafts: ${imageOptions.length} images are offered for ${data.SAMPLE_ARTWORKS.length} records`,
+  )
+  check(
+    imageOptions.every(
+      (option) =>
+        option.src.trim() !== '' &&
+        option.alt.trim() !== '' &&
+        option.width > 0 &&
+        option.height > 0 &&
+        artworkIds.has(option.id),
+    ),
+    'drafts: an image option is unusable or points at no record',
+  )
+  check(drafts.listingDraftImage(blankDraft) === undefined, 'drafts: a blank image id produced an image')
+  check(
+    drafts.listingDraftImage({ ...blankDraft, imageId: 'no-such-artwork' }) === undefined,
+    'drafts: an unknown image id produced an image',
+  )
+  check(
+    drafts.listingDraftImage(validDraft)?.id === firstArtwork.id,
+    'drafts: the chosen image did not resolve',
+  )
+
+  /*
+   * ── The workspace model, checked directly ───────────────────────────────
+   * The workspace shows one studio's records and states how complete they are.
+   * Both claims are computed here from the raw data and compared with what the
+   * model returns, so a figure on screen cannot drift from the catalogue.
+   */
+  const previewEntry = workspace.getPreviewStudioEntry()
+
+  check(Boolean(previewEntry), 'workspace: the preview studio did not resolve')
+  check(
+    previewEntry.creator.id === workspace.PREVIEW_STUDIO_ID,
+    'workspace: the preview studio is not the record it names',
+  )
+  check(
+    previewEntry.works.length > 0 && previewEntry.workCount === previewEntry.works.length,
+    'workspace: the preview studio reported a count that does not match its records',
+  )
+  check(
+    previewEntry.works.every((artwork) => artwork.creatorId === workspace.PREVIEW_STUDIO_ID),
+    'workspace: the preview studio was credited with another studio’s work',
+  )
+  check(
+    previewEntry.href === `/artists/${workspace.PREVIEW_STUDIO_ID}`,
+    'workspace: the preview studio did not link to its public profile',
+  )
+
+  const overview = workspace.buildStudioOverview()
+
+  check(
+    overview.catalogueCount === data.SAMPLE_ARTWORKS.length,
+    'workspace: the catalogue size is wrong',
+  )
+  check(
+    overview.otherStudioCount === overview.catalogueCount - overview.workCount,
+    'workspace: the records attributed to other studios are miscounted',
+  )
+  check(
+    overview.coverage.every((row) => row.total === overview.workCount),
+    'workspace: a coverage row counted records the studio does not hold',
+  )
+  check(
+    overview.coverage.every((row) => row.recorded <= row.total),
+    'workspace: a coverage row reported more records than it counted',
+  )
+
+  const expectedCoverage = {
+    Description: (artwork) => Boolean(artwork.description && artwork.description.trim()),
+    Medium: (artwork) => Boolean(artwork.medium && artwork.medium.trim()),
+    Dimensions: (artwork) => Boolean(artwork.dimensions && artwork.dimensions.trim()),
+    Year: (artwork) => typeof artwork.year === 'number' && Number.isFinite(artwork.year),
+    Image: (artwork) => Boolean(artwork.image && artwork.image.src && artwork.image.src.trim()),
+    'In a collection': (artwork) =>
+      data.SAMPLE_COLLECTIONS.some((collection) => collection.artworkIds.includes(artwork.id)),
+  }
+
+  for (const row of overview.coverage) {
+    const predicate = expectedCoverage[row.label]
+    check(Boolean(predicate), `workspace: “${row.label}” is not one of the counted fields`)
+    if (!predicate) continue
+    const expected = overview.works.filter(predicate).length
+    check(
+      row.recorded === expected,
+      `workspace: ${row.label} reported ${row.recorded}, the data holds ${expected}`,
+    )
+  }
+
+  for (const section of workspace.STUDIO_SECTIONS) {
+    const resolved = resolveInternalLink(section.to)
+    check(resolved.ok, `workspace: the “${section.label}” section links nowhere — ${resolved.reason}`)
+  }
+  check(
+    workspace.STUDIO_SECTIONS.length >= 3,
+    'workspace: the workspace is missing one of its sections',
+  )
+  check(
+    workspace.ARTIST_WORKFLOW.length === 4 &&
+      workspace.ARTIST_WORKFLOW.every((step) => step.title.trim() !== '' && step.text.trim() !== ''),
+    'workspace: the workflow is not stated in four complete steps',
+  )
+  check(
+    workspace.WORKSPACE_NOT_INCLUDED.length >= 4 &&
+      workspace.WORKSPACE_NOT_INCLUDED.every((line) => line.trim() !== ''),
+    'workspace: the list of things this build does not do is incomplete',
+  )
+  check(
+    workspace.WORKSPACE_PREVIEW_NOTICE.startsWith('Frontend preview'),
+    'workspace: the preview notice no longer says what this is',
+  )
+
+  // The address decides which draft the workspace holds.
+  check(
+    workspace.originFromPath('/sell/studio/listings/new').kind === 'new' &&
+      workspace.originFromPath('/sell/studio/listings').kind === 'new' &&
+      workspace.originFromPath('/sell/studio/listings/').kind === 'new' &&
+      workspace.originFromPath('/sell/studio/profile').kind === 'new' &&
+      workspace.originFromPath('/sell/studio').kind === 'new',
+    'workspace: a path without a record id did not start a new draft',
+  )
+
+  const recordOrigin = workspace.originFromPath(
+    `/sell/studio/listings/${firstArtwork.id}`,
+  )
+  check(
+    recordOrigin.kind === 'artwork' && recordOrigin.artworkId === firstArtwork.id,
+    'workspace: a record path did not select that record',
+  )
+
+  // A malformed id must not throw — the editor reports it instead.
+  let malformedOrigin
+  try {
+    malformedOrigin = workspace.originFromPath('/sell/studio/listings/%E0%A4%A')
+  } catch (error) {
+    malformedOrigin = undefined
+    check(false, `workspace: a malformed record id threw — ${String(error)}`)
+  }
+  check(
+    Boolean(malformedOrigin) && malformedOrigin.kind === 'artwork',
+    'workspace: a malformed record id did not reach the editor for reporting',
+  )
+
+  /*
+   * ── The seller workspace pages ──────────────────────────────────────────
+   * One case per destination, with the workspace's own claims asserted: the
+   * preview is labelled, the records shown are the preview studio's own, and
+   * nothing anywhere claims a save, an upload, a publication or a sale.
+   */
+  const previewWorks = previewEntry.works
+  const workspaceCasesStart = CASES.length
+  const noSaveClaims = [
+    'Saved to your account',
+    'Saved successfully',
+    'Published successfully',
+    'Upload complete',
+    'Publish listing',
+    'Verified seller',
+    'Total revenue',
+    'Sales this month',
+    'Earnings',
+  ]
+
+  CASES.push(
+    {
+      path: '/sell/studio',
+      expect: 'Studio workspace',
+      expectAll: [
+        'Frontend preview',
+        'no account, no sign-in and no storage',
+        workspace.PREVIEW_STUDIO_NOTE,
+        'The studio this preview shows',
+        previewEntry.name,
+        'What the records carry',
+        'not sales, revenue, views or any other measure of a marketplace',
+        'Three sections, all of them previews',
+        ...workspace.STUDIO_SECTIONS.map((section) => section.label),
+        'What this workspace does not do',
+        ...workspace.WORKSPACE_NOT_INCLUDED,
+      ],
+      expectLinks: [
+        '/sell/studio/listings',
+        '/sell/studio/profile',
+        `/artists/${workspace.PREVIEW_STUDIO_ID}`,
+      ],
+      forbidAll: noSaveClaims,
+      forbidPatterns: [currencyPattern],
+      minImages: 1,
+      expectEagerImages: 0,
+    },
+    {
+      path: '/sell/studio/listings',
+      expect: 'Records attributed to',
+      expectAll: [
+        'Frontend preview',
+        'Draft a new listing',
+        'Sample record',
+        'Prepare a draft from this record',
+        'Open the public page',
+        'there is no upload, no storage, no availability and no price',
+        ...previewWorks.map((artwork) => artwork.title),
+      ],
+      // The page lists its own records and links to their public pages.
+      expectArtworks: previewWorks.map((artwork) => artwork.id),
+      expectLinks: [
+        '/sell/studio/listings/new',
+        ...previewWorks.map((artwork) => `/sell/studio/listings/${artwork.id}`),
+      ],
+      forbidAll: noSaveClaims,
+      forbidPatterns: [currencyPattern],
+      expectEagerImages: 0,
+    },
+    {
+      path: '/sell/studio/listings/new',
+      expect: 'New listing draft',
+      expectAll: [
+        'Frontend preview',
+        // Every field of the listing model is on the screen.
+        ...drafts.LISTING_FIELDS.map((field) => field.label),
+        'Not chosen yet',
+        'Not in a collection',
+        'No image selected',
+        'There is no price, availability or publication field here',
+        'Nothing is checked until you ask',
+      ],
+      expectLinks: ['/sell/studio/listings'],
+      // A draft with no image chosen renders no image at all — and no empty src.
+      maxImages: 0,
+      forbidAll: [...noSaveClaims, 'Publish', 'Upload image'],
+      forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/sell/studio/listings/no-such-record',
+      expect: 'That record isn’t in this build',
+      expectAll: ['No sample record has the id', 'Start a new draft', 'No record matches that id'],
+      expectLinks: ['/sell/studio/listings', '/sell/studio/listings/new'],
+      maxImages: 0,
+      forbidAll: noSaveClaims,
+      forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/sell/studio/profile',
+      expect: 'Studio profile preview',
+      expectAll: [
+        'Frontend preview',
+        'What the public profile shows',
+        'What a seller would edit',
+        'Not built yet',
+        'Sample record',
+        'Editable profiles arrive with seller accounts',
+        previewEntry.name,
+        previewEntry.practice,
+        previewEntry.location,
+        ...previewWorks.map((artwork) => artwork.title),
+      ],
+      expectArtworks: previewWorks.map((artwork) => artwork.id),
+      expectLinks: ['/artists', `/artists/${workspace.PREVIEW_STUDIO_ID}`, '/sell/studio/listings'],
+      forbidAll: [...noSaveClaims, 'Verified studio', 'Award-winning', 'Featured artist'],
+      forbidPatterns: [currencyPattern],
+      expectEagerImages: 0,
+    },
+  )
+
+  // One case per record the preview studio holds: a draft opens on that
+  // record's own values, and the record itself is never modified.
+  for (const artwork of previewWorks) {
+    CASES.push({
+      path: `/sell/studio/listings/${artwork.id}`,
+      expect: `Draft from “${artwork.title}”`,
+      expectAll: [
+        `The fields below start from the sample record “${artwork.title}”`,
+        // The record's own field values are what the form starts from.
+        `value="${artwork.title}"`,
+        `value="${artwork.medium}"`,
+        `value="${artwork.dimensions}"`,
+        `value="${String(artwork.year)}"`,
+        'Back to listings',
+        'Nothing is checked until you ask',
+      ],
+      expectLinks: ['/sell/studio/listings'],
+      expectAllAlt: [artwork.image.alt],
+      forbidAll: noSaveClaims,
+      forbidPatterns: [currencyPattern],
+      expectEagerImages: 0,
+    })
+  }
+
+  const workspaceCasesEnd = CASES.length
+
   for (const testCase of CASES) {
     routesChecked += 1
     const html = renderToStaticMarkup(
@@ -903,8 +1585,12 @@ try {
       `${creatorIds.size} creators · ${disciplineCount} disciplines`,
   )
   console.log(
-    `catalogue: ${CASES.length - catalogueCasesStart} search, filter, sort and empty-state cases ` +
-      `(each naming the exact records it expects, in order)`,
+    `catalogue: ${catalogueCasesEnd - catalogueCasesStart} search, filter, sort and empty-state ` +
+      `cases (each naming the exact records it expects, in order)`,
+  )
+  console.log(
+    `workspace: ${workspaceCasesEnd - workspaceCasesStart} seller studio cases, plus direct ` +
+      `assertions on the collection, draft and workspace models`,
   )
 
   await server.close()

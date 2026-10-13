@@ -5,13 +5,15 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 7 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 8 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
 signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
 filtering, sorting and honest empty states, an immersive artwork page for every record, a studio
-directory with a profile for every creator, and a collection directory whose pages open on one of
-the collection's own works. It is still a frontend build: there is no backend, no database, no
-authentication, no payments and no real listings.
+directory with a profile for every creator, a collection directory whose pages open on one of the
+collection's own works, and the seller studio illustrated at `/sell/studio` — an overview of one
+studio's records, its listings, a listing draft you can edit, and a profile preview. It is still a
+frontend build: there is no backend, no database, no authentication, no accounts, no storage, no
+payments and no real listings.
 
 ---
 
@@ -27,6 +29,7 @@ authentication, no payments and no real listings.
 - [The artwork page](#the-artwork-page)
 - [The studio directory and profiles](#the-studio-directory-and-profiles)
 - [The collections directory and pages](#the-collections-directory-and-pages)
+- [The seller studio preview](#the-seller-studio-preview)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -127,12 +130,35 @@ authentication, no payments and no real listings.
   portrait — the one image relationship the data holds, and the honest alternative to inventing
   portraits of people who do not exist.
 
+**Phase 8 — the seller studio preview**
+
+This is the frontend of what the roadmap at the end of this file lists as Phases 9 and 10, shipped
+ahead of its place in the plan and labelled as a preview on every screen — accounts, storage,
+listing tools and publication are all still to come.
+
+- `/sell` is now an honest entry point rather than a sign-up prompt: the four steps the studio
+  workflow is built around, a hand-off into the workspace, and a plain list of everything that is
+  not here yet — including that there is no seller account system to sign up to.
+- A workspace at `/sell/studio` with three sections and one layout: an overview of the records one
+  studio holds and which fields they carry, the listings, and a preview of the public profile.
+- The listing editor lives at `/sell/studio/listings/new` and at
+  `/sell/studio/listings/:artworkId`, which opens on that record's own values. The draft is held in
+  the browser tab for as long as it is open — no account, no upload, no storage, no publication.
+- Validation is real and only runs when asked: required fields, length limits, a four-digit year,
+  a discipline from the data layer, an image that is one of the records that exist.
+- `PreviewNotice`, `StatusTag` and `FormField` were added to the shared component set, and the
+  workspace's sidebar becomes a scrolling row of links on narrow screens.
+- Every workspace screen states what it is. Nothing in it claims a save, an upload, a publication,
+  a verification or a sale, and no figure on it is invented.
+
 ## What is deliberately not included
 
 Catalogue pagination, medium/size/material filters and indexed search; editorial curation tools;
-artwork commerce (prices, availability, certificates, purchase); seller accounts, verification,
-listing tools, orders and payouts. There is no backend, database, authentication, payment or AI
-service anywhere in this repository, and no page simulates one.
+artwork commerce (prices, availability, certificates, purchase); seller accounts, sign-in, seller
+verification and approval; file uploads, stored listings, drafts that outlive the tab,
+publication, orders, commissions and payouts. There is no backend, database, authentication,
+payment, storage or AI service anywhere in this repository, and no page simulates one — the seller
+workspace at `/sell/studio` is a frontend preview that says on every screen that it is one.
 
 ## Stack
 
@@ -473,6 +499,41 @@ the same answer:
 - **No usable id** — the card renders as a static article rather than a link to a route that would
   fail.
 
+## The seller studio preview
+
+Five screens under `/sell/studio`, one layout, one draft model, and the same rule on all of them:
+nothing here stores anything.
+
+| Screen | What it shows |
+| --- | --- |
+| `/sell/studio` | The records this preview studio holds, which fields they carry, the three sections of the workspace, and what it deliberately does not do |
+| `/sell/studio/listings` | The studio's own records — each linking to prepare a draft from it, and to its public page — plus any draft already prepared in this tab |
+| `/sell/studio/listings/new` | A listing draft starting from nothing |
+| `/sell/studio/listings/:artworkId` | The same editor, starting from that record's own values |
+| `/sell/studio/profile` | The public profile as it renders today, beside what a seller would eventually edit and what is not built |
+
+**Where a draft lives.** In the browser tab, in memory, held by the workspace layout's reducer and
+shared with every screen underneath it, so stepping into the listings list and back does not lose
+what was typed. Reloading or closing the tab discards it. No draft is sent anywhere, because there
+is nowhere to send it, and the editor says so in its own words rather than implying a save.
+
+**What validation means here.** `validateListingDraft` is a pure function over a pure draft, and the
+editor reports exactly what it returns: a missing or too-short title, a medium over sixty
+characters, a year outside 1800–2026, a discipline that is not one of the five in the data layer,
+an image that is not one of the six records that exist. Nothing is checked until the reader asks,
+and editing a field clears that field's own message rather than silently re-checking everything.
+
+**What the workspace does not claim.** No account, no sign-in, no seller application or
+verification, no file upload, no storage, no publication, no price, no availability, no order and
+no payout. Every workspace screen carries the same preview notice, and the overview lists what is
+missing in the same place it lists what exists — so the reader can see the shape of the thing
+without being sold the thing.
+
+**Why the profile preview reads the directory's model.** `buildStudioEntry` already turns a creator
+record into the practice, location, note and works that the public profile shows, and the preview
+calls that same function instead of describing the profile a second time. Two descriptions would
+eventually disagree; one cannot.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -483,16 +544,23 @@ the same answer:
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5) — the work in full, its record, its studio, related works |
 | `/artists` | `ArtistsPage` | Complete (Phase 6) — studio directory, every creator record |
 | `/artists/:artistId` | `ArtistProfilePage` | Complete (Phase 6) — practice, location, note, own records |
-| `/collections` | `CollectionsPage` | Complete (Phase 7) — editorial collection directory |
-| `/sell` | `SellPage` | Foundation — seller intent, no form or account |
+| `/collections` | `CollectionsPage` | Complete (Phase 7) — the directory of the groupings this build holds |
+| `/sell` | `SellPage` | Complete (Phase 8) — the studio workflow, and an honest account of what does not exist yet |
+| `/sell/studio` | `StudioOverviewPage` | Preview (Phase 8) — the records this studio holds, the sections, and what the workspace does not do |
+| `/sell/studio/listings` | `StudioListingsPage` | Preview (Phase 8) — the studio's own records, and any draft held in this tab |
+| `/sell/studio/listings/new` | `StudioListingEditorPage` | Preview (Phase 8) — a listing draft starting from nothing |
+| `/sell/studio/listings/:artworkId` | `StudioListingEditorPage` | Preview (Phase 8) — the same editor starting from that record's own values |
+| `/sell/studio/profile` | `StudioProfilePreviewPage` | Preview (Phase 8) — the public profile, and what a seller would eventually edit |
 | `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
 | `/search` | `SearchPage` | Foundation — direct destination for a search; Explore Art carries the fuller experience |
 | `/design-system` | `DesignSystemPage` | Complete — internal token and component reference |
 | `/404`, any unknown path | `NotFoundPage` | Complete — also used for unknown artwork, collection and artist ids |
 
-Paths are declared once in `src/app/routes.ts` and registered in `src/app/AppRoutes.tsx`. Unknown
-detail ids render the same not-found experience as an unknown URL, so a stale link is never mistaken
-for a real page.
+Paths are declared once in `src/app/routes.ts` and registered in `src/app/AppRoutes.tsx`. The five
+workspace screens are children of one `/sell` layout route, which is what lets the draft they share
+survive navigation between them. Unknown detail ids render the same not-found experience as an
+unknown URL, so a stale link is never mistaken for a real page — including an unknown artwork id in
+the editor, which says so and offers a new draft instead of appearing to hold a record it does not.
 
 ## Project structure
 
@@ -571,6 +639,12 @@ grids, crops and ratios could be designed and reviewed. They are single-resoluti
 total, all reused across sections and cached after first load) and are intended to be replaced with
 genuine studio photography — and multiple resolutions — in a later phase.
 
+The workspace previews the seller studio using those same records and nothing else. It shows the
+records one sample studio holds, which fields they carry and which are missing — the only figures in
+it are counts of records that exist, recomputed from the data. It carries no views, impressions,
+sales, revenue, conversion, ranking or rating, because the build has no such information and will
+not invent it.
+
 No real artists, prices, sales, verified sellers, testimonials or marketplace activity are
 represented anywhere in this repository.
 
@@ -631,6 +705,14 @@ instead of leaving an unlabelled gap. On a collection page the collection title 
 works under an `h2`, the representative work is a `figure` captioned as a sample image from the
 collection, and the count sits beside the title as text rather than as a badge.
 
+On the workspace screens, the sidebar navigation is a labelled list of links whose current
+destination is marked `aria-current`; the preview notice is a paragraph with a visually hidden
+"Preview:" prefix, so its meaning is not carried by the small tag alone; every field is named by its
+own `<label for>`, and the image chooser is a radio group whose legend, hint and error are linked
+from the `fieldset` — so the group is announced once with its instructions rather than as seven
+unrelated radios. Validation messages appear in the page and are described, not only coloured, and a
+field's message is cleared by editing that field. The draft summary is text, never a badge.
+
 On the artwork page, the studio link is the only link inside the record; the metadata is a proper
 `dl`; the image carries its real descriptive alt text and intrinsic dimensions; the placeholder panel
 and the “Studio not recorded” line are text rather than unlabelled graphics; and the related grid is a
@@ -672,6 +754,17 @@ from 768px, tightening its fact label column from 9rem to 7.5rem at that width s
 their room, then widening the identity column to 1.15fr from 1024px. A studio with no records drops
 the media column entirely rather than leaving a hole beside its name.
 
+The seller workspace steps in two tiers. Below 1024px the sidebar is not a sidebar: the section
+links become a horizontal row that scrolls within itself, so the content keeps the full width and
+nothing is squeezed into a narrow column beside a list of three links. From 1024px the shell becomes
+a 15rem column plus the content, the navigation turns into a sticky column, and the editor's live
+preview sticks beside the form. The form itself is one column on phones and two from 768px, and the
+image chooser is one tile per row on phones and two from 768px, so a radio target is never smaller
+than a comfortable tap. At 360px the content box is 320px and the widest fixed width in the
+workspace is a 15rem sidebar, which only exists above 1024px. On the `/sell` entry page the four
+workflow steps run one per row on phones, two from 768px and four from 1024px, and the hand-off
+panel becomes a wide column plus an action from 1024px.
+
 ## Verification
 
 Executed in this repository:
@@ -682,9 +775,14 @@ Executed in this repository:
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
 | Production build | `npm run build` | Passes — `dist/` JS ≈ 373 kB (≈ 115 kB gzip), CSS ≈ 69 kB (≈ 12 kB gzip) |
-| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including each artwork page, `/discover` with search, filter and sort parameters, and an unknown artwork id |
-| Route rendering | `npm run verify:routes` | 63 route cases (including every artwork, creator and collection id in the data layer), all assertions pass |
-| Internal links | included above | 784 links resolved against the route table and the data layer — no broken destinations |
+| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 24 swept URLs return HTTP 200 with the app shell — every destination, `/discover` with search, filter and sort parameters, all five workspace screens, and an unknown artwork, collection, artist or record id |
+| Route rendering | `npm run verify:routes` | 70 route cases (including every artwork, creator and collection id in the data layer, and every workspace screen), all assertions pass |
+| Internal links | included above | 940 links resolved against the route table and the data layer — no broken destinations |
+| Seller workspace | included above | All five workspace screens render with their preview notice; the overview's coverage figures and the studio's record count are recomputed from the raw data and must match; every section link resolves; nothing on any screen claims a save, an upload, a publication, a verification or a sale |
+| Listing draft model | included above | A blank draft reports exactly the five required fields; every one of the 6 records prepares a valid draft carrying its own title, discipline, medium, year and image; 15 invalid entries each fail on their own field; a record with nothing in it produces no invented values; editing clears only that field's message; checking, resetting and origin-switching all behave; each image option is a real file on a real record |
+| Wrong or missing record id | included above | `/sell/studio/listings/no-such-record` reaches the workspace's own "that record isn't in this build" state with a route to a new draft and to the listings, and it renders no image and no empty `src` |
+| Draft survives navigation | asserted in the markup | `/sell/studio/listings/new` renders no image at all, while the two record-backed editors render exactly one — the image the draft starts on |
+| No price, no availability | included above | No workspace screen contains a currency amount, a purchase phrase, or a `Publish`/`Upload`/`Save` control |
 | Catalogue behaviour | included above | 29 search, filter, sort and empty-state cases, each naming the exact records it expects and the order it expects them in |
 | Collection directory | included above | `/collections` renders all 4 collections with their titles, summaries and counts, links to all 4 collection routes, and contains no artwork route and no ranking language |
 | Collection membership | included above | Each collection page renders exactly the works resolved from `artworkIds`, in the collection's own order, and asserts every artwork id from the other collections is absent |
@@ -720,23 +818,27 @@ Executed in this repository:
 | Studio profile contents | included above | Each profile renders its name as `h1`, its discipline, its location, its practice note, its illustrative notice and the portrait-stand-in caption |
 | Studio records are its own | included above | Each of the 5 profiles lists exactly its creator's works and asserts every other artwork id is absent |
 | Studio lead image | included above | A profile's stand-in image is always one of that creator's own works, and a workless studio gets none |
-| Creator → artwork links | included above | Every profile's artwork links resolve through the same link resolver used for all 784 internal links |
+| Creator → artwork links | included above | Every profile's artwork links resolve through the same link resolver used for all 940 internal links |
 | Studio model safety | included above | A synthetic creator with blank name, id and practice produces no link, falls back to the neutral name, and emits no empty fact row |
 | Empty studio state | included above | The workless path is asserted through a synthetic creator, since all 5 sample creators hold at least one record |
 | No rankings or claims | included above | No studio page contains a currency amount, a purchase phrase, or the words `Verified seller`, `Verified studio`, `Award-winning` |
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
-| CSS Module integrity | script over `src/**` | 45 modules, 442 `styles.*` references resolve; 2 unused rules remain, both pre-existing in untouched files |
-| Heading outline | script over 26 routes | One `h1` per route, no skipped levels — including the empty state, a filtered catalogue, an artwork page and every collection page |
+| CSS Module integrity | script over `src/**` | 53 modules, 602 `styles.*` references resolve; 17 further rules are variant tokens resolved through bracket access; 2 unused rules remain, both pre-existing in untouched files |
+| Heading outline | script over 29 routes | One `h1` per route, no skipped levels (265 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page and every workspace screen |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
 | Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
+| Workspace layout | computed from the stylesheets | At 360/390/430px the shell is a single column with a scrolling nav row; from 1024px it is a 15rem sidebar beside the content with both the nav and the editor's preview sticky. Form columns run 1/1/1/2/2/2 and image tiles 1/1/1/2/2/2 across the six widths; the content box is 320px at the narrowest and every track is guarded by `minmax(0, …)` |
+| Workspace tokens | script over the new stylesheets | 392 `var()` references, all defined in `tokens.css` — no colour literal, no undeclared token, no silently-falling-back value |
+| Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset` |
+| Image integrity | markup assertions | Every image on the workspace screens carries `width`, `height`, descriptive `alt` and an aspect-ratio frame; no screen emits an image without a `src`, and no element is wider than a 360px viewport |
 | Collection layout | computed from the stylesheets | At the six widths the directory's grid runs 1/1/1/2/3/3 cards after a full-scale opening composition, the feature card splits at 768px only and with `minmax(0, …)` guards, cards stay 282px or wider, and every image on the collection pages is rendered inside an aspect-ratio frame — no page emits an image without a src, a size or alternative text |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
 | Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
 
-`verify:routes` renders the real route tree for every destination — every route, plus every artwork
-and creator id in the data layer — and asserts: the intended page renders for each path, unknown
+`verify:routes` renders the real route tree for every destination — every route, plus every artwork,
+collection and creator id in the data layer and every workspace screen — and asserts: the intended page renders for each path, unknown
 paths and unknown detail ids reach the not-found experience, each page has exactly one `h1`, no
 element ids are duplicated, every image has descriptive `alt` text and intrinsic dimensions, the
 shared skip link and footer are present, and **every internal link resolves to a destination that
@@ -756,6 +858,27 @@ documented is what gets checked, not a second copy of the implementation. Alongs
 page's decisions are asserted directly: no self-link, no related id outside the data layer, no
 unstable ordering, no metadata row without a value, no link without a creator record, and no
 currency or purchase phrase anywhere on the page.
+
+Phase 7 added the collection assertions in the same spirit, this time against the model directly
+rather than against a page: that a count equals the works that actually resolved, that the lead work
+is always the collection's own and always carries a requestable image, and that a collection holding
+an id with no record counts only what it finds.
+
+Phase 8 does the same for the workspace, and it is the phase where the script earns its keep twice
+over. The five workspace screens are ordinary cases — preview label present, the studio's own
+records only, no save or publish claim anywhere — but the behaviour behind them is not markup: the
+draft, the validator and the reducer are pure, so the script drives them directly. A blank draft
+must report exactly its five required fields and no optional one; all six records must prepare a
+draft that passes; fifteen separate invalid entries must each fail on their own field; a record with
+nothing in it must not produce an invented value; editing one field must clear that field's error
+and no other; checking, resetting and switching origin must all leave the draft where the reader
+expects. The workspace's own arithmetic is recomputed from the raw data too, so the coverage figures
+printed on the overview cannot drift from the catalogue they describe.
+
+That sweep found a real defect before the phase was committed: the image chooser's `<label for>`
+values named ids that did not exist, so although the tiles were visible, the radios inside them had
+no accessible name at all. It is the kind of fault a screenshot cannot show and a model test cannot
+reach, and it was fixed by pointing each label at its own control.
 
 Phase 6 applies the same idea to the studios. Every profile asserts that its artwork links are
 exactly its own creator's records — with every other artwork id forbidden — and the directory
@@ -782,6 +905,19 @@ reads as a label rather than a caption over a busy image, that the 4:5 studio ca
 rhythm when one studio's lead work is square and another's is portrait, and that the directory's
 five cards leave an intentional gap on the last row at three columns.
 
+Phase 8 adds its own browser-only list, and it is the longest of the three, because the workspace is
+the first part of the build whose behaviour is a form rather than a page: that typing in a field is
+immediate and does not lose a character, that selecting an image with the arrow keys moves between
+tiles and announces the right one, that the draft really does survive a step into the listings list
+and back, that "check this draft" reports the fields it says it reports and that correcting one
+field clears that field's message only, that the sticky sidebar and the sticky preview column behave
+while the form is scrolled, that the section nav really does scroll sideways on a phone without
+dragging the page with it, and that focus order through the editor's fourteen controls feels like
+reading order.
+The model behind each of those is asserted directly — the reducer, the validator, the origin
+derivation and the coverage arithmetic are all tested against the raw data — but the interaction
+itself was not watched.
+
 One SPA characteristic worth knowing: every route returns HTTP 200 from the dev server, including
 unknown ids, because the not-found view renders client-side. A production deployment would need to
 return a real 404 status at the edge; that is deliberately out of scope here (no deployment).
@@ -790,6 +926,12 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
 
 One plan in twelve phases. The About page presents the same twelve in the same order, so the two
 never disagree about what a phase covers.
+
+The numbering of the *work* and the numbering of the *plan* diverge once, and only here: the eighth
+piece of work delivered is the seller studio preview, which is the frontend of what this plan lists
+as Phases 9 and 10. It shipped ahead of its place in the plan and is labelled as a preview on every
+screen, because the capability behind it — accounts, storage, listings, publication — is not built.
+The plan below keeps its own numbering so the README and the About page continue to agree.
 
 - **Phase 1 — Foundation and design system** _(delivered)_: setup, tokens, components, routes, page
   shells, design-system preview.
@@ -808,11 +950,15 @@ never disagree about what a phase covers.
   editorial spread, and a collection page that opens on its own work, with counts that always match
   the works actually rendered.
 - **Phase 8 — Curation and catalogue growth**: editorial notes with context for each grouping,
-  ordering controls, pagination and deeper filters as the catalogue outgrows one page.
+  ordering controls, pagination and deeper filters as the catalogue outgrows one page. _Not
+  started — the eighth piece of work delivered is the seller studio preview described above, which
+  belongs to Phases 9 and 10._
 - **Phase 9 — Studio and seller accounts**: seller onboarding with an honest verification step, and
-  profiles the studios maintain themselves.
+  profiles the studios maintain themselves. _The workspace these will live in exists as a frontend
+  preview — it holds no account and stores nothing._
 - **Phase 10 — Listings and inventory**: listing tools for images, metadata, dimensions and
-  availability, with drafts before anything is published.
+  availability, with drafts before anything is published. _The listing draft editor exists as a
+  preview: it validates every field and saves none of them._
 - **Phase 11 — Orders, fulfilment and payouts**: order handling, shipping options, fees stated
   plainly and payouts to the studios.
 - **Phase 12 — Artwork commerce and provenance**: availability, pricing and currency handling;

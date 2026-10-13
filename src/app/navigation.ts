@@ -19,8 +19,12 @@ export const PRIMARY_NAV: NavItem[] = [
   { label: 'Collections', to: '/collections' },
 ]
 
-/** Full destination list used by the mobile navigation panel. */
-export const MOBILE_NAV: NavItem[] = [...PRIMARY_NAV, { label: 'Become a Seller', to: '/sell' }]
+/**
+ * Full destination list used by the mobile navigation panel. The seller entry
+ * point is stated once, in the header's own link, and repeated here for the
+ * panel rather than given a second destination.
+ */
+export const MOBILE_NAV: NavItem[] = [...PRIMARY_NAV, { label: 'For Artists', to: '/sell' }]
 
 export interface FooterNavGroup {
   title: string
@@ -42,7 +46,8 @@ export const FOOTER_NAV: FooterNavGroup[] = [
     title: 'ArtVerse',
     items: [
       { label: 'About', to: '/about' },
-      { label: 'Become a Seller', to: '/sell' },
+      { label: 'For Artists', to: '/sell' },
+      { label: 'Artist studio preview', to: '/sell/studio' },
       { label: 'Design system', to: '/design-system' },
     ],
   },

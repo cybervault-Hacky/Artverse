@@ -1,0 +1,84 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.label {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.required {
+  color: var(--color-accent-ink);
+}
+
+.hint {
+  max-width: 40rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/*
+ * The invalid state is carried by the message and the border together. The
+ * message is prefixed for screen readers in the component, so nothing depends
+ * on seeing the colour change.
+ */
+.error {
+  font-size: var(--text-meta);
+  color: var(--color-accent-ink);
+}
+
+.fieldInvalid {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-accent-strong);
+}
+
+/*
+ * Controls are styled here rather than in each page, so every field in the
+ * workspace has the same hit area, the same focus ring and the same refusal to
+ * overflow a narrow column.
+ */
+.field :is(input[type='text'], textarea, select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--color-ink);
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.field textarea {
+  min-height: 9rem;
+  resize: vertical;
+  line-height: var(--leading-body);
+}
+
+.field :is(input[type='text'], textarea, select):hover {
+  border-color: var(--color-border-strong);
+}
+
+.field :is(input[type='text'], textarea, select):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-color: var(--color-border-strong);
+}
+
+.field :is(input[type='text'], textarea, select)[aria-invalid='true'] {
+  border-color: var(--color-accent-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field :is(input[type='text'], textarea, select) {
+    transition: none;
+  }
+}
