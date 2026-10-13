@@ -1,0 +1,26 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-muted);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.description {
+  max-width: 46ch;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.action {
+  margin-top: var(--space-2);
+}

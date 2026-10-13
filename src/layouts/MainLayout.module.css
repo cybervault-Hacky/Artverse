@@ -1,0 +1,11 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1 0 auto;
+  /* Offset for the shared page header, which site pages render themselves. */
+  padding-bottom: var(--space-9);
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ArtVerse">
+  <rect width="32" height="32" rx="8" fill="#171717" />
+  <circle cx="16" cy="16" r="12" fill="none" stroke="#FAF9F6" stroke-opacity="0.22" stroke-width="1" />
+  <ellipse
+    cx="16"
+    cy="16"
+    rx="11.5"
+    ry="4.6"
+    transform="rotate(-27 16 16)"
+    fill="none"
+    stroke="#FAF9F6"
+    stroke-opacity="0.5"
+    stroke-width="1.1"
+  />
+  <circle cx="16" cy="16" r="5.4" fill="#C8AD78" />
+  <circle cx="25.4" cy="9.6" r="1.9" fill="#FAF9F6" />
+</svg>

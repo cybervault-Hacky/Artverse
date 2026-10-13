@@ -1,0 +1,131 @@
+/*
+ * ArtVerse design tokens.
+ * Every colour, size, radius, shadow and motion value used by the interface
+ * is declared here once. Component styles must consume these variables
+ * instead of hard-coding raw values.
+ */
+
+:root {
+  /* ── Colour ─────────────────────────────────────────────────────────── */
+  /* Surfaces */
+  --color-canvas: #faf9f6; /* page background — warm white */
+  --color-surface: #ffffff; /* raised surfaces such as image mats */
+  --color-surface-muted: #f3f1ec; /* quiet panels, code blocks, swatch beds */
+  --color-surface-sunken: #eeeae3; /* deepest neutral surface */
+
+  /* Text */
+  --color-ink: #171717; /* primary text — near black */
+  --color-ink-muted: #6e6b66; /* secondary text; the brand soft neutral grey,
+                                 nudged darker than #77746F so body copy keeps
+                                 an AA contrast ratio (5.0:1) on the canvas */
+  --color-ink-subtle: #8c8880; /* captions and fine print (large/label use only) */
+  --color-ink-inverse: #f7f5f1; /* text on charcoal sections */
+
+  /* Lines */
+  --color-border: #e5e2dc; /* default hairline */
+  --color-border-strong: #d6d1c7; /* emphasis hairline, control outlines */
+
+  /* Accent — muted champagne gold */
+  --color-accent: #c8ad78;
+  --color-accent-strong: #b2945e; /* hover / active accent */
+  --color-accent-ink: #8a6f35; /* accent used as text on light surfaces (4.5:1) */
+  --color-accent-soft: #f2e9d8; /* accent tint surface */
+
+  /* Contrast section */
+  --color-charcoal: #1e1d1b;
+  --color-charcoal-ink: #f4f1ec;
+  --color-charcoal-muted: #b3ada2;
+  --color-charcoal-border: #38352f;
+
+  /* Interaction */
+  --color-focus: #8a6f35;
+  --color-overlay: rgba(23, 23, 23, 0.32);
+
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-display: 'Playfair Display Variable', 'Playfair Display', Georgia, 'Times New Roman',
+    serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+
+  /* Scale — fluid between 360px and 1440px viewports */
+  --text-display: clamp(2.5rem, 1.65rem + 3.6vw, 4rem); /* hero headline */
+  --text-title: clamp(1.9rem, 1.45rem + 1.9vw, 2.75rem); /* page title */
+  --text-section: clamp(1.5rem, 1.3rem + 0.9vw, 2rem); /* section heading */
+  --text-heading: 1.25rem; /* card and block heading */
+  --text-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.1875rem); /* intro copy */
+  --text-body: 1rem;
+  --text-small: 0.9375rem;
+  --text-meta: 0.8125rem; /* metadata and captions */
+  --text-label: 0.75rem; /* editorial / eyebrow labels */
+
+  --leading-display: 1.06;
+  --leading-title: 1.12;
+  --leading-heading: 1.25;
+  --leading-body: 1.65;
+
+  --tracking-label: 0.14em;
+  --tracking-tight: -0.015em;
+  --tracking-display: -0.02em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* ── Spacing scale (4px base) ───────────────────────────────────────── */
+  --space-1: 0.25rem; /* 4 */
+  --space-2: 0.5rem; /* 8 */
+  --space-3: 0.75rem; /* 12 */
+  --space-4: 1rem; /* 16 */
+  --space-5: 1.5rem; /* 24 */
+  --space-6: 2rem; /* 32 */
+  --space-7: 3rem; /* 48 */
+  --space-8: 4rem; /* 64 */
+  --space-9: 6rem; /* 96 */
+  --space-10: 8rem; /* 128 */
+
+  /* Vertical rhythm for page sections */
+  --space-section: clamp(3.5rem, 7vw, 6.5rem);
+  --space-section-tight: clamp(2.5rem, 5vw, 4rem);
+
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  --container-max: 1200px;
+  --container-max-wide: 1400px;
+  --container-max-narrow: 760px;
+  --container-gutter: clamp(1.25rem, 4vw, 3rem);
+  --header-height: 4.5rem;
+
+  /* ── Borders, radii, shadows ────────────────────────────────────────── */
+  --border-hairline: 1px solid var(--color-border);
+  --border-strong: 1px solid var(--color-border-strong);
+  --border-accent: 1px solid var(--color-accent);
+
+  --radius-xs: 3px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  --shadow-none: none;
+  /* Shadows stay intentionally soft and low-contrast. */
+  --shadow-soft: 0 18px 36px -30px rgba(23, 23, 23, 0.45), 0 2px 6px -3px rgba(23, 23, 23, 0.08);
+  --shadow-lift: 0 30px 60px -34px rgba(23, 23, 23, 0.4), 0 4px 12px -6px rgba(23, 23, 23, 0.1);
+  --shadow-frame: 0 1px 2px rgba(23, 23, 23, 0.04), 0 12px 28px -24px rgba(23, 23, 23, 0.35);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --duration-fast: 140ms;
+  --duration-base: 220ms;
+  --duration-slow: 420ms;
+  --duration-float: 34s; /* signature floating-art loop */
+  --ease-standard: cubic-bezier(0.32, 0.08, 0.24, 1);
+  --ease-out: cubic-bezier(0.16, 0.84, 0.28, 1);
+  --ease-inout: cubic-bezier(0.45, 0.05, 0.55, 0.95);
+
+  /* ── Z-index scale ──────────────────────────────────────────────────── */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-skip-link: 300;
+}

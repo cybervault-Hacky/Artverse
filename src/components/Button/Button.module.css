@@ -1,0 +1,108 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 2.875rem;
+  padding-inline: var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.005em;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.block {
+  width: 100%;
+}
+
+/* ── Sizes ────────────────────────────────────────────────────────────── */
+
+.sm {
+  min-height: 2.5rem;
+  padding-inline: var(--space-4);
+  font-size: var(--text-meta);
+}
+
+.md {
+  min-height: 2.875rem;
+}
+
+.lg {
+  min-height: 3.25rem;
+  padding-inline: var(--space-6);
+  font-size: var(--text-body);
+}
+
+/* ── Variants ─────────────────────────────────────────────────────────── */
+
+.primary {
+  background-color: var(--color-ink);
+  color: var(--color-canvas);
+}
+
+.primary:hover {
+  /* Fallback for browsers without color-mix support. */
+  background-color: var(--color-charcoal);
+  background-color: color-mix(in srgb, var(--color-canvas) 14%, var(--color-ink));
+}
+
+.secondary {
+  border-color: var(--color-border-strong);
+  background-color: transparent;
+  color: var(--color-ink);
+}
+
+.secondary:hover {
+  border-color: var(--color-ink);
+  background-color: var(--color-surface-muted);
+}
+
+.quiet {
+  padding-inline: var(--space-2);
+  color: var(--color-ink);
+}
+
+.quiet:hover {
+  color: var(--color-accent-ink);
+}
+
+/* ── States ───────────────────────────────────────────────────────────── */
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button[aria-disabled='true'] {
+  pointer-events: none;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .button:not(:disabled):not([aria-disabled='true']):hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .button:hover {
+    transform: none;
+  }
+}

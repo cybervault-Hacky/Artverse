@@ -1,0 +1,43 @@
+.steps {
+  display: grid;
+  gap: var(--space-7);
+  margin-top: var(--space-8);
+}
+
+.step {
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.stepTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+}
+
+.stepText {
+  margin-top: var(--space-3);
+  max-width: 34rem;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.honestyNote {
+  margin-top: var(--space-8);
+  max-width: 46rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.note {
+  margin-top: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6);
+  }
+}

@@ -1,0 +1,32 @@
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-7);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.categoryName {
+  font-size: var(--text-small);
+  color: var(--color-ink);
+}
+
+.categoryCount {
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.catalogue {
+  margin-top: var(--space-8);
+}
+
+.note {
+  margin-top: var(--space-8);
+}

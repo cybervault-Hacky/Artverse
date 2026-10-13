@@ -1,0 +1,13 @@
+/*
+ * Global stylesheet entry.
+ *
+ * Order matters: self-hosted fonts first, then design tokens, then base
+ * element styles. Component styling is colocated in CSS Modules and layered on
+ * top of these foundations.
+ */
+
+@import '@fontsource-variable/inter/index.css';
+@import '@fontsource-variable/playfair-display/index.css';
+
+@import './tokens.css';
+@import './base.css';

@@ -1,0 +1,5 @@
+# ArtVerse — Phase 1 foundation.
+# The marketplace is not published yet; crawling stays disabled until the
+# launch phase explicitly revises this file.
+User-agent: *
+Disallow: /

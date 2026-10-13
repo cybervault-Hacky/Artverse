@@ -1,0 +1,101 @@
+.footer {
+  margin-top: auto;
+  border-top: var(--border-hairline);
+  background-color: var(--color-canvas);
+  padding-block: var(--space-8) var(--space-6);
+}
+
+.top {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.intro {
+  max-width: 26rem;
+}
+
+.tagline {
+  margin-top: var(--space-5);
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-style: italic;
+  color: var(--color-ink);
+}
+
+.note {
+  margin-top: var(--space-3);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-7) var(--space-6);
+}
+
+.groupTitle {
+  /* These are navigational labels, so they stay in the sans face rather than
+     the display serif that other headings use. */
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+}
+
+.groupLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  font-size: var(--text-small);
+  color: var(--color-ink);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.groupLink:hover {
+  color: var(--color-accent-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.25em;
+}
+
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+@media (min-width: 768px) {
+  .top {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-items: start;
+  }
+}
+
+@media (min-width: 1024px) {
+  .top {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

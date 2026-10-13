@@ -1,0 +1,36 @@
+.header {
+  padding-block: clamp(2.5rem, 5vw, 4.5rem) clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.crumbs {
+  margin-bottom: var(--space-5);
+}
+
+.eyebrow {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.title {
+  max-width: 30ch;
+  font-size: var(--text-title);
+  letter-spacing: var(--tracking-display);
+}
+
+.intro {
+  max-width: 44rem;
+  margin-top: var(--space-4);
+  font-size: var(--text-lead);
+  color: var(--color-ink-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}

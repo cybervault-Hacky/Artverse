@@ -1,0 +1,36 @@
+.link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-border-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+}
+
+.link:hover {
+  text-decoration-color: var(--color-accent-ink);
+}
+
+.accent {
+  color: var(--color-accent-ink);
+  text-decoration-color: color-mix(in srgb, var(--color-accent-ink) 40%, transparent);
+}
+
+.arrow {
+  font-size: 0.95em;
+  line-height: 1;
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.link:hover .arrow {
+  transform: translateX(0.15em);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link:hover .arrow {
+    transform: none;
+  }
+}

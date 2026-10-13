@@ -1,0 +1,57 @@
+.table {
+  margin-top: var(--space-6);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-meta);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-accent);
+}
+
+.dotEmpty {
+  background-color: var(--color-border-strong);
+}
+
+.checks {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  max-width: 52rem;
+}
+
+.check {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-small);
+}
+
+.checkCommand {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+}
+
+.checkResult {
+  color: var(--color-ink-muted);
+}
+
+.note {
+  margin-top: var(--space-6);
+  max-width: 46rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
