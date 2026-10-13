@@ -1,69 +1,64 @@
-.list {
-  margin-top: var(--space-8);
-  border-top: var(--border-hairline);
-}
-
-.row {
-  border-bottom: var(--border-hairline);
-}
-
-.link {
+.heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2) var(--space-6);
-  padding-block: var(--space-5);
-  min-height: 3.5rem;
-  color: inherit;
-  text-decoration: none;
-  transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
-.name {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  line-height: var(--leading-heading);
-  letter-spacing: var(--tracking-tight);
+.headingTitle {
+  font-size: var(--text-section);
 }
 
-.discipline {
-  font-size: var(--text-small);
+.count {
+  font-size: var(--text-meta);
   color: var(--color-ink-muted);
-}
-
-.arrow {
-  font-size: var(--text-small);
-  color: var(--color-ink-muted);
-  transition: transform var(--duration-base) var(--ease-out);
-}
-
-.link:hover .name {
-  text-decoration: underline;
-  text-decoration-color: var(--color-accent);
-  text-underline-offset: 0.22em;
-}
-
-.link:hover .arrow {
-  transform: translateX(0.2rem);
-  color: var(--color-ink);
-}
-
-.note {
-  margin-top: var(--space-8);
 }
 
 .introNote {
-  margin-top: var(--space-6);
-  max-width: 46rem;
+  margin-top: var(--space-5);
+  max-width: 52rem;
   padding-left: var(--space-4);
   border-left: 2px solid var(--color-accent);
   font-size: var(--text-meta);
   color: var(--color-ink-muted);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .link:hover .arrow {
-    transform: none;
+/*
+ * One column on phones, two from 640px, three from 1024px. Five entries leave a
+ * deliberate gap on the last row rather than stretching a card to fill it.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-8) var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.item {
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-9) var(--space-7);
+  }
+}
+
+.note {
+  margin-top: var(--space-9);
+}
+
+.crossLink {
+  margin-top: var(--space-6);
+  max-width: 46rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
 }

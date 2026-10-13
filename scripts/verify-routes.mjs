@@ -44,6 +44,7 @@ try {
   const data = await server.ssrLoadModule('/src/data/index.ts')
   const catalogue = await server.ssrLoadModule('/src/utils/catalogue.ts')
   const detail = await server.ssrLoadModule('/src/utils/artworkDetail.ts')
+  const studio = await server.ssrLoadModule('/src/utils/studioProfile.ts')
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -90,6 +91,25 @@ try {
     return { ok: false, reason: 'no route matches this path' }
   }
 
+  /*
+   * Shared negative assertions. Nothing in ArtVerse is for sale yet, so no page
+   * may show a price-shaped value or a purchase control — and no studio may be
+   * described as verified or award-winning, because nothing verifies anybody.
+   */
+  const currencyPattern = /[£$€¥₹]\s?\d|\d\s?(?:GBP|USD|EUR|INR)/
+  const purchasePhrases = [
+    'Add to cart',
+    'Add to basket',
+    'Buy now',
+    'Add to favourites',
+    'Add to wishlist',
+    'Wishlist',
+    'Save for later',
+    'Out of stock',
+    'Sold out',
+    'Enquire about this work',
+  ]
+
   /**
    * The artwork cards the page actually rendered, in DOM order.
    *
@@ -135,7 +155,40 @@ try {
     { path: '/discover/contemporary-colour', expect: 'Contemporary Colour' },
     { path: '/discover/thoughtful-spaces', expect: 'Art for Thoughtful Spaces' },
     { path: '/discover/unknown-collection-id', expect: 'We couldn’t find that collection' },
-    { path: '/artists', expect: 'The people behind the work' },
+    {
+      path: '/artists',
+      // The h1 is “Artists & Studios”; the ampersand is escaped in markup.
+      expect: 'Artists &amp; Studios',
+      expectAll: [
+        // The intro still carries the editorial line the page has always used.
+        'The people behind the work',
+        '5 illustrative entries',
+        // Every creator record is listed, with its practice and location.
+        ...data.SAMPLE_CREATORS.map((creator) => creator.name),
+        ...data.SAMPLE_CREATORS.map((creator) => creator.discipline),
+        ...data.SAMPLE_CREATORS.map((creator) => creator.location),
+        // Each card is labelled as illustrative, and its image is named as a
+        // sample work rather than a portrait.
+        'Illustrative profile',
+        'Sample work',
+      ],
+      // The directory links to profiles, never straight to artworks.
+      expectArtworks: [],
+      forbidArtworks: data.SAMPLE_ARTWORKS.map((artwork) => artwork.id),
+      expectLinks: [
+        ...data.SAMPLE_CREATORS.map((creator) => `/artists/${creator.id}`),
+        '/discover',
+        '/collections',
+      ],
+      forbidAll: ['Verified seller', 'Verified studio', 'Verification badge', 'Award-winning'],
+      forbidPatterns: [currencyPattern],
+      // One lead work per studio, so every card shows that studio's own image.
+      expectEagerImages: 0,
+      expectAllAlt: data.SAMPLE_CREATORS.map(
+        (creator) =>
+          data.SAMPLE_ARTWORKS.find((artwork) => artwork.creatorId === creator.id)?.image.alt,
+      ),
+    },
     { path: '/collections', expect: 'Groupings, not folders' },
     { path: '/sell', expect: 'Bring your work to a wider room' },
     { path: '/about', expect: 'A marketplace built calmly, in the open' },
@@ -155,20 +208,6 @@ try {
    * the page's own helper — so the related list is checked against the rule as
    * written down, not against a second copy of the implementation.
    */
-  const currencyPattern = /[£$€¥₹]\s?\d|\d\s?(?:GBP|USD|EUR|INR)/
-  const purchasePhrases = [
-    'Add to cart',
-    'Add to basket',
-    'Buy now',
-    'Add to favourites',
-    'Add to wishlist',
-    'Wishlist',
-    'Save for later',
-    'Out of stock',
-    'Sold out',
-    'Enquire about this work',
-  ]
-
   for (const artwork of data.SAMPLE_ARTWORKS) {
     const creator = data.SAMPLE_CREATORS.find((entry) => entry.id === artwork.creatorId)
     const collections = data.SAMPLE_COLLECTIONS.filter((collection) =>
@@ -219,9 +258,35 @@ try {
     })
   }
 
-  // Every creator in the data layer must render its own profile.
+  // Every creator in the data layer must render its own profile, listing its
+  // own records and nobody else's.
   for (const creator of data.SAMPLE_CREATORS) {
-    CASES.push({ path: `/artists/${creator.id}`, expect: creator.name })
+    const ownWorks = data.SAMPLE_ARTWORKS.filter((artwork) => artwork.creatorId === creator.id)
+    const otherWorks = data.SAMPLE_ARTWORKS.filter((artwork) => artwork.creatorId !== creator.id)
+    const leadWork = ownWorks.find((artwork) => artwork.image?.src)
+
+    CASES.push({
+      path: `/artists/${creator.id}`,
+      expect: creator.name,
+      expectAll: [
+        creator.discipline,
+        creator.location,
+        creator.bio,
+        'Sample records from this studio',
+        'Illustrative placeholder profile',
+        // The stand-in image is named as a work, never as a portrait.
+        'shown in place of a portrait',
+      ],
+      // Its works are the only related/artwork links on the page, plus the
+      // breadcrumb and the two onward routes.
+      expectArtworks: ownWorks.map((artwork) => artwork.id),
+      forbidArtworks: otherWorks.map((artwork) => artwork.id),
+      expectLinks: ['/artists', '/discover'],
+      forbidAll: [...purchasePhrases, 'Verified seller', 'Verified studio', 'Award-winning'],
+      forbidPatterns: [currencyPattern],
+      // One eager image when the studio has a work to show, none when it does not.
+      expectEagerImages: leadWork ? 1 : 0,
+    })
   }
 
   /*
@@ -377,6 +442,93 @@ try {
     check(studio.href === `/artists/${creator.id}`, `detail: ${creator.id} did not link to its profile`)
     check(studio.illustrative, `detail: ${creator.id} lost its illustrative placeholder label`)
   }
+
+  /*
+   * ── The studio model, checked directly ──────────────────────────────────
+   * Rules markup cannot demonstrate: that a studio is only ever credited with
+   * its own records, that its stand-in image comes from one of them, and that a
+   * record missing every optional field renders as text rather than as a link
+   * to nowhere or a fabricated name.
+   */
+  const directoryEntries = studio.buildStudioDirectory()
+
+  check(
+    directoryEntries.length === data.SAMPLE_CREATORS.length,
+    `studio: the directory lists ${directoryEntries.length} of ${data.SAMPLE_CREATORS.length} creators`,
+  )
+  check(
+    directoryEntries.every((entry) => entry.href === `/artists/${entry.creator.id}`),
+    'studio: a directory entry did not link to its own profile route',
+  )
+
+  for (const creator of data.SAMPLE_CREATORS) {
+    const entry = studio.buildStudioEntry(creator)
+    const expectedWorks = data.SAMPLE_ARTWORKS.filter((artwork) => artwork.creatorId === creator.id)
+
+    check(
+      entry.works.map((artwork) => artwork.id).join(',') ===
+        expectedWorks.map((artwork) => artwork.id).join(','),
+      `studio: ${creator.id} does not list exactly its own records, in order`,
+    )
+    check(
+      entry.works.every((artwork) => artwork.creatorId === creator.id),
+      `studio: ${creator.id} is credited with somebody else's work`,
+    )
+    check(
+      entry.workCount === expectedWorks.length && entry.hasWorks === expectedWorks.length > 0,
+      `studio: ${creator.id} reports the wrong work count`,
+    )
+    check(
+      entry.leadWork ? entry.leadWork.creatorId === creator.id : true,
+      `studio: ${creator.id} leads with a work that is not its own`,
+    )
+    check(entry.practice === creator.discipline, `studio: ${creator.id} lost its practice`)
+    check(entry.location === creator.location, `studio: ${creator.id} lost its location`)
+    check(entry.illustrative, `studio: ${creator.id} lost its illustrative label`)
+
+    // The page's own facts must line up with the record.
+    const facts = studio.buildStudioFacts(entry)
+    check(
+      facts.some((fact) => fact.label === 'Records in this build' && fact.value.includes(String(entry.workCount))),
+      `studio: ${creator.id} does not report its record count as a fact`,
+    )
+  }
+
+  // Every studio in this build holds at least one record, so the profile's
+  // empty state is out of reach from data alone — it is asserted through a
+  // synthetic creator instead of being left unverified.
+  const worklessCreator = {
+    id: 'sample-creator-with-no-work',
+    name: 'Unattributed Studio',
+    discipline: 'Practice not recorded',
+    illustrative: true,
+  }
+  const workless = studio.buildStudioEntry(worklessCreator)
+
+  check(workless.workCount === 0 && !workless.hasWorks, 'studio: a workless creator reported records')
+  check(workless.works.length === 0, 'studio: a workless creator was given records')
+  check(workless.leadWork === undefined, 'studio: a workless creator was given a lead image')
+  check(workless.location === undefined, 'studio: a missing location was invented')
+  check(workless.practiceNote === undefined, 'studio: a missing practice note was invented')
+
+  // A creator with nothing usable at all: no link, no fabricated name.
+  const blankCreator = { id: '   ', name: '  ', discipline: '', illustrative: true }
+  const blank = studio.buildStudioEntry(blankCreator)
+
+  check(blank.href === undefined, 'studio: a creator without a usable id still produced a link')
+  check(
+    blank.name === studio.UNNAMED_STUDIO,
+    'studio: a creator without a name did not fall back to the neutral label',
+  )
+  check(blank.practice === undefined, 'studio: a blank practice was reported as a value')
+  check(
+    studio.studioPracticeLine(blank) === undefined,
+    'studio: a blank practice and location still produced a practice line',
+  )
+  check(
+    studio.buildStudioFacts(blank).every((fact) => fact.value !== ''),
+    'studio: a fact row was rendered with an empty value',
+  )
 
   /*
    * ── Catalogue behaviour through the page ────────────────────────────────
@@ -602,6 +754,14 @@ try {
 
     for (const marker of testCase.expectAll ?? []) {
       check(html.includes(marker), `${testCase.path}: expected content missing — ${marker}`)
+    }
+    // Every listed alt string must be present on an image, which is how the
+    // directory's per-studio lead work is checked.
+    for (const alt of testCase.expectAllAlt ?? []) {
+      check(
+        typeof alt === 'string' && html.includes(`alt="${alt}"`),
+        `${testCase.path}: expected an image with alt “${alt}”`,
+      )
     }
     for (const marker of testCase.forbidAll ?? []) {
       check(!html.includes(marker), `${testCase.path}: unexpected markup present — ${marker}`)

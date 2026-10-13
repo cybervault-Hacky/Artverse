@@ -36,6 +36,16 @@ export interface Creator {
   discipline: string
   /** City and country of practice, shown where a record provides one. */
   location?: string
+  /**
+   * Short practice note.
+   *
+   * Optional, and always illustrative when present: these lines describe the
+   * placeholder records this build ships and the way each one works with its
+   * material — never a real artist, studio history, exhibition or statement.
+   * A creator without one is shown as having no practice note yet, rather than
+   * being given invented copy.
+   */
+  bio?: string
   illustrative: true
 }
 

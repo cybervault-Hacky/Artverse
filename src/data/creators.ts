@@ -7,6 +7,11 @@ import type { CategoryOption, Creator } from '@/types'
  * They intentionally read as placeholders: ArtVerse does not fabricate artists,
  * studios or verified sellers. Locations are placeholder values that belong to
  * no real studio.
+ *
+ * The practice notes describe the sample records attributed to each entry and
+ * how those pieces were made — the only thing this build can honestly say about
+ * a placeholder. None of them invents a person, a studio history, an exhibition,
+ * an award or a career.
  */
 export const SAMPLE_CREATORS: Creator[] = [
   {
@@ -14,6 +19,7 @@ export const SAMPLE_CREATORS: Creator[] = [
     name: 'Illustrative Studio A',
     discipline: 'Painting — placeholder record',
     location: 'Lisbon, Portugal',
+    bio: 'An illustrative painting entry. Its two sample canvases are built from layered colour and a low horizon — one in oil, one in acrylic on linen. Both are placeholder pieces made for this build, not a real studio’s catalogue.',
     illustrative: true,
   },
   {
@@ -21,6 +27,7 @@ export const SAMPLE_CREATORS: Creator[] = [
     name: 'Illustrative Studio B',
     discipline: 'Digital artwork — placeholder record',
     location: 'Kyoto, Japan',
+    bio: 'An illustrative digital practice entry. Its single sample piece is a rising arc held inside a wide, warm field — a placeholder made for this build rather than a published edition.',
     illustrative: true,
   },
   {
@@ -28,6 +35,7 @@ export const SAMPLE_CREATORS: Creator[] = [
     name: 'Illustrative Studio C',
     discipline: 'Lighting and objects — placeholder record',
     location: 'Copenhagen, Denmark',
+    bio: 'An illustrative lighting entry. Its sample piece is a hand-built stoneware base in a matte sand glaze, paired with a natural linen shade — a placeholder object made for this build.',
     illustrative: true,
   },
   {
@@ -35,6 +43,7 @@ export const SAMPLE_CREATORS: Creator[] = [
     name: 'Illustrative Maker D',
     discipline: 'Ceramics — placeholder record',
     location: 'Oaxaca, Mexico',
+    bio: 'An illustrative ceramics entry. Its sample piece is a thrown and faceted stoneware vessel in a speckled glaze that keeps the making marks visible.',
     illustrative: true,
   },
   {
@@ -42,6 +51,7 @@ export const SAMPLE_CREATORS: Creator[] = [
     name: 'Illustrative Maker E',
     discipline: 'Woodwork — placeholder record',
     location: 'Jaipur, India',
+    bio: 'An illustrative woodwork entry. Its sample piece is a panel carved in shallow relief, where the grain and the geometry carry equal weight.',
     illustrative: true,
   },
 ]

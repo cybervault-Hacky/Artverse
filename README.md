@@ -5,12 +5,12 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 5 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 6 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
 signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
-filtering, sorting and honest empty states, and an immersive artwork page for every record. It is
-still a frontend build: there is no backend, no database, no authentication, no payments and no real
-listings.
+filtering, sorting and honest empty states, an immersive artwork page for every record, and a studio
+directory with a profile for every creator. It is still a frontend build: there is no backend, no
+database, no authentication, no payments and no real listings.
 
 ---
 
@@ -24,6 +24,7 @@ listings.
 - [The discovery catalogue](#the-discovery-catalogue)
 - [Search, filtering and sorting](#search-filtering-and-sorting)
 - [The artwork page](#the-artwork-page)
+- [The studio directory and profiles](#the-studio-directory-and-profiles)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -109,6 +110,21 @@ listings.
 - Phase numbering realigned again to follow the brief's sequence: artwork detail is Phase 5,
   commerce and provenance Phase 6, collections and catalogue growth Phase 7, studios and sellers
   Phase 8.
+
+**Phase 6 — artist directory and studio profiles**
+
+- `/artists` rebuilt as a studio directory: every creator record, each card leading with that
+  studio's own sample work and carrying its practice, location and record count.
+- `/artists/:artistId` rebuilt as a studio profile: the practice, the location, the practice note,
+  the record's own facts, and the sample works attributed to that creator — and nothing else.
+- An optional `bio` field added to the creator records, authored for this build and explicitly
+  illustrative: each note describes the sample pieces attributed to that entry and how they were
+  made, never a person, a studio history, an exhibition or an award.
+- `StudioCard` added as the directory's card, plus `src/utils/studioProfile.ts` holding the model
+  both pages read, so creator data is never duplicated between them.
+- The lead image is the studio's own work, captioned and labelled as a sample work rather than a
+  portrait — the one image relationship the data holds, and the honest alternative to inventing
+  portraits of people who do not exist.
 
 ## What is deliberately not included
 
@@ -331,6 +347,66 @@ There is also **no purchase, favourite or share control anywhere on the page**. 
 single image, so there is no gallery navigation, no thumbnails and no zoom. Both facts are stated on
 the page rather than dressed up as actions that would do nothing.
 
+## The studio directory and profiles
+
+### `/artists` — the directory
+
+Every creator record in the data layer is listed. It is the catalogue of studios rather than a
+curated selection, so nothing is filtered, boosted or reordered, and there is no ranking of any kind
+— no follower counts, no sales, no ratings and no "featured" placement, because none of that data
+exists.
+
+Each card leads with that studio's **own** sample work and carries its name, practice, location and
+record count. The image is labelled *Sample work* on the card itself: this build holds no studio
+photography, and a work is the one image relationship the data actually supports — the alternative
+would be inventing portraits of people who do not exist.
+
+| Element | Where it comes from |
+| --- | --- |
+| Name | `creator.name`, or **“Studio name not recorded”** when blank |
+| Image | The creator's first record with a requestable image, in catalogue order |
+| Practice · location | `creator.discipline`, `creator.location` — each omitted when missing |
+| Record count | The artworks whose `creatorId` matches, counted from the data |
+| Illustrative label | Every entry, because every creator record carries `illustrative: true` |
+| Link | `NavRoutes.artist(creator.id)` — omitted entirely if the id is unusable |
+
+### `/artists/:artistId` — the profile
+
+| Section | What it holds |
+| --- | --- |
+| Breadcrumb | Home → Artists & Studios → the studio |
+| Masthead | The studio's own work (captioned as a work in place of a portrait), the practice · location eyebrow, the name as `h1`, the practice note, the illustrative notice, the facts table, and two onward routes |
+| Facts | Practice, Based in, Records in this build, Reference — assembled from real fields only |
+| Sample records | `<h2>` heading with the count, then `ArtworkGrid` of exactly that creator's works |
+| Closing note | What the profile will carry once studios maintain their own accounts |
+
+### Missing information, handled explicitly
+
+| Situation | What happens |
+| --- | --- |
+| No practice note (`bio`) | The profile says so: *“No practice note has been written for this record yet.”* It is never given invented copy |
+| No name | Falls back to **“Studio name not recorded”**, and the profile keeps a usable `h1` |
+| No practice or location | Both the eyebrow and the corresponding fact row are omitted |
+| No id | No link is emitted — the card renders as static text instead of a route that would 404 |
+| No records | The grid is replaced by an empty state that points at the catalogue, and the masthead loses its media column entirely |
+| No studio photograph | A sample work stands in, captioned as such — never presented as a portrait |
+
+The two pages read one model, `src/utils/studioProfile.ts` (`buildStudioDirectory`,
+`buildStudioEntry`, `buildStudioFacts`, `getStudioLeadWork`, `studioPracticeLine`), so creator data
+is never duplicated between the page components. Unknown ids render the shared not-found experience,
+as everywhere else.
+
+### Cross-page navigation
+
+Every route in this chain is checked by the verification script:
+
+1. Homepage → **Artists & Studios** (hero action, header nav, footer nav).
+2. Directory → any studio profile (one link per card, `aria-label` naming the destination).
+3. Artwork page → the studio behind it (the studio block links only when a creator resolves).
+4. Studio profile → that studio's artwork (the grid, each card opening `/artwork/:id`).
+5. Studio profile → the directory (breadcrumb and the **All artists & studios** action).
+6. Studio artwork → artwork detail → back to the studio profile.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -339,8 +415,8 @@ the page rather than dressed up as actions that would do nothing.
 | `/discover` | `DiscoverPage` | Complete (Phase 4) — live search, discipline filters, sorting, full catalogue, collections |
 | `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 3) — collection, its works, route back |
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5) — the work in full, its record, its studio, related works |
-| `/artists` | `ArtistsPage` | Foundation — editorial directory list |
-| `/artists/:artistId` | `ArtistProfilePage` | Foundation — placeholder profile and its records |
+| `/artists` | `ArtistsPage` | Complete (Phase 6) — studio directory, every creator record |
+| `/artists/:artistId` | `ArtistProfilePage` | Complete (Phase 6) — practice, location, note, own records |
 | `/collections` | `CollectionsPage` | Foundation — collection directory |
 | `/sell` | `SellPage` | Foundation — seller intent, no form or account |
 | `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
@@ -364,7 +440,7 @@ src/
 ├── pages/        One folder per destination; the homepage is split into five section files
 ├── styles/       tokens.css, base.css and the global entry point
 ├── types/        Shared domain types
-└── utils/        Small helpers: cn, aspect ratios, text formatting, the catalogue engine, the artwork detail model
+└── utils/        Small helpers: cn, aspect ratios, text formatting, the catalogue engine, the artwork detail and studio models
 public/
 ├── artworks/     Six project-generated sample images
 ├── favicon.svg   Brand symbol
@@ -449,6 +525,12 @@ represented anywhere in this repository.
 - Card links carry a visually hidden action suffix, so a link's purpose is clear when read aloud.
 - `prefers-reduced-motion` is honoured globally and specifically in the floating composition.
 
+On the studio pages, the directory is a semantic list of cards, each card a single link whose
+`aria-label` names its destination (`Illustrative Studio A — view studio profile`); the profile's
+name is the page `h1` with the works under an `h2`; the facts table is a proper `dl`; the stand-in
+image keeps its real artwork alt text and is captioned as a work; and the "Studio name not recorded"
+and "No practice note" states are text rather than unlabelled placeholders.
+
 On the artwork page, the studio link is the only link inside the record; the metadata is a proper
 `dl`; the image carries its real descriptive alt text and intrinsic dimensions; the placeholder panel
 and the “Studio not recorded” line are text rather than unlabelled graphics; and the related grid is a
@@ -475,6 +557,13 @@ the values readable. From 1024px the record column becomes sticky beside the ima
 label column back to 8rem; the panel is capped to the viewport height and scrolls inside itself if it
 is taller, so its last row can always be reached instead of being clipped.
 
+The studio pages step in three tiers of their own. The directory is one column on phones, two from
+640px and three from 1024px, with the cards' 4:5 images cropped from each studio's own lead work.
+The profile is a single stacked column on phones — work, then identity — and a two-column masthead
+from 768px, tightening its fact label column from 9rem to 7.5rem at that width so the values keep
+their room, then widening the identity column to 1.15fr from 1024px. A studio with no records drops
+the media column entirely rather than leaving a hole beside its name.
+
 ## Verification
 
 Executed in this repository:
@@ -484,10 +573,10 @@ Executed in this repository:
 | Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 361 kB (≈ 112 kB gzip), CSS ≈ 61 kB (≈ 11 kB gzip) |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 367 kB (≈ 113 kB gzip), CSS ≈ 66 kB (≈ 11 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including each artwork page, `/discover` with search, filter and sort parameters, and an unknown artwork id |
 | Route rendering | `npm run verify:routes` | 59 route cases (including every artwork and creator id in the data layer), all assertions pass |
-| Internal links | included above | 739 links resolved against the route table and the data layer — no broken destinations |
+| Internal links | included above | 740 links resolved against the route table and the data layer — no broken destinations |
 | Catalogue behaviour | included above | 29 search, filter, sort and empty-state cases, each naming the exact records it expects and the order it expects them in |
 | Search matching | included above | Title, medium, description, year, discipline, creator practice and creator location each find the right records; `OCHRE` and `  ochre  ` return the same two as `ochre` |
 | Word-by-word search | included above | `ochre canvas` finds *Layered Light, Study I*, whose two words are not adjacent |
@@ -511,6 +600,16 @@ Executed in this repository:
 | Unusable image | included above | `imageAspectRatio` falls back to the frame ratio and `imagePixelLabel` returns nothing when the pixel size is unusable |
 | No commerce on the artwork page | included above | No artwork page contains a currency-with-amount pattern or any of ten purchase phrases (`Add to cart`, `Buy now`, `Wishlist`, …) |
 | Collection trail | included above | Every artwork page links to the first collection holding it, matching `SAMPLE_COLLECTIONS` order |
+| Studio directory completeness | included above | `/artists` lists all 5 creators by name, practice and location, marks each as illustrative, and links to all 5 profile routes |
+| Directory leads with own work | included above | Each directory card carries that studio's own lead image, asserted by alt text per creator |
+| Directory is not an artwork list | included above | `/artists` contains 5 images but no artwork route at all — the cards link to profiles, not to works |
+| Studio profile contents | included above | Each profile renders its name as `h1`, its discipline, its location, its practice note, its illustrative notice and the portrait-stand-in caption |
+| Studio records are its own | included above | Each of the 5 profiles lists exactly its creator's works and asserts every other artwork id is absent |
+| Studio lead image | included above | A profile's stand-in image is always one of that creator's own works, and a workless studio gets none |
+| Creator → artwork links | included above | Every profile's artwork links resolve through the same link resolver used for all 740 internal links |
+| Studio model safety | included above | A synthetic creator with blank name, id and practice produces no link, falls back to the neutral name, and emits no empty fact row |
+| Empty studio state | included above | The workless path is asserted through a synthetic creator, since all 5 sample creators hold at least one record |
+| No rankings or claims | included above | No studio page contains a currency amount, a purchase phrase, or the words `Verified seller`, `Verified studio`, `Award-winning` |
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
 | CSS Module integrity | script over `src/**` | 44 modules, 367 `styles.*` references resolve; 3 unused rules remain, all pre-existing in untouched files |
@@ -543,6 +642,14 @@ page's decisions are asserted directly: no self-link, no related id outside the 
 unstable ordering, no metadata row without a value, no link without a creator record, and no
 currency or purchase phrase anywhere on the page.
 
+Phase 6 applies the same idea to the studios. Every profile asserts that its artwork links are
+exactly its own creator's records — with every other artwork id forbidden — and the directory
+asserts the inverse: five studio images, five profile links, and no artwork route at all. The studio
+model is checked directly for the things markup cannot show: that a studio is never credited with
+somebody else's work, that its lead image comes from one of its own records, that an unusable id
+produces no link, and that a creator with no records gets an empty list rather than a grid of
+unrelated work.
+
 **Not executed — stated plainly:** there is still no browser binary in this environment (no Chromium,
 Firefox, Playwright or Puppeteer), so no screenshot, visual regression, Lighthouse or cross-browser
 pass was performed, and no interaction was driven by hand. Rendering is verified at the markup, link
@@ -552,11 +659,13 @@ cannot: that typing in the field feels immediate, that the clear button actually
 browser's back button steps through filter changes, that focus rings are visible on every control and
 that the strip scrolls smoothly on a phone. The logic behind each of those is asserted at the level it
 can be — URL writing, parsing, validation and rendering — but the interaction itself was not watched.
-A manual pass at the six widths remains the recommended next step — this phase adds to the list of
-things only a browser can show: that the record column actually stays beside the image while the
-work is scrolled past, that it scrolls inside itself on a short viewport instead of clipping its last
-row, that the placeholder panel looks deliberate rather than broken, and that long collection names
-wrap gracefully in the metadata table.
+A manual pass at the six widths remains the recommended next step — Phases 5 and 6 add to the list of
+things only a browser can show: that the artwork record column stays beside the image while the work
+is scrolled past, that it scrolls inside itself on a short viewport instead of clipping its last row,
+that long collection names wrap gracefully in the metadata table, whether the *Sample work* pill
+reads as a label rather than a caption over a busy image, that the 4:5 studio cards keep their
+rhythm when one studio's lead work is square and another's is portrait, and that the directory's
+five cards leave an intentional gap on the last row at three columns.
 
 One SPA characteristic worth knowing: every route returns HTTP 200 from the dev server, including
 unknown ids, because the not-found view renders client-side. A production deployment would need to
@@ -575,11 +684,14 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
 - **Phase 5 — Immersive artwork detail experiences** _(delivered)_: every work presented in full,
   its record assembled from real fields only, its studio linked, and related works chosen by
   discipline and shared collection.
-- **Phase 6**: artwork commerce and provenance — availability, pricing, enquiry and purchase flows,
-  certificates and provenance history.
+- **Phase 6 — Artist directory and studio profiles** _(delivered)_: every creator listed and
+  profiled from real fields, with its own records and a clear route back to the directory.
 - **Phase 7**: collections, curation and catalogue growth — editorial collections with context,
   ordering controls, pagination and deeper filters.
-- **Phase 8**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
+- **Phase 8**: studios and sellers — seller accounts, studio-managed profiles, listing tools,
+  orders, payouts.
+- **Phase 9 — artwork commerce and provenance**: availability, pricing, enquiry and purchase flows,
+  certificates and provenance history.
 
 ## Scripts reference
 

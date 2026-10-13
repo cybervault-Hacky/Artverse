@@ -9,8 +9,10 @@ import { CollectionCard } from '@/components/CollectionCard/CollectionCard'
 import { EmptyState } from '@/components/EmptyState/EmptyState'
 import { LoadingIndicator } from '@/components/LoadingIndicator/LoadingIndicator'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
+import { StudioCard } from '@/components/StudioCard/StudioCard'
 import { TextLink } from '@/components/TextLink/TextLink'
-import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, getArtworkById } from '@/data'
+import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS, getArtworkById } from '@/data'
+import { buildStudioEntry } from '@/utils/studioProfile'
 import { PreviewBlock } from './PreviewBlock'
 import styles from './ComponentSections.module.css'
 
@@ -22,6 +24,7 @@ export function ComponentSections() {
   const sample = SAMPLE_ARTWORKS[0]
   const cartWorks = useMemo(() => SAMPLE_ARTWORKS.slice(0, 3), [])
   const sampleCollection = SAMPLE_COLLECTIONS[0]
+  const sampleStudio = useMemo(() => buildStudioEntry(SAMPLE_CREATORS[0]), [])
 
   return (
     <>
@@ -197,6 +200,16 @@ export function ComponentSections() {
             collection={sampleCollection}
             leadArtwork={getArtworkById(sampleCollection.artworkIds[0])}
           />
+        </div>
+      </PreviewBlock>
+
+      <PreviewBlock
+        id="ds-studio-card"
+        title="Studio card"
+        description="A studio entry leads with that studio's own work — labelled as a sample work, because this build holds no studio photography — followed by its practice, location and record count. A creator with no usable id renders as a static card rather than a link to nowhere."
+      >
+        <div className={styles.gridSample}>
+          <StudioCard entry={sampleStudio} />
         </div>
       </PreviewBlock>
 

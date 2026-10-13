@@ -66,14 +66,16 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
   {
     pattern: '/artists',
     page: 'ArtistsPage',
-    status: 'foundation',
-    purpose: 'Directory of artists and studios.',
+    status: 'implemented',
+    purpose:
+      'Studio directory — every creator record, each with its practice, location, record count and own sample work.',
   },
   {
     pattern: '/artists/:artistId',
     page: 'ArtistProfilePage',
-    status: 'foundation',
-    purpose: 'A single artist or studio profile.',
+    status: 'implemented',
+    purpose:
+      'A studio profile: practice, location, practice note, its sample records, and the routes onward.',
   },
   {
     pattern: '/sell',
