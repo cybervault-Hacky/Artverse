@@ -398,7 +398,7 @@ Executed in this repository:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Dependency install | `npm ci` | 168 packages, no vulnerabilities reported by npm |
+| Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
 | Production build | `npm run build` | Passes — `dist/` JS ≈ 357 kB (≈ 111 kB gzip), CSS ≈ 59 kB (≈ 11 kB gzip) |
