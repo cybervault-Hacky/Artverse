@@ -78,7 +78,7 @@ export function ArtistsPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 8"
+            phase="Phase 9"
             title="What the directory will carry later"
             description="The listing itself is in place. What is still missing is everything that has to come from the studios rather than from this build."
             items={[

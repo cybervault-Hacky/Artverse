@@ -1,7 +1,47 @@
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-6);
+}
+
+.headingTitle {
+  font-size: var(--text-section);
+}
+
+.count {
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
 .note {
+  margin-top: var(--space-5);
+  max-width: 52rem;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+/* The full-width moment, on its own hairline so it reads as an opening spread. */
+.feature {
   margin-top: var(--space-8);
+  padding-top: var(--space-7);
+  border-top: var(--border-hairline);
 }
 
 .grid {
+  margin-top: var(--space-9);
+}
+
+.crossLink {
   margin-top: var(--space-8);
+  max-width: 48rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.phase {
+  margin-top: var(--space-9);
 }

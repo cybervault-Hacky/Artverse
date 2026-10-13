@@ -24,14 +24,16 @@ import type { Artwork, Collection, Creator } from '@/types'
 import { NavRoutes } from '@/app/routes'
 import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, getArtworksForCollection } from '@/data'
 import { ASPECT_RATIOS } from '@/utils/aspect'
+import { hasText } from '@/utils/text'
+
+/**
+ * Whether a field carries something worth showing. Re-exported from the shared
+ * text helpers, where every other module reads it from.
+ */
+export { hasText }
 
 /** How many related works the section shows at most. */
 export const RELATED_LIMIT = 4
-
-/** A non-blank string. Used to decide whether a field is worth showing. */
-export function hasText(value: unknown): value is string {
-  return typeof value === 'string' && value.trim() !== ''
-}
 
 function isPositiveNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0

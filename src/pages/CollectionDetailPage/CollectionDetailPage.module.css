@@ -1,19 +1,99 @@
-.grid {
-  margin-top: var(--space-8);
+.crumbs {
+  padding-block: var(--space-6) var(--space-2);
 }
 
-.summary {
+/* ── Editorial hero ──────────────────────────────────────────────────────── */
+
+/*
+ * One of the collection's own works as a wide band, with the title block
+ * beneath it. The band is capped so a landscape crop never runs taller than the
+ * viewport, and it keeps its own proportions rather than being stretched.
+ */
+.hero {
+  margin: 0;
+}
+
+.heroFrame {
+  width: 100%;
+}
+
+.heroCaption {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4) var(--space-6);
-  margin-top: var(--space-6);
-  padding-top: var(--space-5);
-  border-top: var(--border-hairline);
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
   font-size: var(--text-meta);
   color: var(--color-ink-muted);
 }
 
-/* The clear route back to the catalogue, after the works. */
+.heroWork {
+  font-family: var(--font-display);
+  font-size: var(--text-small);
+  color: var(--color-ink);
+}
+
+.heroDivider {
+  color: var(--color-border-strong);
+}
+
+.intro {
+  margin-top: var(--space-8);
+  padding-top: var(--space-7);
+  border-top: var(--border-hairline);
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.title {
+  margin-top: var(--space-4);
+  max-width: 26ch;
+  font-size: var(--text-title);
+  letter-spacing: var(--tracking-display);
+}
+
+.description {
+  margin-top: var(--space-5);
+  max-width: 46rem;
+  font-size: var(--text-lead);
+  color: var(--color-ink-muted);
+}
+
+/* Shown when a collection carries neither a description nor a summary. */
+.descriptionMissing {
+  margin-top: var(--space-5);
+  max-width: 46rem;
+  font-size: var(--text-lead);
+  font-style: italic;
+  color: var(--color-ink-subtle);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  margin-top: var(--space-6);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+/* ── Works ───────────────────────────────────────────────────────────────── */
+
+.worksHeading {
+  font-size: var(--text-section);
+}
+
+.grid {
+  margin-top: var(--space-7);
+}
+
+/* The clear routes onward, after the works. */
 .returnRow {
   display: flex;
   flex-wrap: wrap;
@@ -25,4 +105,10 @@
 
 .note {
   margin-top: var(--space-8);
+}
+
+@media (min-width: 768px) {
+  .intro {
+    margin-top: var(--space-9);
+  }
 }

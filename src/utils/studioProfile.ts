@@ -23,6 +23,7 @@
 import type { Artwork, Creator } from '@/types'
 import { NavRoutes } from '@/app/routes'
 import { SAMPLE_ARTWORKS, SAMPLE_CREATORS, getArtworksByCreator } from '@/data'
+import { hasText } from '@/utils/text'
 
 /** Shown where a creator record carries no usable name. */
 export const UNNAMED_STUDIO = 'Studio name not recorded'
@@ -31,9 +32,11 @@ export const UNNAMED_STUDIO = 'Studio name not recorded'
 export const NO_PRACTICE_NOTE =
   'No practice note has been written for this record yet. What the studio works in is listed above.'
 
-export function isNonEmpty(value: unknown): value is string {
-  return typeof value === 'string' && value.trim() !== ''
-}
+/**
+ * Whether a field carries something worth showing — the shared predicate, under
+ * the name this module has always exported it as.
+ */
+export const isNonEmpty = hasText
 
 /**
  * The image that stands in for a studio: the first of its own records that has

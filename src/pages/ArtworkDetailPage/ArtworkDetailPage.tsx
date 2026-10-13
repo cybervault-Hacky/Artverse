@@ -221,7 +221,7 @@ export function ArtworkDetailPage() {
       <Section divided spacing="tight" ariaLabelledBy="artwork-later">
         <PageContainer>
           <PhaseNote
-            phase="Phase 6"
+            phase="Phase 12"
             title="What this artwork page will become"
             description="Commerce and provenance are the subjects of a later phase; nothing here pretends to offer them yet."
             items={[

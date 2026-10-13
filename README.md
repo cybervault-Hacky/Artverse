@@ -5,12 +5,13 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 6 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 7 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
 signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
-filtering, sorting and honest empty states, an immersive artwork page for every record, and a studio
-directory with a profile for every creator. It is still a frontend build: there is no backend, no
-database, no authentication, no payments and no real listings.
+filtering, sorting and honest empty states, an immersive artwork page for every record, a studio
+directory with a profile for every creator, and a collection directory whose pages open on one of
+the collection's own works. It is still a frontend build: there is no backend, no database, no
+authentication, no payments and no real listings.
 
 ---
 
@@ -25,6 +26,7 @@ database, no authentication, no payments and no real listings.
 - [Search, filtering and sorting](#search-filtering-and-sorting)
 - [The artwork page](#the-artwork-page)
 - [The studio directory and profiles](#the-studio-directory-and-profiles)
+- [The collections directory and pages](#the-collections-directory-and-pages)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -107,9 +109,8 @@ database, no authentication, no payments and no real listings.
 - Honest handling throughout: a missing creator reads "Studio not recorded" instead of being
   faked, an unusable image path renders a neutral panel instead of a broken image, and the closing
   note states that the record carries one image, so there is no gallery to navigate.
-- Phase numbering realigned again to follow the brief's sequence: artwork detail is Phase 5,
-  commerce and provenance Phase 6, collections and catalogue growth Phase 7, studios and sellers
-  Phase 8.
+- Phase numbering follows the roadmap at the end of this file rather than the order the phases
+  happened to be built in.
 
 **Phase 6 — artist directory and studio profiles**
 
@@ -221,10 +222,12 @@ was rewritten to match what the tiles actually do.
 
 ### Collection pages
 
-`/discover/:collectionId` renders the collection's editorial description, the works it holds in the
-same consistent crop, and two clear routes onward — **Back to Explore Art** and **All collections**.
-An unknown id renders the shared not-found experience with the requested id shown back to the
-visitor, so a stale link is never mistaken for a real page.
+`/discover/:collectionId` opens on one of the collection's own works, then renders its editorial
+description, the works it holds in the same consistent crop, and two clear routes onward — **Back to
+Explore Art** and **All collections**. An unknown id renders the shared not-found experience with
+the requested id shown back to the visitor, so a stale link is never mistaken for a real page. See
+[the collections directory and pages](#the-collections-directory-and-pages) for how the page is
+composed.
 
 ## Search, filtering and sorting
 
@@ -293,12 +296,13 @@ When nothing matches, the controls stay exactly where they are, the grid is repl
 match “light” in the Handmade Products discipline.”* No fake results, no spinner, no dead end: one
 button clears the criteria. The default catalogue keeps showing all six records.
 
-### Why collection pages are unchanged
+### Why collection pages carry no controls
 
 `/discover/:collectionId` shows a collection's own works and nothing else — searching inside a
 three-work grouping would add a control that can only ever hide two of them. Phase 4's controls are
-therefore scoped to `/discover`, and the collection pages keep their Phase 3 behaviour, descriptions,
-links and back navigation untouched.
+therefore scoped to `/discover`. Phase 7 composed those pages further but added no controls to
+them: the works, the descriptions, the count and the routes back to the directory are all that is
+there.
 
 ## The artwork page
 
@@ -407,17 +411,79 @@ Every route in this chain is checked by the verification script:
 5. Studio profile → the directory (breadcrumb and the **All artists & studios** action).
 6. Studio artwork → artwork detail → back to the studio profile.
 
+## The collections directory and pages
+
+A collection is how ArtVerse holds work together across studios — by mood, material or a shared idea,
+rather than by category. Four sample collections exist in this build, each holding three of the six
+illustrative records, and a work can sit in more than one of them.
+
+### `/collections` — the directory
+
+Four collections do not justify filters, sorting or a category system, so the page carries none of
+them. What it does instead is compose: the first collection is given a full-width moment — a wide
+image beside its title, summary and full description — and the remaining three sit in a calmer grid
+beneath it. The section copy states that this is a composition choice and not a ranking, because a
+wider image is otherwise easy to read as a verdict. Every card links to its own collection and
+carries an accurate count.
+
+### `/discover/:collectionId` — the page
+
+The collection pages keep their Phase 3 address: a collection is reached from the catalogue's
+collection row as well as from the directory, and moving the route now would break existing links,
+so the breadcrumb leads **Home → Collections → the collection** while the address stays under
+`/discover/`.
+
+The page is built from the collection's own artwork and metadata and nothing else — there is no
+curator, no provenance and no collection story here, because the data holds none. It reads:
+
+1. A breadcrumb: **Home → Collections → the collection's title**.
+2. An editorial hero: the representative work running wide as a band, captioned with its own title,
+   its medium and the plain statement that it is a sample image from the collection.
+3. The title as the page `h1`, the full description when the record carries one, and the count of
+   works actually rendered.
+4. The works themselves, in the collection's own order and in the catalogue's consistent crop, each
+   opening its own artwork page.
+5. Two routes back: **All collections** and **Explore Art**.
+
+An unknown id renders the shared not-found experience with the requested id shown back, exactly as
+elsewhere in the app.
+
+### One model, one source of membership
+
+`collection.artworkIds` is the only membership the data holds — there is no second relationship array
+and no duplicated id list. `src/utils/collections.ts` resolves it through `getArtworksForCollection`
+and returns the works, the count, the representative work and the destination, so every surface reads
+the same answer:
+
+| Decision | Rule | Consequence |
+| --- | --- | --- |
+| What it holds | `artworkIds` resolved against the artwork records; an id with no record is skipped | The count can never overstate what the page renders |
+| What represents it | The first work in the collection's own order that resolves **and** has a requestable image | Deterministic; no empty `src` is possible |
+| Where it goes | A route is built only from a usable id | A card can never link to nowhere |
+
+### When something is missing
+
+- **No usable image** — the card renders a bordered panel saying how many works the collection holds
+  and that no image is attached, and emits no `<img>` at all. The detail page drops the hero band
+  entirely and opens on the title.
+- **No description** — the card shows its summary only; the detail page says plainly that no
+  description has been written yet rather than leaving a silent gap.
+- **Empty collection** — the card reports "No works in this collection", the directory moves to the
+  shared empty state, and the detail page shows its own empty state with a route to the catalogue.
+- **No usable id** — the card renders as a static article rather than a link to a route that would
+  fail.
+
 ## Route architecture
 
 | Route | Page component | Status |
 | --- | --- | --- |
 | `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
 | `/discover` | `DiscoverPage` | Complete (Phase 4) — live search, discipline filters, sorting, full catalogue, collections |
-| `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 3) — collection, its works, route back |
+| `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 7) — editorial hero from its own work, description, its works only, route back to the directory |
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5) — the work in full, its record, its studio, related works |
 | `/artists` | `ArtistsPage` | Complete (Phase 6) — studio directory, every creator record |
 | `/artists/:artistId` | `ArtistProfilePage` | Complete (Phase 6) — practice, location, note, own records |
-| `/collections` | `CollectionsPage` | Foundation — collection directory |
+| `/collections` | `CollectionsPage` | Complete (Phase 7) — editorial collection directory |
 | `/sell` | `SellPage` | Foundation — seller intent, no form or account |
 | `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
 | `/search` | `SearchPage` | Foundation — direct destination for a search; Explore Art carries the fuller experience |
@@ -531,6 +597,40 @@ name is the page `h1` with the works under an `h2`; the facts table is a proper 
 image keeps its real artwork alt text and is captioned as a work; and the "Studio name not recorded"
 and "No practice note" states are text rather than unlabelled placeholders.
 
+**Phase 7 — collections and curated worlds**
+
+- `/collections` rebuilt as an editorial directory: an introduction that says what a collection is
+  in this build, the first collection at full scale with its wide image beside the title, summary
+  and full description, and the remaining three in a calmer grid beneath it.
+- The full-scale moment is composition, not a ranking — the section copy says plainly that the
+  groupings appear in the order the build holds them and that nothing is measured, rated or
+  endorsed, so a wider image is never read as a verdict on the collection.
+- `/discover/:collectionId` now opens on its own editorial hero: one of the collection's own
+  works as a wide band, captioned as a sample image, with the title, description and count beneath
+  it — deliberately unlike the artwork page's side-by-side hero. Breadcrumbs lead
+  **Home → Collections → collection**.
+- `src/utils/collections.ts` added as the one model both surfaces read: the resolved works, the
+  count, the representative work and the destination. A collection's count is the number of works
+  it actually resolves to, so the number on a card, in the hero and in the grid cannot disagree.
+- The representative work is the first of the collection's own records, in the collection's own
+  order, that resolves and carries a requestable image — deterministic, drawn from the real
+  relationship, and unable to ask the browser for an empty `src`.
+- Degradation handled explicitly: a collection whose works carry no usable image renders a labelled
+  panel instead of a frame and emits no `<img>` at all, a collection with no description says so
+  rather than showing nothing, and a record with no usable id renders as a static card rather than
+  a link to nowhere.
+- The homepage's Four Artistic Worlds and the catalogue's collection row now resolve through the
+  same model, so the homepage, the directory and the collection pages cannot drift apart.
+- Roadmaps reconciled: the README and the About page now describe one twelve-phase plan, and every
+  in-page "what comes later" note names the phase that actually owns that work.
+
+On the collections directory, each card is a single link whose `aria-label` names its destination
+(`Quiet Landscapes — open collection`); the grid is a labelled list; a card with no usable id is a
+static `article` rather than a link to nowhere; and an imageless card states its count in text
+instead of leaving an unlabelled gap. On a collection page the collection title is the `h1` with the
+works under an `h2`, the representative work is a `figure` captioned as a sample image from the
+collection, and the count sits beside the title as text rather than as a badge.
+
 On the artwork page, the studio link is the only link inside the record; the metadata is a proper
 `dl`; the image carries its real descriptive alt text and intrinsic dimensions; the placeholder panel
 and the “Studio not recorded” line are text rather than unlabelled graphics; and the related grid is a
@@ -557,6 +657,14 @@ the values readable. From 1024px the record column becomes sticky beside the ima
 label column back to 8rem; the panel is capped to the viewport height and scrolls inside itself if it
 is taller, so its last row can always be reached instead of being clipped.
 
+The collections directory steps in two tiers of its own. The opening composition — a wide image
+beside the title, summary and description — is stacked on phones and becomes two columns at 768px,
+with both tracks guarded by `minmax(0, …)` so it cannot overflow. The grid beneath it is one column
+on phones, two from 700px and three from 1024px, where the cards settle at 282px within the 1200px
+container and every card keeps its image above its text. On a collection page the hero band runs the
+full content width — 320px on the smallest phone, 1104px on a large screen — retaining the work's own
+proportions, so nothing is stretched or cropped by the composition.
+
 The studio pages step in three tiers of their own. The directory is one column on phones, two from
 640px and three from 1024px, with the cards' 4:5 images cropped from each studio's own lead work.
 The profile is a single stacked column on phones — work, then identity — and a two-column masthead
@@ -573,11 +681,17 @@ Executed in this repository:
 | Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 367 kB (≈ 113 kB gzip), CSS ≈ 66 kB (≈ 11 kB gzip) |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 373 kB (≈ 115 kB gzip), CSS ≈ 69 kB (≈ 12 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including each artwork page, `/discover` with search, filter and sort parameters, and an unknown artwork id |
-| Route rendering | `npm run verify:routes` | 59 route cases (including every artwork and creator id in the data layer), all assertions pass |
-| Internal links | included above | 740 links resolved against the route table and the data layer — no broken destinations |
+| Route rendering | `npm run verify:routes` | 63 route cases (including every artwork, creator and collection id in the data layer), all assertions pass |
+| Internal links | included above | 784 links resolved against the route table and the data layer — no broken destinations |
 | Catalogue behaviour | included above | 29 search, filter, sort and empty-state cases, each naming the exact records it expects and the order it expects them in |
+| Collection directory | included above | `/collections` renders all 4 collections with their titles, summaries and counts, links to all 4 collection routes, and contains no artwork route and no ranking language |
+| Collection membership | included above | Each collection page renders exactly the works resolved from `artworkIds`, in the collection's own order, and asserts every artwork id from the other collections is absent |
+| Collection counts | included above | The printed count equals the number of works that page renders, for all 4 collections; the model is also asserted directly against the data layer, including an id that resolves to nothing |
+| Collection breadcrumbs | included above | Every collection page leads Home → Collections → its title, and both routes onward resolve |
+| Collection degradation | included above | A collection whose works carry no image offers no representative work and still reports its count; a blank id produces no link; a blank summary is reported as absent |
+| No collection claims | included above | No collection page contains a currency amount, a purchase phrase, or the words `Curated by`, `Featured collection`, `Most popular` or `Best seller` |
 | Search matching | included above | Title, medium, description, year, discipline, creator practice and creator location each find the right records; `OCHRE` and `  ochre  ` return the same two as `ochre` |
 | Word-by-word search | included above | `ochre canvas` finds *Layered Light, Study I*, whose two words are not adjacent |
 | Each discipline filter | included above | Painting 2, digital 1, decor 1, handmade 1, custom 1 — asserted from the rendered catalogue |
@@ -606,16 +720,17 @@ Executed in this repository:
 | Studio profile contents | included above | Each profile renders its name as `h1`, its discipline, its location, its practice note, its illustrative notice and the portrait-stand-in caption |
 | Studio records are its own | included above | Each of the 5 profiles lists exactly its creator's works and asserts every other artwork id is absent |
 | Studio lead image | included above | A profile's stand-in image is always one of that creator's own works, and a workless studio gets none |
-| Creator → artwork links | included above | Every profile's artwork links resolve through the same link resolver used for all 740 internal links |
+| Creator → artwork links | included above | Every profile's artwork links resolve through the same link resolver used for all 784 internal links |
 | Studio model safety | included above | A synthetic creator with blank name, id and practice produces no link, falls back to the neutral name, and emits no empty fact row |
 | Empty studio state | included above | The workless path is asserted through a synthetic creator, since all 5 sample creators hold at least one record |
 | No rankings or claims | included above | No studio page contains a currency amount, a purchase phrase, or the words `Verified seller`, `Verified studio`, `Award-winning` |
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
-| CSS Module integrity | script over `src/**` | 44 modules, 367 `styles.*` references resolve; 3 unused rules remain, all pre-existing in untouched files |
-| Heading outline | script over 11 routes | One `h1` per route, no skipped levels — including the empty state, a filtered catalogue and an artwork page |
+| CSS Module integrity | script over `src/**` | 45 modules, 442 `styles.*` references resolve; 2 unused rules remain, both pre-existing in untouched files |
+| Heading outline | script over 26 routes | One `h1` per route, no skipped levels — including the empty state, a filtered catalogue, an artwork page and every collection page |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
 | Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
+| Collection layout | computed from the stylesheets | At the six widths the directory's grid runs 1/1/1/2/3/3 cards after a full-scale opening composition, the feature card splits at 768px only and with `minmax(0, …)` guards, cards stay 282px or wider, and every image on the collection pages is rendered inside an aspect-ratio frame — no page emits an image without a src, a size or alternative text |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
 | Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
@@ -673,6 +788,9 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
 
 ## Roadmap
 
+One plan in twelve phases. The About page presents the same twelve in the same order, so the two
+never disagree about what a phase covers.
+
 - **Phase 1 — Foundation and design system** _(delivered)_: setup, tokens, components, routes, page
   shells, design-system preview.
 - **Phase 2 — Homepage and floating art** _(delivered)_: the editorial homepage, the floating-art
@@ -686,12 +804,19 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
   discipline and shared collection.
 - **Phase 6 — Artist directory and studio profiles** _(delivered)_: every creator listed and
   profiled from real fields, with its own records and a clear route back to the directory.
-- **Phase 7**: collections, curation and catalogue growth — editorial collections with context,
-  ordering controls, pagination and deeper filters.
-- **Phase 8**: studios and sellers — seller accounts, studio-managed profiles, listing tools,
-  orders, payouts.
-- **Phase 9 — artwork commerce and provenance**: availability, pricing, enquiry and purchase flows,
-  certificates and provenance history.
+- **Phase 7 — Collections and curated worlds** _(delivered)_: the collection directory composed as an
+  editorial spread, and a collection page that opens on its own work, with counts that always match
+  the works actually rendered.
+- **Phase 8 — Curation and catalogue growth**: editorial notes with context for each grouping,
+  ordering controls, pagination and deeper filters as the catalogue outgrows one page.
+- **Phase 9 — Studio and seller accounts**: seller onboarding with an honest verification step, and
+  profiles the studios maintain themselves.
+- **Phase 10 — Listings and inventory**: listing tools for images, metadata, dimensions and
+  availability, with drafts before anything is published.
+- **Phase 11 — Orders, fulfilment and payouts**: order handling, shipping options, fees stated
+  plainly and payouts to the studios.
+- **Phase 12 — Artwork commerce and provenance**: availability, pricing and currency handling;
+  enquiry and purchase flows; certificates, edition records and provenance history.
 
 ## Scripts reference
 

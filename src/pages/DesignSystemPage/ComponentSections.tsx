@@ -11,7 +11,8 @@ import { LoadingIndicator } from '@/components/LoadingIndicator/LoadingIndicator
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
 import { StudioCard } from '@/components/StudioCard/StudioCard'
 import { TextLink } from '@/components/TextLink/TextLink'
-import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS, getArtworkById } from '@/data'
+import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS } from '@/data'
+import { buildCollectionEntry } from '@/utils/collections'
 import { buildStudioEntry } from '@/utils/studioProfile'
 import { PreviewBlock } from './PreviewBlock'
 import styles from './ComponentSections.module.css'
@@ -23,8 +24,8 @@ import styles from './ComponentSections.module.css'
 export function ComponentSections() {
   const sample = SAMPLE_ARTWORKS[0]
   const cartWorks = useMemo(() => SAMPLE_ARTWORKS.slice(0, 3), [])
-  const sampleCollection = SAMPLE_COLLECTIONS[0]
   const sampleStudio = useMemo(() => buildStudioEntry(SAMPLE_CREATORS[0]), [])
+  const sampleCollectionEntry = useMemo(() => buildCollectionEntry(SAMPLE_COLLECTIONS[0]), [])
 
   return (
     <>
@@ -196,10 +197,7 @@ export function ComponentSections() {
         description="Collections lead with a landscape crop of one work, plus a summary and an honest record count."
       >
         <div className={styles.gridSample}>
-          <CollectionCard
-            collection={sampleCollection}
-            leadArtwork={getArtworkById(sampleCollection.artworkIds[0])}
-          />
+          <CollectionCard entry={sampleCollectionEntry} />
         </div>
       </PreviewBlock>
 

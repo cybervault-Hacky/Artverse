@@ -61,22 +61,50 @@ const PHASES = [
   },
   {
     label: 'Phase 6',
-    title: 'Artwork commerce and provenance',
+    title: 'Artist directory and studio profiles',
     detail:
-      'Availability, pricing and currency; enquiry and purchase flows; certificates, edition records and provenance history.',
-    status: 'Not started',
+      'Every creator listed and profiled from real fields, each with its own records and a clear route back to the directory.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 7',
-    title: 'Collections, curation and catalogue growth',
+    title: 'Collections and curated worlds',
     detail:
-      'Editorial collections curated with context, ordering controls, pagination and deeper filters as the catalogue outgrows a single page.',
-    status: 'Not started',
+      'The collection directory composed as an editorial spread, and a collection page that opens on its own work — with counts that always match the works actually rendered.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 8',
-    title: 'Studios and sellers',
-    detail: 'Seller accounts, studio profiles, listing tools, orders and payouts.',
+    title: 'Curation and catalogue growth',
+    detail:
+      'Editorial notes with context for each grouping, ordering controls, pagination and deeper filters as the catalogue outgrows one page.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 9',
+    title: 'Studio and seller accounts',
+    detail:
+      'Seller onboarding with an honest verification step, and profiles the studios maintain themselves.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 10',
+    title: 'Listings and inventory',
+    detail:
+      'Listing tools for images, metadata, dimensions and availability, with drafts before anything is published.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 11',
+    title: 'Orders, fulfilment and payouts',
+    detail: 'Order handling, shipping options, fees stated plainly and payouts to the studios.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 12',
+    title: 'Artwork commerce and provenance',
+    detail:
+      'Availability, pricing and currency handling; enquiry and purchase flows; certificates, edition records and provenance history.',
     status: 'Not started',
   },
 ]

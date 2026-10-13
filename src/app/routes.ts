@@ -54,7 +54,8 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     pattern: '/discover/:collectionId',
     page: 'CollectionDetailPage',
     status: 'implemented',
-    purpose: 'A single collection: introduction, its works and the route back to the catalogue.',
+    purpose:
+      'A single collection: an editorial hero built from one of its own works, its description, its works and only its works, and the routes back to the directory and the catalogue.',
   },
   {
     pattern: '/artwork/:artworkId',
@@ -87,13 +88,14 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     pattern: '/about',
     page: 'AboutPage',
     status: 'implemented',
-    purpose: 'What ArtVerse is, and what Phase 1 covers.',
+    purpose: 'What ArtVerse is, and the twelve-phase plan behind it.',
   },
   {
     pattern: '/collections',
     page: 'CollectionsPage',
-    status: 'foundation',
-    purpose: 'Directory of curated collections.',
+    status: 'implemented',
+    purpose:
+      'The collection directory, composed as an editorial spread: the first collection at full scale, the rest in a grid, every card linking to its own collection.',
   },
   {
     pattern: '/search',

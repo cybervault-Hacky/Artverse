@@ -143,7 +143,8 @@ export function SiteHeader() {
               Search ArtVerse
             </Button>
             <p className={styles.panelNote}>
-              Browse the Phase 1 foundation. Sample artwork records are illustrative placeholders.
+              Browse the sample records. Every artwork, studio and collection here is an
+              illustrative placeholder.
             </p>
           </div>
         </div>

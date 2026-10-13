@@ -162,7 +162,7 @@ export function ArtistProfilePage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 8"
+            phase="Phase 9"
             title="What this profile will carry later"
             description="The profile itself is in place. What follows has to come from the studio, or from accounts that do not exist yet."
             items={[

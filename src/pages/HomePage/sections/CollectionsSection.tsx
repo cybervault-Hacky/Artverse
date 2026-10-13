@@ -4,8 +4,9 @@ import { PageContainer } from '@/components/PageContainer/PageContainer'
 import { Section } from '@/components/Section/Section'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
 import { TextLink } from '@/components/TextLink/TextLink'
-import { getArtworkById, getCollectionsByIds } from '@/data'
+import { getCollectionsByIds } from '@/data'
 import { HOMEPAGE_COLLECTION_IDS } from '@/data/homepage'
+import { buildCollectionDirectory } from '@/utils/collections'
 import styles from './CollectionsSection.module.css'
 
 /**
@@ -16,9 +17,11 @@ import styles from './CollectionsSection.module.css'
  * never render a collection that does not exist.
  */
 export function CollectionsSection() {
-  const collections = getCollectionsByIds(HOMEPAGE_COLLECTION_IDS)
+  // Resolved through the shared collection model, so the lead work, the count
+  // and the destination are decided in one place rather than here.
+  const entries = buildCollectionDirectory(getCollectionsByIds(HOMEPAGE_COLLECTION_IDS))
 
-  if (collections.length === 0) return null
+  if (entries.length === 0) return null
 
   return (
     <Section divided ariaLabelledBy="worlds-title">
@@ -37,11 +40,10 @@ export function CollectionsSection() {
 
         <CollectionGrid
           className={styles.grid}
-          collections={collections}
+          entries={entries}
           columns="two"
           label="Artistic worlds"
           sizes="(max-width: 699px) 92vw, (max-width: 1247px) 45vw, 520px"
-          leadArtworkFor={(collection) => getArtworkById(collection.artworkIds[0])}
         />
 
         <p className={styles.note}>

@@ -189,7 +189,39 @@ try {
           data.SAMPLE_ARTWORKS.find((artwork) => artwork.creatorId === creator.id)?.image.alt,
       ),
     },
-    { path: '/collections', expect: 'Groupings, not folders' },
+    {
+      path: '/collections',
+      expect: 'Curated Worlds',
+      expectAll: [
+        'The collections',
+        '4 sample collections',
+        // Every collection is listed with its title, summary and count.
+        ...data.SAMPLE_COLLECTIONS.map((collection) => collection.title),
+        ...data.SAMPLE_COLLECTIONS.map((collection) => collection.summary),
+        // The composition is explained rather than left to imply a ranking.
+        'That is a composition choice, not a ranking',
+        'Open the collection',
+      ],
+      // The directory shows collection covers, never artwork links or the works
+      // themselves — the cards open collections.
+      expectArtworks: [],
+      forbidArtworks: data.SAMPLE_ARTWORKS.map((artwork) => artwork.id),
+      expectLinks: [
+        ...collectionLinks,
+        '/discover',
+        '/artists',
+      ],
+      // No collection may be described as ranked, endorsed or measured.
+      forbidAll: ['Featured collection', 'Most popular', 'Best seller', 'Editor’s pick'],
+      expectEagerImages: 0,
+      // Each card's cover is a real work from that collection.
+      expectAllAlt: data.SAMPLE_COLLECTIONS.map(
+        (collection) =>
+          collection.artworkIds
+            .map((id) => data.SAMPLE_ARTWORKS.find((artwork) => artwork.id === id))
+            .find(Boolean)?.image.alt,
+      ),
+    },
     { path: '/sell', expect: 'Bring your work to a wider room' },
     { path: '/about', expect: 'A marketplace built calmly, in the open' },
     { path: '/search', expect: 'Find a work, a medium or a studio', maxImages: 0 },
@@ -444,6 +476,55 @@ try {
   }
 
   /*
+   * ── Collection pages, one case per record ───────────────────────────────
+   * The expectation for each collection is derived here from the raw data: the
+   * works it resolves to, the count the page must print, and the work that
+   * represents it. The breadcrumb must lead back to the collection directory,
+   * and nothing from another collection may appear.
+   */
+  for (const collection of data.SAMPLE_COLLECTIONS) {
+    const works = collection.artworkIds
+      .map((id) => data.SAMPLE_ARTWORKS.find((artwork) => artwork.id === id))
+      .filter(Boolean)
+    const leadWork = works.find((artwork) => artwork.image?.src)
+    const otherWorks = data.SAMPLE_ARTWORKS.filter(
+      (artwork) => !collection.artworkIds.includes(artwork.id),
+    )
+
+    CASES.push({
+      path: `/discover/${collection.id}`,
+      expect: collection.title,
+      expectAll: [
+        collection.description,
+        // The count printed in the hero must be the resolved count.
+        `${works.length} work${works.length === 1 ? '' : 's'} in this collection`,
+        'Works in this collection',
+        'Illustrative sample records',
+        // The representative work is named as a sample image from the
+        // collection, never presented as anything more.
+        'A sample image from this collection',
+      ],
+      expectArtworks: works.map((artwork) => artwork.id),
+      forbidArtworks: otherWorks.map((artwork) => artwork.id),
+      // Breadcrumb to the directory, and both routes onward.
+      expectLinks: ['/collections', '/discover', ...(leadWork ? [] : [])],
+      forbidAll: [
+        'Curated by',
+        'Curator:',
+        'Featured collection',
+        'Most popular',
+        'Best seller',
+        'Editor’s pick',
+        ...purchasePhrases,
+      ],
+      forbidPatterns: [currencyPattern],
+      // One eager image — the hero band. The grid's first row is lazy here
+      // because the hero already carries the opening image.
+      expectEagerImages: leadWork ? 1 : 0,
+    })
+  }
+
+  /*
    * ── The studio model, checked directly ──────────────────────────────────
    * Rules markup cannot demonstrate: that a studio is only ever credited with
    * its own records, that its stand-in image comes from one of them, and that a
@@ -694,8 +775,7 @@ try {
       expect: 'Objects for Living',
       expectArtworks: ['sample-handmade-01', 'sample-decor-01', 'sample-custom-01'],
       forbidArtworks: paintingWorks,
-    },
-  )
+    },  )
 
   for (const testCase of CASES) {
     routesChecked += 1

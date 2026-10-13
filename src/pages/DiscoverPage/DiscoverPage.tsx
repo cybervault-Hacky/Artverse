@@ -12,7 +12,8 @@ import { Section } from '@/components/Section/Section'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
 import { TextLink } from '@/components/TextLink/TextLink'
 import { ChevronDownIcon, CloseIcon, SearchIcon } from '@/components/icons/Icons'
-import { SAMPLE_COLLECTIONS, getArtworkById } from '@/data'
+import { SAMPLE_COLLECTIONS } from '@/data'
+import { buildCollectionDirectory } from '@/utils/collections'
 import { useCatalogueParams } from '@/hooks/useCatalogueParams'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { SORT_OPTIONS, disciplineLabel, isSortOption } from '@/utils/catalogue'
@@ -224,14 +225,13 @@ export function DiscoverPage() {
 
           <CollectionGrid
             className={styles.collections}
-            collections={SAMPLE_COLLECTIONS}
+            entries={buildCollectionDirectory(SAMPLE_COLLECTIONS)}
             label="Sample collections"
-            leadArtworkFor={(collection) => getArtworkById(collection.artworkIds[0])}
           />
 
           <PhaseNote
             className={styles.phase}
-            phase="Phase 7"
+            phase="Phase 8"
             title="Still to come on this page"
             description="Search, discipline filtering and sorting now work across the sample set. These are the parts that need a real catalogue behind them."
             items={[
