@@ -77,7 +77,7 @@ export function SellPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 7"
+            phase="Phase 8"
             items={[
               'Seller accounts with a clear, honest verification step.',
               'Listing tools for images, dimensions and availability.',

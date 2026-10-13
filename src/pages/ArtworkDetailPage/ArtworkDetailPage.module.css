@@ -2,6 +2,11 @@
   padding-block: var(--space-6) var(--space-2);
 }
 
+/*
+ * Two columns from 1024px — the work on the left, its record on the right —
+ * and one column below that, so a phone reads image, caption, title,
+ * description, studio, metadata in that order.
+ */
 .layout {
   display: grid;
   gap: clamp(2rem, 5vw, 4rem);
@@ -15,6 +20,33 @@
 .details {
   min-width: 0;
 }
+
+/* Neutral panel for a record whose image is missing or unusable. */
+.placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: var(--space-6);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-muted);
+}
+
+.placeholderText {
+  max-width: 24rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+  text-align: center;
+}
+
+.caption {
+  margin-top: var(--space-4);
+  max-width: 34rem;
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+/* ── The record ──────────────────────────────────────────────────────────── */
 
 .eyebrow {
   font-size: var(--text-label);
@@ -37,6 +69,54 @@
   color: var(--color-ink-muted);
 }
 
+/* ── Studio ──────────────────────────────────────────────────────────────── */
+
+/*
+ * The one part of the record that leads somewhere, so it gets its own block
+ * rather than a row in the table below it.
+ */
+.studio {
+  margin-top: var(--space-7);
+  padding: var(--space-5);
+  border: var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.blockLabel {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.studioName {
+  display: inline-block;
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
+}
+
+.studioMeta {
+  margin-top: var(--space-2);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.studioNote {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+  font-size: var(--text-meta);
+  color: var(--color-ink-subtle);
+}
+
+/* ── Metadata ────────────────────────────────────────────────────────────── */
+
 .meta {
   margin-top: var(--space-7);
   border-top: var(--border-hairline);
@@ -45,7 +125,7 @@
 .metaRow {
   display: grid;
   grid-template-columns: 8rem minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-3) var(--space-4);
   padding-block: var(--space-3);
   border-bottom: var(--border-hairline);
 }
@@ -56,18 +136,45 @@
 }
 
 .metaValue {
+  margin: 0;
   font-size: var(--text-small);
   color: var(--color-ink);
-  margin: 0;
 }
 
-.reference {
-  padding: 0.15rem 0.4rem;
-  border: var(--border-hairline);
-  border-radius: var(--radius-xs);
-  background-color: var(--color-surface-muted);
-  font-size: var(--text-meta);
-  word-break: break-all;
+.linkList {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.linkItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.linkDivider {
+  color: var(--color-border-strong);
+}
+
+/*
+ * Above a phone the work is shown at a comfortable width rather than filling
+ * the screen: a portrait record at full width runs past a whole screen height
+ * and pushes its own title out of sight, which is the opposite of useful.
+ */
+@media (min-width: 480px) {
+  .media {
+    max-width: 30rem;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 359px) {
+  /* Below the smallest supported width, labels stack above their values. */
+  .metaRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .sampleNote {
@@ -78,21 +185,70 @@
   color: var(--color-ink-muted);
 }
 
+/* ── Return and related ──────────────────────────────────────────────────── */
+
+.returnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: var(--border-hairline);
+}
+
 .related {
   margin-top: var(--space-8);
 }
 
-.note {
-  margin-top: var(--space-8);
+/*
+ * From 768px the work and its record sit side by side, as they would on a
+ * gallery wall label — the reading order on a phone is restored to one column
+ * below that. The label column narrows here so the values keep their room in
+ * the tighter tablet width.
+ */
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    column-gap: clamp(2rem, 5vw, 3rem);
+  }
+
+  .media {
+    max-width: none;
+    margin-inline: 0;
+  }
+
+  .metaRow {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+  }
 }
 
+/*
+ * From 1024px the record column stays beside the work while the image is
+ * scrolled past — but never at the cost of its own content: the panel is capped
+ * to the viewport and scrolls inside itself if it is taller, so the last row
+ * and the sample note can always be reached.
+ */
 @media (min-width: 1024px) {
   .layout {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    column-gap: clamp(2.5rem, 5vw, 4.5rem);
+  }
+
+  .metaRow {
+    grid-template-columns: 8rem minmax(0, 1fr);
   }
 
   .details {
     position: sticky;
     top: calc(var(--header-height) + var(--space-6));
+    max-height: calc(100vh - var(--header-height) - var(--space-8));
+    max-height: calc(100dvh - var(--header-height) - var(--space-8));
+    overflow-y: auto;
+    /* Room for focus rings on the last link without clipping them. */
+    padding-inline: 2px;
+    margin-inline: -2px;
   }
 }
+
+/* This page adds no animation of its own. The frame's soft shadow is the only
+   transition, and it carries no movement, so nothing here needs a reduced-motion
+   override beyond the global rule in base.css. */

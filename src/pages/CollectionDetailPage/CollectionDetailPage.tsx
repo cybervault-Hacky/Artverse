@@ -87,7 +87,7 @@ export function CollectionDetailPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 5"
+            phase="Phase 7"
             title="What this collection page will become"
             items={[
               'A curated introduction written with editorial context.',

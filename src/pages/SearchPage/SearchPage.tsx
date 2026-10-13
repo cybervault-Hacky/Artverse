@@ -126,7 +126,7 @@ export function SearchPage() {
 
           <PhaseNote
             className={styles.results}
-            phase="Phase 5"
+            phase="Phase 7"
             description="Explore Art now carries live search, discipline filtering and sorting over the same six records. This page stays as the direct search destination until a real index replaces it."
             items={[
               'Deeper filters for medium, size and material.',

@@ -59,8 +59,9 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
   {
     pattern: '/artwork/:artworkId',
     page: 'ArtworkDetailPage',
-    status: 'foundation',
-    purpose: 'One artwork with its full metadata.',
+    status: 'implemented',
+    purpose:
+      'One artwork in full at its own proportions, with its record, its studio and related works chosen by discipline and shared collections.',
   },
   {
     pattern: '/artists',

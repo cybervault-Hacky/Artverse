@@ -231,7 +231,7 @@ export function DiscoverPage() {
 
           <PhaseNote
             className={styles.phase}
-            phase="Phase 5"
+            phase="Phase 7"
             title="Still to come on this page"
             description="Search, discipline filtering and sorting now work across the sample set. These are the parts that need a real catalogue behind them."
             items={[

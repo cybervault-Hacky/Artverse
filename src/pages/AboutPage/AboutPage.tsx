@@ -54,19 +54,27 @@ const PHASES = [
   },
   {
     label: 'Phase 5',
-    title: 'Collections and curation',
+    title: 'Immersive artwork detail experiences',
     detail:
-      'Editorial collections, studio series, pagination as the catalogue outgrows a single page, and the curation tools behind them.',
-    status: 'Not started',
+      'Each work presented in full at its own proportions, its record assembled only from real fields, its studio linked, and related works chosen by discipline and shared collection.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 6',
-    title: 'Artwork detail and commerce',
-    detail: 'Provenance, certificates, availability and the purchase journey.',
+    title: 'Artwork commerce and provenance',
+    detail:
+      'Availability, pricing and currency; enquiry and purchase flows; certificates, edition records and provenance history.',
     status: 'Not started',
   },
   {
     label: 'Phase 7',
+    title: 'Collections, curation and catalogue growth',
+    detail:
+      'Editorial collections curated with context, ordering controls, pagination and deeper filters as the catalogue outgrows a single page.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 8',
     title: 'Studios and sellers',
     detail: 'Seller accounts, studio profiles, listing tools, orders and payouts.',
     status: 'Not started',

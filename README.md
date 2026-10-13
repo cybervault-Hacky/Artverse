@@ -5,11 +5,12 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 4 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 5 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
-signature floating-art hero, and the immersive Explore Art discovery catalogue — now with live
-search, discipline filtering, sorting and honest empty states. It is still a frontend build: there
-is no backend, no database, no authentication, no payments and no real listings.
+signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
+filtering, sorting and honest empty states, and an immersive artwork page for every record. It is
+still a frontend build: there is no backend, no database, no authentication, no payments and no real
+listings.
 
 ---
 
@@ -22,6 +23,7 @@ is no backend, no database, no authentication, no payments and no real listings.
 - [The homepage](#the-homepage)
 - [The discovery catalogue](#the-discovery-catalogue)
 - [Search, filtering and sorting](#search-filtering-and-sorting)
+- [The artwork page](#the-artwork-page)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -87,6 +89,26 @@ is no backend, no database, no authentication, no payments and no real listings.
 - All criteria live in the address (`?q`, `?discipline`, `?sort`), parsed and validated: an unknown
   discipline or sort key falls back to the default instead of emptying the catalogue. Views are
   shareable, and back and forward step through them.
+
+**Phase 5 — immersive artwork detail experiences**
+
+- `/artwork/:artworkId` rebuilt as a gallery presentation: the work shown in full at its own
+  intrinsic ratio, never cropped to a grid frame, with a caption that says so and gives the image's
+  own pixel size.
+- A record built only from fields the data actually carries. Blank fields produce no row at all;
+  the studio is a block rather than a table row because it is the one part of the record that leads
+  somewhere, and it links only when a creator record resolves.
+- Related works chosen by a stated rule — the discipline the work belongs to, then the collections
+  it appears in, most-recently-added first excluded, the work itself always excluded. No score, no
+  weighting, no recommendation model, and the page says so.
+- Breadcrumbs now include the collection a work belongs to, and its collections are linked in the
+  record itself.
+- Honest handling throughout: a missing creator reads "Studio not recorded" instead of being
+  faked, an unusable image path renders a neutral panel instead of a broken image, and the closing
+  note states that the record carries one image, so there is no gallery to navigate.
+- Phase numbering realigned again to follow the brief's sequence: artwork detail is Phase 5,
+  commerce and provenance Phase 6, collections and catalogue growth Phase 7, studios and sellers
+  Phase 8.
 
 ## What is deliberately not included
 
@@ -262,6 +284,53 @@ three-work grouping would add a control that can only ever hide two of them. Pha
 therefore scoped to `/discover`, and the collection pages keep their Phase 3 behaviour, descriptions,
 links and back navigation untouched.
 
+## The artwork page
+
+`/artwork/:artworkId` is the work itself, presented the way a gallery would hang it: the image first
+at full size and true proportion, the record beside it, then what the catalogue honestly knows about
+how it relates to everything else.
+
+| Zone | What it holds |
+| --- | --- |
+| Breadcrumb | Home → Explore Art → *the collection it sits in* → the work. The collection crumb only appears when the record really belongs to one |
+| The work | `ArtworkFrame` at the record's intrinsic ratio, radius `md`, soft elevation, eager loading, `sizes` tuned to the two-column split. Nothing is cropped |
+| Image caption | States that the sample image is shown in full rather than cropped to the catalogue frame, and gives its real pixel size |
+| The record | Discipline eyebrow, `h1` title, editorial description, then the studio block and the metadata table |
+| Studio block | Name (linked to the artist route when it resolves), practice and location, and the illustrative placeholder label these records ship with |
+| Metadata | Medium, Dimensions, Year, Collections (linked), Reference — assembled from real fields only |
+| Return | **Back to Explore Art** and **All collections** |
+| Explore Related Art | Up to four other records, chosen by discipline then by shared collection |
+
+### How the record is assembled, and what happens when something is missing
+
+Every row comes from a field the sample record carries. Nothing is estimated, inferred or padded:
+
+| Situation | What the page does |
+| --- | --- |
+| A field is blank or whitespace | No row is rendered at all — the label never appears over an empty value |
+| `year` is not a finite number | The Year row is dropped |
+| The work is in no collection | The Collections row and the collection breadcrumb are both dropped |
+| The creator does not resolve, or has a blank name | The studio block reads **“Studio not recorded”**, with the practice, location and link all omitted — stated, not faked |
+| The creator exists but has no practice or location | Those lines are omitted; the name and link remain |
+| The image path is empty or unusable | A neutral panel replaces the image, sized to the record's own ratio, with the catalogued details still shown. No `<img>` is emitted, so there is no broken request and no re-request of the page itself |
+
+The two decisions inside this page are made by pure functions in `src/utils/artworkDetail.ts` —
+`buildArtworkDetails`, `buildStudioDetail`, `getRelatedArtworks`, `getCollectionsForArtwork`,
+`hasDisplayableImage` — so the verification script can assert the rules directly rather than
+inferring them from markup.
+
+### Related works, and what is deliberately absent
+
+Related works follow one fixed rule: **other records in the same discipline first, then works this
+one is held alongside in a collection**, de-duplicated, in catalogue order, capped at four, with the
+current work always excluded. The same work always produces the same list. The section states the
+rule in its own words — *“No recommendation model is involved”* — because there is none: no score,
+no weighting, no personalisation, no “you may also like”.
+
+There is also **no purchase, favourite or share control anywhere on the page**. The record carries a
+single image, so there is no gallery navigation, no thumbnails and no zoom. Both facts are stated on
+the page rather than dressed up as actions that would do nothing.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -269,7 +338,7 @@ links and back navigation untouched.
 | `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
 | `/discover` | `DiscoverPage` | Complete (Phase 4) — live search, discipline filters, sorting, full catalogue, collections |
 | `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 3) — collection, its works, route back |
-| `/artwork/:artworkId` | `ArtworkDetailPage` | Foundation — full metadata, no commerce |
+| `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5) — the work in full, its record, its studio, related works |
 | `/artists` | `ArtistsPage` | Foundation — editorial directory list |
 | `/artists/:artistId` | `ArtistProfilePage` | Foundation — placeholder profile and its records |
 | `/collections` | `CollectionsPage` | Foundation — collection directory |
@@ -295,7 +364,7 @@ src/
 ├── pages/        One folder per destination; the homepage is split into five section files
 ├── styles/       tokens.css, base.css and the global entry point
 ├── types/        Shared domain types
-└── utils/        Small helpers: cn, aspect ratios, text formatting, and the catalogue engine
+└── utils/        Small helpers: cn, aspect ratios, text formatting, the catalogue engine, the artwork detail model
 public/
 ├── artworks/     Six project-generated sample images
 ├── favicon.svg   Brand symbol
@@ -380,6 +449,11 @@ represented anywhere in this repository.
 - Card links carry a visually hidden action suffix, so a link's purpose is clear when read aloud.
 - `prefers-reduced-motion` is honoured globally and specifically in the floating composition.
 
+On the artwork page, the studio link is the only link inside the record; the metadata is a proper
+`dl`; the image carries its real descriptive alt text and intrinsic dimensions; the placeholder panel
+and the “Studio not recorded” line are text rather than unlabelled graphics; and the related grid is a
+labelled list whose cards keep the site-wide focus ring.
+
 ## Responsive behaviour
 
 Designed and checked against 360, 390, 430, 768, 1024 and 1440 pixel widths. Grid columns step at
@@ -392,6 +466,15 @@ readable on large screens. No layout uses `100vw`, every viewport-relative value
 The narrowest discipline tile is 104px at 768px — enough for the longest label to wrap to two lines —
 and every control keeps a touch target of at least 44px.
 
+The artwork page steps in three tiers. On a phone the work fills the width and the record follows it
+in reading order, so the image is 573–699px tall at 360–430px rather than overwhelming. From 480px
+the image is capped at 30rem and centred, because a portrait record at full width would run past a
+whole screen and push its own title out of sight. From 768px the work and its record sit side by
+side — a 350px work beside a 317px record, with the metadata label column narrowed to 6.5rem to keep
+the values readable. From 1024px the record column becomes sticky beside the image and widens its
+label column back to 8rem; the panel is capped to the viewport height and scrolls inside itself if it
+is taller, so its last row can always be reached instead of being clipped.
+
 ## Verification
 
 Executed in this repository:
@@ -401,10 +484,10 @@ Executed in this repository:
 | Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 357 kB (≈ 111 kB gzip), CSS ≈ 59 kB (≈ 11 kB gzip) |
-| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including `/discover` with search, filter and sort parameters |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 361 kB (≈ 112 kB gzip), CSS ≈ 61 kB (≈ 11 kB gzip) |
+| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200, including each artwork page, `/discover` with search, filter and sort parameters, and an unknown artwork id |
 | Route rendering | `npm run verify:routes` | 59 route cases (including every artwork and creator id in the data layer), all assertions pass |
-| Internal links | included above | 713 links resolved against the route table and the data layer — no broken destinations |
+| Internal links | included above | 739 links resolved against the route table and the data layer — no broken destinations |
 | Catalogue behaviour | included above | 29 search, filter, sort and empty-state cases, each naming the exact records it expects and the order it expects them in |
 | Search matching | included above | Title, medium, description, year, discipline, creator practice and creator location each find the right records; `OCHRE` and `  ochre  ` return the same two as `ochre` |
 | Word-by-word search | included above | `ochre canvas` finds *Layered Light, Study I*, whose two words are not adjacent |
@@ -418,11 +501,22 @@ Executed in this repository:
 | Eager loading | included above | The first 3 catalogue images load eagerly, every other image lazily, and no image loads eagerly when nothing matches |
 | Empty and invalid ids | included above | Unknown artwork, collection and artist ids all reach the not-found experience |
 | Collection isolation | included above | `/discover/quiet-landscapes` and `/discover/objects-for-living` render their own three works and none of the other collection's |
+| Artwork record completeness | included above | Each of the 6 records renders its title, description, medium, year, dimensions and creator name, and keeps its illustrative placeholder label |
+| Artwork → studio link | included above | Every artwork page renders `href="/artists/<creatorId>"`, and the link resolver independently confirms it resolves to a real creator record |
+| Studio links are impossible to break | included above | `buildStudioDetail` is asserted to emit no `href` for a missing creator, or for one with a blank name |
+| Related works | included above | For each record the page renders exactly the expected related ids, in order, derived in the script from the raw data — discipline matches first, then shared collections |
+| Self-exclusion | included above | No artwork page contains a link to its own route, asserted for all six records |
+| Related limits | included above | The related list never exceeds four, never contains an id that does not exist, and is stable across repeated calls |
+| Missing metadata | included above | A synthetic record with blank medium, dimensions and year produces no such rows and still shows its reference; a blank image path is never treated as displayable |
+| Unusable image | included above | `imageAspectRatio` falls back to the frame ratio and `imagePixelLabel` returns nothing when the pixel size is unusable |
+| No commerce on the artwork page | included above | No artwork page contains a currency-with-amount pattern or any of ten purchase phrases (`Add to cart`, `Buy now`, `Wishlist`, …) |
+| Collection trail | included above | Every artwork page links to the first collection holding it, matching `SAMPLE_COLLECTIONS` order |
+| Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
 | CSS Module integrity | script over `src/**` | 44 modules, 367 `styles.*` references resolve; 3 unused rules remain, all pre-existing in untouched files |
-| Heading outline | script over 11 routes | One `h1` per route, no skipped levels — including the empty state and a filtered catalogue |
+| Heading outline | script over 11 routes | One `h1` per route, no skipped levels — including the empty state, a filtered catalogue and an artwork page |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
-| Layout geometry | computed from the stylesheets | Control-bar and grid arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px |
+| Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
 | Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
@@ -435,14 +529,19 @@ shared skip link and footer are present, and **every internal link resolves to a
 genuinely exists** — parameterised links are matched against the actual artwork, collection and
 creator records, so a link to a record that does not exist fails the build check.
 
-Phase 4 extended the same script rather than adding a parallel one. Twenty-nine of its cases are now
-catalogue queries, and each one names the exact records it expects **in the order it expects them**,
-read out of the rendered page by following the artwork links. That makes search, filtering, sorting,
-their combinations, the fallbacks and the empty state all testable without a browser — and it is how
-the sort-only copy bug was caught: a reordered catalogue was briefly claiming “6 of 6 records match”,
-which reads as though something had been hidden. The catalogue engine's two invisible rules are
-asserted directly as well: that sorting leaves `SAMPLE_ARTWORKS` in its curated order, and that
-unknown values from the address bar are ignored rather than emptied into the page.
+Phases 4 and 5 extended the same script rather than adding a parallel one. Twenty-nine of its cases
+are catalogue queries, and each one names the exact records it expects **in the order it expects
+them**, read out of the rendered page by following the artwork links. That makes search, filtering,
+sorting, their combinations, the fallbacks and the empty state all testable without a browser — and
+it is how the sort-only copy bug was caught: a reordered catalogue was briefly claiming “6 of 6
+records match”, which reads as though something had been hidden.
+
+The six artwork pages are asserted from the rendered markup too, with the expected related list
+derived in the script from the raw data rather than from the page's own helper — so the rule as
+documented is what gets checked, not a second copy of the implementation. Alongside that, the detail
+page's decisions are asserted directly: no self-link, no related id outside the data layer, no
+unstable ordering, no metadata row without a value, no link without a creator record, and no
+currency or purchase phrase anywhere on the page.
 
 **Not executed — stated plainly:** there is still no browser binary in this environment (no Chromium,
 Firefox, Playwright or Puppeteer), so no screenshot, visual regression, Lighthouse or cross-browser
@@ -453,7 +552,11 @@ cannot: that typing in the field feels immediate, that the clear button actually
 browser's back button steps through filter changes, that focus rings are visible on every control and
 that the strip scrolls smoothly on a phone. The logic behind each of those is asserted at the level it
 can be — URL writing, parsing, validation and rendering — but the interaction itself was not watched.
-A manual pass at the six widths remains the recommended next step.
+A manual pass at the six widths remains the recommended next step — this phase adds to the list of
+things only a browser can show: that the record column actually stays beside the image while the
+work is scrolled past, that it scrolls inside itself on a short viewport instead of clipping its last
+row, that the placeholder panel looks deliberate rather than broken, and that long collection names
+wrap gracefully in the metadata table.
 
 One SPA characteristic worth knowing: every route returns HTTP 200 from the dev server, including
 unknown ids, because the not-found view renders client-side. A production deployment would need to
@@ -469,10 +572,14 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
   sample catalogue and the collection groupings.
 - **Phase 4 — Smart explore, search and filters** _(delivered)_: live search, discipline filtering,
   sorting and honest empty states, with the criteria carried in the address.
-- **Phase 5**: collections and curation — editorial collections, studio series, pagination as the
-  catalogue grows, curation tools.
-- **Phase 6**: artwork detail and commerce — provenance, certificates, availability, purchase flow.
-- **Phase 7**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
+- **Phase 5 — Immersive artwork detail experiences** _(delivered)_: every work presented in full,
+  its record assembled from real fields only, its studio linked, and related works chosen by
+  discipline and shared collection.
+- **Phase 6**: artwork commerce and provenance — availability, pricing, enquiry and purchase flows,
+  certificates and provenance history.
+- **Phase 7**: collections, curation and catalogue growth — editorial collections with context,
+  ordering controls, pagination and deeper filters.
+- **Phase 8**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
 
 ## Scripts reference
 

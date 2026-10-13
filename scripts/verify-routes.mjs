@@ -43,6 +43,7 @@ try {
   const { AppRoutes } = await server.ssrLoadModule('/src/app/AppRoutes.tsx')
   const data = await server.ssrLoadModule('/src/data/index.ts')
   const catalogue = await server.ssrLoadModule('/src/utils/catalogue.ts')
+  const detail = await server.ssrLoadModule('/src/utils/artworkDetail.ts')
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -148,9 +149,74 @@ try {
     { path: '/artists/unknown-artist-id', expect: 'We couldn’t find that artist or studio' },
   ]
 
-  // Every artwork in the data layer must render its own page.
+  /*
+   * ── Artwork detail, one case per record ─────────────────────────────────
+   * The expectation for each work is derived here from the raw data — not from
+   * the page's own helper — so the related list is checked against the rule as
+   * written down, not against a second copy of the implementation.
+   */
+  const currencyPattern = /[£$€¥₹]\s?\d|\d\s?(?:GBP|USD|EUR|INR)/
+  const purchasePhrases = [
+    'Add to cart',
+    'Add to basket',
+    'Buy now',
+    'Add to favourites',
+    'Add to wishlist',
+    'Wishlist',
+    'Save for later',
+    'Out of stock',
+    'Sold out',
+    'Enquire about this work',
+  ]
+
   for (const artwork of data.SAMPLE_ARTWORKS) {
-    CASES.push({ path: `/artwork/${artwork.id}`, expect: artwork.title })
+    const creator = data.SAMPLE_CREATORS.find((entry) => entry.id === artwork.creatorId)
+    const collections = data.SAMPLE_COLLECTIONS.filter((collection) =>
+      collection.artworkIds.includes(artwork.id),
+    )
+    const primaryCollection = collections[0]
+
+    // The documented rule: same discipline first, then works held in the same
+    // collections, the work itself always excluded.
+    const expectedRelated = []
+    const addRelated = (candidate) => {
+      if (candidate.id !== artwork.id && !expectedRelated.some((id) => id === candidate.id)) {
+        expectedRelated.push(candidate.id)
+      }
+    }
+    for (const candidate of data.SAMPLE_ARTWORKS) {
+      if (candidate.category === artwork.category) addRelated(candidate)
+    }
+    for (const collection of collections) {
+      for (const id of collection.artworkIds) {
+        const candidate = data.SAMPLE_ARTWORKS.find((entry) => entry.id === id)
+        if (candidate) addRelated(candidate)
+      }
+    }
+
+    CASES.push({
+      path: `/artwork/${artwork.id}`,
+      expect: artwork.title,
+      expectAll: [
+        artwork.description,
+        artwork.medium,
+        String(artwork.year),
+        artwork.dimensions,
+        creator.name,
+        'Explore Related Art',
+        'Illustrative placeholder record',
+      ],
+      // The studio links, and the collection trail resolves.
+      expectLinks: [
+        `/artists/${artwork.creatorId}`,
+        ...(primaryCollection ? [`/discover/${primaryCollection.id}`] : []),
+      ],
+      // Only the related works appear as artwork links — never the work itself.
+      expectArtworks: expectedRelated.slice(0, 4),
+      forbidAll: [...purchasePhrases, `href="/artwork/${artwork.id}"`],
+      forbidPatterns: [currencyPattern],
+      expectEagerImages: 1,
+    })
   }
 
   // Every creator in the data layer must render its own profile.
@@ -185,6 +251,132 @@ try {
       catalogue.buildCatalogueView(blankQuery).artworks.length === data.SAMPLE_ARTWORKS.length,
     'catalogue: a whitespace-only query did not fall back to the whole catalogue',
   )
+
+  /*
+   * ── Artwork detail helpers, checked directly ────────────────────────────
+   * Rules that markup cannot demonstrate: that related works never include the
+   * work itself, that a missing creator or a blank field produces no fabricated
+   * content, and that a record with no usable image does not reach an <img>.
+   */
+  const detailArtworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
+
+  for (const artwork of data.SAMPLE_ARTWORKS) {
+    const related = detail.getRelatedArtworks(artwork)
+
+    check(!related.some((entry) => entry.id === artwork.id), `detail: ${artwork.id} relates to itself`)
+    check(
+      related.every((entry) => detailArtworkIds.has(entry.id)),
+      `detail: ${artwork.id} relates to a record that does not exist`,
+    )
+    check(related.length <= detail.RELATED_LIMIT, `detail: ${artwork.id} exceeds the related limit`)
+    check(
+      related.map((entry) => entry.id).join(',') ===
+        detail
+          .getRelatedArtworks(artwork)
+          .map((entry) => entry.id)
+          .join(','),
+      `detail: ${artwork.id} produces an unstable related list`,
+    )
+    check(
+      detail.hasDisplayableImage(artwork),
+      `detail: ${artwork.id} has no usable image path`,
+    )
+
+    // Discipline is the first signal, so any same-discipline sibling must lead.
+    const sibling = data.SAMPLE_ARTWORKS.find(
+      (candidate) => candidate.id !== artwork.id && candidate.category === artwork.category,
+    )
+    if (sibling) {
+      check(
+        related[0]?.id === sibling.id,
+        `detail: ${artwork.id} does not lead with its discipline sibling ${sibling.id}`,
+      )
+    }
+
+    const rows = detail.buildArtworkDetails(artwork)
+    check(rows.length > 0, `detail: ${artwork.id} produced no metadata rows`)
+    check(
+      rows.every((row) => detail.hasText(row.value) || (row.links && row.links.length > 0)),
+      `detail: ${artwork.id} produced an empty metadata row`,
+    )
+    check(
+      rows.some((row) => row.label === 'Medium') &&
+        rows.some((row) => row.label === 'Dimensions') &&
+        rows.some((row) => row.label === 'Year'),
+      `detail: ${artwork.id} is missing a metadata row the record carries`,
+    )
+    check(
+      detail.getCollectionsForArtwork(artwork).length > 0,
+      `detail: ${artwork.id} is in no collection, so the trail cannot be checked`,
+    )
+  }
+
+  // A record with nothing but an id: no fabricated rows, no broken image.
+  const bareRecord = {
+    id: 'bare-record',
+    title: 'Untitled',
+    category: 'painting',
+    medium: '',
+    year: Number.NaN,
+    dimensions: '   ',
+    description: 'Record kept deliberately empty for this check.',
+    image: { src: '', width: 0, height: 0, alt: '' },
+    aspect: 'portrait',
+    creatorId: 'no-such-creator',
+    sample: true,
+  }
+
+  check(!detail.hasDisplayableImage(bareRecord), 'detail: an empty image path was treated as usable')
+  check(
+    detail.buildArtworkDetails(bareRecord).every(
+      (row) => row.label !== 'Medium' && row.label !== 'Dimensions' && row.label !== 'Year',
+    ),
+    'detail: a blank field still produced a metadata row',
+  )
+  check(
+    detail.buildArtworkDetails(bareRecord).some((row) => row.label === 'Reference'),
+    'detail: the record reference was dropped',
+  )
+  // A record that is not in the catalogue still only ever links to real
+  // records in it, and never to itself — the contract that matters for safety.
+  const bareRelated = detail.getRelatedArtworks(bareRecord)
+  check(
+    bareRelated.every((entry) => detailArtworkIds.has(entry.id)),
+    'detail: a record outside the catalogue produced related works that do not exist',
+  )
+  check(
+    !bareRelated.some((entry) => entry.id === bareRecord.id),
+    'detail: a record outside the catalogue related to itself',
+  )
+  check(
+    detail.imageAspectRatio(bareRecord) === '4 / 5',
+    'detail: an unusable image size did not fall back to the frame ratio',
+  )
+  check(
+    detail.imagePixelLabel(bareRecord) === undefined,
+    'detail: an unusable image size still produced a pixel caption',
+  )
+
+  // A studio that cannot be resolved is stated, never linked.
+  check(
+    detail.buildStudioDetail(undefined).name === 'Studio not recorded',
+    'detail: a missing creator was not stated plainly',
+  )
+  check(
+    detail.buildStudioDetail(undefined).href === undefined,
+    'detail: a missing creator still produced a link',
+  )
+  check(
+    detail.buildStudioDetail({ id: 'x', name: '  ', discipline: '', illustrative: true }).href ===
+      undefined,
+    'detail: a creator with a blank name still produced a link',
+  )
+
+  for (const creator of data.SAMPLE_CREATORS) {
+    const studio = detail.buildStudioDetail(creator)
+    check(studio.href === `/artists/${creator.id}`, `detail: ${creator.id} did not link to its profile`)
+    check(studio.illustrative, `detail: ${creator.id} lost its illustrative placeholder label`)
+  }
 
   /*
    * ── Catalogue behaviour through the page ────────────────────────────────
