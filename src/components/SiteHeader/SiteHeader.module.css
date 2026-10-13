@@ -71,6 +71,8 @@
 }
 
 .iconButton {
+  /* The badge is placed against this box, so it never widens the header row. */
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -86,6 +88,31 @@
 
 .iconButton:hover {
   background-color: var(--color-surface-muted);
+}
+
+/*
+ * The count of what this visitor has collected. Not a metric: it is their own
+ * list, and the link's accessible name carries the same number.
+ *
+ * It is positioned rather than laid out, so a two-digit count can never push the
+ * header row wider than the four controls it has room for at 360px. The text is
+ * full ink for the same reason the save control's is: accent-ink on accent-soft
+ * does not clear 4.5:1.
+ */
+.count {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.15rem;
+  min-width: 1.15rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-accent-soft);
+  color: var(--color-ink);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15rem;
+  text-align: center;
 }
 
 .searchLabel {
@@ -164,6 +191,27 @@
 }
 
 /* ── Breakpoints ──────────────────────────────────────────────────────── */
+
+/*
+ * Below 600px the header carries four controls beside the brand: saved works,
+ * the cart, search and the menu. Their minimum sizes and the two gaps tighten so
+ * the row still fits a 320px content box at 360px wide — measured, not assumed:
+ * brand 131px, four controls at 40px, and a 12px gap come to 303px.
+ */
+@media (max-width: 599px) {
+  .inner {
+    gap: var(--space-3);
+  }
+
+  .actions {
+    gap: 0;
+  }
+
+  .iconButton {
+    min-width: 2.5rem;
+    padding-inline: var(--space-1);
+  }
+}
 
 @media (min-width: 600px) {
   .searchLabel {

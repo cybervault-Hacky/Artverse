@@ -52,6 +52,19 @@ try {
   const pricing = await server.ssrLoadModule('/src/utils/pricing.ts')
   const provenance = await server.ssrLoadModule('/src/utils/provenance.ts')
   const certificate = await server.ssrLoadModule('/src/utils/certificate.ts')
+  const buyer = await server.ssrLoadModule('/src/utils/buyerJourney.ts')
+  const checkoutModel = await server.ssrLoadModule('/src/utils/checkout.ts')
+  const orderModel = await server.ssrLoadModule('/src/utils/orders.ts')
+  const buyerState = await server.ssrLoadModule('/src/app/buyerState.ts')
+  const buyerPages = {
+    wishlist: (await server.ssrLoadModule('/src/pages/WishlistPage/WishlistPage.tsx')).WishlistPage,
+    cart: (await server.ssrLoadModule('/src/pages/CartPage/CartPage.tsx')).CartPage,
+    checkout: (await server.ssrLoadModule('/src/pages/CheckoutPage/CheckoutPage.tsx')).CheckoutPage,
+    orders: (await server.ssrLoadModule('/src/pages/OrdersPage/OrdersPage.tsx')).OrdersPage,
+  }
+  const { CheckoutReview } = await server.ssrLoadModule(
+    '/src/components/CheckoutReview/CheckoutReview.tsx',
+  )
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -78,6 +91,12 @@ try {
     { pattern: /^\/artists$/, resolve: () => true, label: 'artists' },
     { pattern: /^\/artists\/([^/]+)$/, resolve: (id) => creatorIds.has(id), label: 'artist' },
     { pattern: /^\/collections$/, resolve: () => true, label: 'collections' },
+    // The buyer journey: four literal paths, none of them parameterised, all of
+    // them reachable without an account.
+    { pattern: /^\/wishlist$/, resolve: () => true, label: 'saved works' },
+    { pattern: /^\/cart$/, resolve: () => true, label: 'cart' },
+    { pattern: /^\/checkout$/, resolve: () => true, label: 'checkout preview' },
+    { pattern: /^\/orders$/, resolve: () => true, label: 'orders' },
     { pattern: /^\/sell$/, resolve: () => true, label: 'sell' },
     { pattern: /^\/sell\/studio$/, resolve: () => true, label: 'studio workspace' },
     { pattern: /^\/sell\/studio\/listings$/, resolve: () => true, label: 'studio listings' },
@@ -135,16 +154,38 @@ try {
     'Exhibited at',
     'Gallery history',
   ]
-  const purchasePhrases = [
-    'Add to cart',
-    'Add to basket',
+  /*
+   * Words that would claim a transaction, a stock position or an account.
+   *
+   * Phase 10 adds a real cart, a real save control and a checkout preview, so
+   * “Add to cart” is no longer in this list — it is now a control that works, and
+   * the pages that carry it state what it cannot do. What stays forbidden is the
+   * language of a completed sale: nothing has been bought, nothing is in stock,
+   * nothing is reserved, and nobody has an account to sign in to.
+   */
+  const transactionPhrases = [
     'Buy now',
-    'Add to favourites',
-    'Add to wishlist',
-    'Wishlist',
-    'Save for later',
+    'Pay now',
+    'Proceed to payment',
+    'Order placed',
+    'Order confirmed',
+    'Payment received',
+    'Payment successful',
+    'Thank you for your order',
+    'Your order is on its way',
+    'Track your order',
     'Out of stock',
     'Sold out',
+    'In stock',
+    'Reserved for you',
+    'Free shipping',
+    'Estimated delivery',
+    'Sign in',
+    'Sign up',
+    'Create an account',
+    'My account',
+    'Saved to your account',
+    'Add to basket',
     'Enquire about this work',
   ]
 
@@ -301,6 +342,9 @@ try {
       ],
     },
     { path: '/404', expect: 'Error 404' },
+    // The buyer routes are literal paths: anything below them is not a page.
+    { path: '/orders/unknown-order-id', expect: 'Error 404' },
+    { path: '/cart/checkout', expect: 'Error 404' },
     { path: '/this-route-does-not-exist', expect: 'Error 404' },
     { path: '/artwork/unknown-artwork-id', expect: 'We couldn’t find that artwork' },
     { path: '/artists/unknown-artist-id', expect: 'We couldn’t find that artist or studio' },
@@ -357,7 +401,13 @@ try {
         provenance.NO_DOCUMENTS_NOTE,
         'Attribution',
         'Holding',
+        // Phase 10: the two buyer controls, and where they lead.
+        'Your list',
+        'Add to cart',
+        buyer.BUYER_ACTION_NOTE,
+        buyer.BUYER_STATE_NOTE,
       ],
+      expectLinks: ['/wishlist', '/cart'],
       // The studio links, and the collection trail resolves.
       expectLinks: [
         `/artists/${artwork.creatorId}`,
@@ -366,7 +416,7 @@ try {
       // Only the related works appear as artwork links — never the work itself.
       expectArtworks: expectedRelated.slice(0, 4),
       forbidAll: [
-        ...purchasePhrases,
+        ...transactionPhrases,
         `href="/artwork/${artwork.id}"`,
         // Provenance is never invented, for any record.
         ...fabricatedProvenance,
@@ -402,7 +452,7 @@ try {
       expectArtworks: ownWorks.map((artwork) => artwork.id),
       forbidArtworks: otherWorks.map((artwork) => artwork.id),
       expectLinks: ['/artists', '/discover'],
-      forbidAll: [...purchasePhrases, 'Verified seller', 'Verified studio', 'Award-winning'],
+      forbidAll: [...transactionPhrases, 'Verified seller', 'Verified studio', 'Award-winning'],
       forbidPatterns: [currencyPattern],
       // One eager image when the studio has a work to show, none when it does not.
       expectEagerImages: leadWork ? 1 : 0,
@@ -603,7 +653,7 @@ try {
         'Most popular',
         'Best seller',
         'Editor’s pick',
-        ...purchasePhrases,
+        ...transactionPhrases,
       ],
       forbidPatterns: [currencyPattern],
       // One eager image — the hero band. The grid's first row is lazy here
@@ -1538,6 +1588,446 @@ try {
   )
 
   /*
+   * ── The buyer journey, checked directly ─────────────────────────────────
+   * The saved list and the cart are the only state Phase 10 adds, and every
+   * promise the pages make is checked here against the model the pages use:
+   * a save and a cart add are idempotent, a work the catalogue does not hold can
+   * never be stored, a figure is only ever produced from complete prices in one
+   * currency, and no checkout state can represent a placed order.
+   */
+  const firstId = data.SAMPLE_ARTWORKS[0].id
+  const secondId = data.SAMPLE_ARTWORKS[1].id
+
+  const emptyJourney = buyer.EMPTY_BUYER_JOURNEY
+  check(
+    emptyJourney.savedIds.length === 0 && emptyJourney.cartIds.length === 0,
+    'buyer: the starting state is not empty',
+  )
+
+  const savedOnce = buyer.buyerJourneyReducer(emptyJourney, { type: 'save', artworkId: firstId })
+  check(savedOnce.savedIds.join() === firstId, 'buyer: saving a work did not add it')
+  check(
+    buyer.buyerJourneyReducer(savedOnce, { type: 'save', artworkId: firstId }) === savedOnce,
+    'buyer: saving the same work twice changed the list',
+  )
+  const cartedOnce = buyer.buyerJourneyReducer(emptyJourney, { type: 'addToCart', artworkId: firstId })
+  check(cartedOnce.cartIds.join() === firstId, 'buyer: adding a work did not put it in the cart')
+  check(
+    buyer.buyerJourneyReducer(cartedOnce, { type: 'addToCart', artworkId: firstId }) === cartedOnce,
+    'buyer: adding the same work twice changed the cart',
+  )
+  check(
+    emptyJourney.savedIds.length === 0 && emptyJourney.cartIds.length === 0,
+    'buyer: the reducer mutated the state it was handed',
+  )
+
+  // Nothing the catalogue does not hold may be stored, whatever a control sends.
+  for (const junk of ['no-such-work', '', '   ', 42, null, undefined, {}, []]) {
+    for (const type of ['save', 'addToCart']) {
+      const result = buyer.buyerJourneyReducer(emptyJourney, { type, artworkId: junk })
+      check(
+        result.savedIds.length === 0 && result.cartIds.length === 0,
+        `buyer: ${String(junk)} was accepted by ${type}`,
+      )
+    }
+  }
+
+  const toggled = buyer.buyerJourneyReducer(savedOnce, { type: 'toggleSaved', artworkId: firstId })
+  check(toggled.savedIds.length === 0, 'buyer: toggling a saved work did not unsave it')
+  const unsaved = buyer.buyerJourneyReducer(savedOnce, { type: 'unsave', artworkId: secondId })
+  check(unsaved.savedIds.join() === firstId, 'buyer: unsaving a work that was not saved changed the list')
+  const bothCart = buyer.buyerJourneyReducer(cartedOnce, { type: 'addToCart', artworkId: secondId })
+  check(bothCart.cartIds.length === 2, 'buyer: a second work was not added to the cart')
+  check(
+    buyer.buyerJourneyReducer(bothCart, { type: 'removeFromCart', artworkId: firstId }).cartIds.join() ===
+      secondId,
+    'buyer: removing a cart line did not take that work out',
+  )
+  check(
+    buyer.buyerJourneyReducer(bothCart, { type: 'emptyCart' }).cartIds.length === 0,
+    'buyer: emptying the cart left something in it',
+  )
+  check(
+    buyer.buyerJourneyReducer(unsaved, { type: 'emptyCart' }).cartIds.length === 0 &&
+      buyer.buyerJourneyReducer(unsaved, { type: 'emptyCart' }).savedIds.join() === firstId,
+    'buyer: emptying the cart touched the saved list',
+  )
+
+  // Malformed lists degrade instead of throwing.
+  check(buyer.normaliseIdList([firstId, firstId, '', 7, null]).join() === firstId,
+    'buyer: a malformed id list did not normalise to its usable ids')
+  check(buyer.normaliseIdList('not-a-list').length === 0, 'buyer: a non-array id list was accepted')
+  check(buyer.normaliseIdList(undefined).length === 0, 'buyer: undefined was accepted as an id list')
+  check(buyer.resolveArtworks(['no-such-work', firstId]).length === 1,
+    'buyer: an unknown id resolved to something')
+  check(buyer.resolveArtworks(42).length === 0, 'buyer: a number resolved to a record')
+  check(
+    buyer.savedArtworks({ savedIds: [firstId, 'no-such-work'], cartIds: [] }).length === 1,
+    'buyer: a saved list with a stale id did not degrade to the records that exist',
+  )
+
+  /* The cart's total: one way to have a figure, four honest ways not to. */
+  const emptyTotal = buyer.cartTotal([])
+  check(emptyTotal.kind === 'empty', `buyer: an empty cart reported “${emptyTotal.kind}”`)
+  check(emptyTotal.groups.length === 0, 'buyer: an empty cart produced a subtotal')
+
+  const unpricedTotal = buyer.cartTotal(data.SAMPLE_ARTWORKS)
+  check(
+    unpricedTotal.kind === 'unpriced' && unpricedTotal.pricedCount === 0,
+    `buyer: the catalogue's own cart reported “${unpricedTotal.kind}” — it must have no figure at all`,
+  )
+  check(
+    unpricedTotal.unpricedCount === data.SAMPLE_ARTWORKS.length &&
+      unpricedTotal.groups.length === 0,
+    'buyer: a cart of unpriced works produced a group',
+  )
+
+  const pricedWork = (amount, currency) => ({
+    ...data.SAMPLE_ARTWORKS[0],
+    price: { amount, currency },
+  })
+  const usdComplete = buyer.cartTotal([pricedWork(2400, 'USD'), pricedWork(600, 'USD')])
+  check(
+    usdComplete.kind === 'complete' && usdComplete.groups.length === 1,
+    `buyer: two priced works in one currency reported “${usdComplete.kind}”`,
+  )
+  check(
+    usdComplete.groups[0].subtotal.text === 'USD 3,000',
+    `buyer: the subtotal is ${usdComplete.groups[0]?.subtotal.text}, expected USD 3,000`,
+  )
+  check(
+    usdComplete.groups[0].subtotal.value === 3000,
+    'buyer: the subtotal does not carry the number it printed',
+  )
+
+  const mixedCart = buyer.cartTotal([pricedWork(2400, 'USD'), pricedWork(600, 'INR')])
+  check(mixedCart.kind === 'mixed', `buyer: a two-currency cart reported “${mixedCart.kind}”`)
+  check(
+    mixedCart.groups.map((group) => group.subtotal.text).join(' | ') === 'USD 2,400 | INR 600',
+    `buyer: the mixed cart's groups are ${mixedCart.groups.map((group) => group.subtotal.text).join(' | ')}`,
+  )
+  check(
+    !mixedCart.message.includes('3,000') && /never added together|does not treat currencies/.test(mixedCart.message),
+    'buyer: a mixed-currency cart adds its currencies together',
+  )
+
+  const partialCart = buyer.cartTotal([pricedWork(2400, 'USD'), data.SAMPLE_ARTWORKS[1]])
+  check(partialCart.kind === 'partial', `buyer: a half-priced cart reported “${partialCart.kind}”`)
+  check(
+    partialCart.groups[0].subtotal.text === 'USD 2,400' && partialCart.unpricedCount === 1,
+    'buyer: a half-priced cart did not separate what it can and cannot total',
+  )
+  check(
+    /no complete total/.test(partialCart.message),
+    'buyer: a partial subtotal is not described as incomplete',
+  )
+
+  // The default a visitor actually meets: two sample records, no price anywhere.
+  const realCart = buyer.cartTotal(data.SAMPLE_ARTWORKS.slice(0, 2))
+  check(
+    realCart.kind === 'unpriced' && realCart.heading === 'A total cannot be shown',
+    `buyer: the sample cart reports “${realCart.kind}”`,
+  )
+  check(
+    pricing.formatPrice({ amount: 2400, currency: 'USD' }).value === 2400,
+    'buyer: a formatted price does not carry the value its subtotal would add',
+  )
+
+  /* The checkout model: what it asks for, what it refuses, and what it keeps. */
+  check(
+    checkoutModel.CHECKOUT_STAGES.map((stage) => stage.id).join() === 'contact,delivery,review',
+    'checkout: the sections are no longer contact, delivery, review',
+  )
+  check(
+    !checkoutModel.CHECKOUT_FIELDS.some((field) =>
+      /card|cvv|cvc|expiry|iban|wallet|account/i.test(`${field.name} ${field.label}`),
+    ),
+    'checkout: the form describes a payment field',
+  )
+
+  const blankDetails = checkoutModel.emptyCheckoutDetails()
+  const blankContact = checkoutModel.validateCheckoutStage(blankDetails, 'contact')
+  check(
+    Boolean(blankContact.fullName) && Boolean(blankContact.email),
+    'checkout: an empty contact section was accepted',
+  )
+  check(
+    blankContact.phone === undefined,
+    'checkout: an optional telephone number was required',
+  )
+  check(
+    checkoutModel.CHECKOUT_FIELDS.filter((field) => field.stage === 'delivery').length === 5 &&
+      Object.keys(checkoutModel.validateCheckoutStage(blankDetails, 'delivery')).length === 4,
+    'checkout: the delivery section does not ask for its five fields, four of them required',
+  )
+  check(
+    Object.keys(checkoutModel.validateCheckoutStage(blankDetails, 'review')).length === 0,
+    'checkout: the review section asked for a field of its own',
+  )
+
+  const filledDetails = {
+    ...blankDetails,
+    fullName: 'A Buyer',
+    email: 'buyer@example.com',
+    addressLine1: '1 Sample Street',
+    city: 'Pune',
+    postcode: '411001',
+    country: 'India',
+  }
+  check(
+    Object.keys(checkoutModel.validateCheckoutDetails(filledDetails)).length === 0,
+    'checkout: a complete set of details was rejected',
+  )
+  check(
+    Boolean(checkoutModel.validateCheckoutStage({ ...filledDetails, email: 'not-an-email' }, 'contact').email),
+    'checkout: an address that is not an email was accepted',
+  )
+  check(
+    Boolean(checkoutModel.validateCheckoutStage({ ...filledDetails, phone: '++' }, 'contact').phone),
+    'checkout: an unusable telephone number was accepted',
+  )
+  check(
+    checkoutModel.validateCheckoutStage({ ...filledDetails, phone: '' }, 'contact').phone === undefined,
+    'checkout: an empty optional telephone number was rejected',
+  )
+  check(
+    Boolean(
+      checkoutModel.validateCheckoutStage({ ...filledDetails, postcode: '1234567890123' }, 'delivery')
+        .postcode,
+    ),
+    'checkout: an over-long postal code was accepted',
+  )
+
+  let checkoutState = checkoutModel.initialCheckoutState()
+  check(
+    checkoutState.stageIndex === 0 && checkoutState.checked === false,
+    'checkout: the preview does not open on the first section',
+  )
+  check(
+    !/place|order|submit|confirm|paid/i.test(Object.keys(checkoutState).join()),
+    'checkout: the state model carries a flag for a placed order',
+  )
+
+  const blockedContinue = checkoutModel.checkoutReducer(checkoutState, { type: 'continue' })
+  check(
+    blockedContinue.stageIndex === 0 && blockedContinue.checked === true,
+    'checkout: an empty section let the visitor continue',
+  )
+  check(
+    Boolean(blockedContinue.errors.fullName),
+    'checkout: continuing past an empty section produced no message',
+  )
+
+  checkoutState = checkoutModel.checkoutReducer(checkoutState, {
+    type: 'setField',
+    field: 'fullName',
+    value: 'A Buyer',
+  })
+  checkoutState = checkoutModel.checkoutReducer(checkoutState, {
+    type: 'setField',
+    field: 'email',
+    value: 'buyer@example.com',
+  })
+  const advanced = checkoutModel.checkoutReducer(checkoutState, { type: 'continue' })
+  check(
+    advanced.stageIndex === 1 && advanced.furthestIndex === 1,
+    'checkout: a complete section did not open the next one',
+  )
+  check(
+    advanced.details.fullName === 'A Buyer' && advanced.details.email === 'buyer@example.com',
+    'checkout: continuing dropped a typed value',
+  )
+  check(
+    checkoutModel.checkoutReducer(advanced, { type: 'goToStage', index: 2 }).stageIndex === 1,
+    'checkout: the review section could be opened before delivery',
+  )
+  check(
+    checkoutModel.checkoutReducer(advanced, { type: 'back' }).details.email === 'buyer@example.com',
+    'checkout: going back lost the details',
+  )
+  check(
+    checkoutModel.incompleteStages(blankDetails).map((stage) => stage.id).join() === 'contact,delivery',
+    'checkout: the sections still waiting are not named',
+  )
+  check(
+    checkoutModel.incompleteStages(filledDetails).length === 0,
+    'checkout: complete details still reported a section as incomplete',
+  )
+
+  check(
+    /disabled/.test(checkoutModel.PLACE_ORDER_REASON) &&
+      checkoutModel.PLACE_ORDER_BLOCKERS.length >= 5,
+    'checkout: the unavailable order action is not explained',
+  )
+  check(
+    /no order is placed/.test(checkoutModel.CHECKOUT_PREVIEW_NOTICE),
+    'checkout: the preview notice does not say no order is placed',
+  )
+  check(
+    /no card/i.test(checkoutModel.CHECKOUT_PAYMENT_NOTE) &&
+      /never hold card details/.test(checkoutModel.CHECKOUT_PAYMENT_NOTE),
+    'checkout: the payment note does not rule out card data',
+  )
+  check(
+    /not sent, not stored/.test(checkoutModel.CHECKOUT_DETAILS_NOTE),
+    'checkout: the details note does not say what happens to what is typed',
+  )
+  check(
+    /Nothing is dispatched/.test(checkoutModel.checkoutDeliveryNote([])) &&
+      /delivers nothing/.test(checkoutModel.checkoutDeliveryNote(['Arc of Quiet Light'])),
+    'checkout: the delivery note promises a delivery',
+  )
+
+  /* The orders page's structure: placeholders, never generated values. */
+  const orderRows = orderModel.orderStructure()
+  check(orderRows.length === 5, `orders: ${orderRows.length} structure rows, expected 5`)
+  const placeholderRows = orderRows.filter((row) => row.placeholder)
+  check(
+    placeholderRows.length === 3 && placeholderRows.every((row) => /^\[.+\]$/.test(row.value)),
+    'orders: a placeholder row is not written as a bracketed placeholder',
+  )
+  check(
+    orderRows.every((row) => row.note.length > 20 && !/\d{4}/.test(row.value)),
+    'orders: a structure row carries no explanation, or carries a date or a number',
+  )
+  check(
+    orderRows.some((row) => row.label === 'Status' && row.value === 'No order placed' && !row.placeholder),
+    'orders: the status row does not state the one accurate status',
+  )
+  check(
+    Boolean(orderModel.orderStructureArtwork()?.id),
+    'orders: the structure card is not anchored to a real record',
+  )
+
+  /* The four buyer screens, rendered with state in them. */
+  const seededJourney = { savedIds: [firstId, secondId], cartIds: [firstId, secondId] }
+  const renderSeeded = (path, Component) =>
+    renderToStaticMarkup(
+      createElement(
+        MemoryRouter,
+        { initialEntries: [path] },
+        createElement(
+          buyerState.BuyerStateContext.Provider,
+          { value: { state: seededJourney, dispatch: () => {} } },
+          createElement(Component),
+        ),
+      ),
+    )
+
+  const savedHtml = renderSeeded('/wishlist', buyerPages.wishlist)
+  const firstTitle = data.SAMPLE_ARTWORKS[0].title
+  const secondTitle = data.SAMPLE_ARTWORKS[1].title
+  check(
+    savedHtml.includes(firstTitle) && savedHtml.includes(secondTitle),
+    'wishlist: a saved work is not listed on the page',
+  )
+  check(
+    (savedHtml.match(/aria-pressed="true"/g) ?? []).length === 2,
+    'wishlist: the saved works are not marked as saved on their controls',
+  )
+  check(
+    savedHtml.includes(`Remove ${firstTitle} from saved works`),
+    'wishlist: the save control does not name the work it applies to',
+  )
+  check(
+    savedHtml.includes('2 works saved') && savedHtml.includes('href="/discover"'),
+    'wishlist: the saved count or the route back to discovery is missing',
+  )
+  check(
+    !/USD|INR|GBP/.test(savedHtml),
+    'wishlist: a currency appeared on a page of unpriced sample records',
+  )
+
+  const seededCartHtml = renderSeeded('/cart', buyerPages.cart)
+  check(
+    seededCartHtml.includes('A total cannot be shown'),
+    'cart: a cart of unpriced works claims a total',
+  )
+  check(
+    (seededCartHtml.match(/No price has been provided/g) ?? []).length === 2,
+    'cart: the absence of a price is not stated on every line',
+  )
+  check(
+    (seededCartHtml.match(/aria-label="Remove /g) ?? []).length === 2,
+    'cart: a line has no remove action that names its work',
+  )
+  check(
+    seededCartHtml.includes('href="/checkout"') && seededCartHtml.includes('href="/orders"'),
+    'cart: the way on to checkout or orders is missing',
+  )
+  check(
+    !/[A-Z]{3}\s\d/.test(seededCartHtml),
+    'cart: a currency figure appeared for works that carry no price',
+  )
+  check(
+    seededCartHtml.includes('Local to this tab'),
+    'cart: the page does not state where the cart is held',
+  )
+
+  const seededCheckoutHtml = renderSeeded('/checkout', buyerPages.checkout)
+  check(
+    seededCheckoutHtml.includes('Step 1 of 3') && seededCheckoutHtml.includes('Contact'),
+    'checkout: the page does not open on the first of three sections',
+  )
+  check(
+    seededCheckoutHtml.includes('id="checkout-fullName"') &&
+      seededCheckoutHtml.includes('for="checkout-fullName"'),
+    'checkout: the first contact field is unlabelled',
+  )
+  check(
+    !seededCheckoutHtml.includes('id="checkout-addressLine1"'),
+    'checkout: the delivery fields are shown before the contact section is complete',
+  )
+  check(
+    seededCheckoutHtml.includes('aria-label="Checkout sections"') &&
+      seededCheckoutHtml.includes('aria-current="step"'),
+    'checkout: the sections are not marked up as an ordered set',
+  )
+  check(
+    seededCheckoutHtml.includes('Order summary') &&
+      seededCheckoutHtml.includes('A total cannot be shown'),
+    'checkout: the order summary does not report the cart honestly',
+  )
+  check(
+    !/card number|CVC|CVV|expiry date/i.test(seededCheckoutHtml),
+    'checkout: a card field is present',
+  )
+
+  // The review step on its own: the action that can never be taken.
+  const reviewHtml = renderToStaticMarkup(
+    createElement(CheckoutReview, { details: filledDetails, onEdit: () => {} }),
+  )
+  const placeOrderTag = /<button[^>]*id="place-order"[^>]*>/.exec(reviewHtml)?.[0]
+  check(Boolean(placeOrderTag), 'checkout: the order action is not rendered with an id')
+  check(
+    Boolean(placeOrderTag && /disabled/.test(placeOrderTag)),
+    'checkout: the order action is not disabled',
+  )
+  check(
+    Boolean(placeOrderTag && /aria-describedby="place-order-reason"/.test(placeOrderTag)),
+    'checkout: the order action is not connected to its reason',
+  )
+  check(
+    reviewHtml.includes('id="place-order-reason"') &&
+      reviewHtml.includes(checkoutModel.PLACE_ORDER_REASON),
+    'checkout: the reason the order cannot be placed is missing',
+  )
+  check(
+    reviewHtml.includes('Every section above is complete') &&
+      reviewHtml.includes('buyer@example.com'),
+    'checkout: the review step does not read back what was entered',
+  )
+  check(
+    !/card number|CVC|CVV|expiry date/i.test(reviewHtml) &&
+      reviewHtml.includes(checkoutModel.CHECKOUT_PAYMENT_NOTE),
+    'checkout: the review step shows a card field, or does not rule one out',
+  )
+  check(
+    checkoutModel.PLACE_ORDER_BLOCKERS.every((blocker) => reviewHtml.includes(blocker)),
+    'checkout: the review step does not list what a real checkout needs',
+  )
+
+  /*
    * ── The workspace model, checked directly ───────────────────────────────
    * The workspace shows one studio's records and states how complete they are.
    * Both claims are computed here from the raw data and compared with what the
@@ -1846,6 +2336,97 @@ try {
   }
 
   const workspaceCasesEnd = CASES.length
+  const buyerCasesStart = CASES.length
+
+  /*
+   * The buyer journey, as a visitor meets it: every one of these screens starts
+   * empty, because there is no account behind them and nothing is stored. The
+   * seeded states — a saved list, a cart, a completed review — are asserted
+   * against the models above, where they can be built without pretending a
+   * visitor arrived with them.
+   */
+  CASES.push(
+    {
+      path: '/wishlist',
+      expect: 'Saved works',
+      expectAll: [
+        buyer.SAVED_EMPTY_TITLE,
+        buyer.SAVED_EMPTY_TEXT,
+        buyer.BUYER_STATE_NOTE,
+        'Local to this tab',
+        // The list is a bookmark, and the page says so where it is empty.
+        'not a reservation',
+      ],
+      expectLinks: ['/discover', '/collections', '/cart', '/orders', '/checkout'],
+      forbidAll: [...transactionPhrases, ...fabricatedProvenance],
+      forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/cart',
+      expect: 'Your cart',
+      expectAll: [
+        buyer.CART_EMPTY_TITLE,
+        buyer.CART_EMPTY_TEXT,
+        buyer.BUYER_STATE_NOTE,
+        'nothing in it can be bought',
+      ],
+      expectLinks: ['/discover', '/wishlist', '/checkout', '/orders'],
+      // An empty cart: no image, no total, no figure of any kind.
+      maxImages: 0,
+      forbidAll: [...transactionPhrases, ...fabricatedProvenance],
+      forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/checkout',
+      expect: 'Checkout',
+      expectAll: [
+        buyer.CHECKOUT_EMPTY_TITLE,
+        buyer.CHECKOUT_EMPTY_TEXT,
+        checkoutModel.CHECKOUT_PREVIEW_NOTICE,
+        'no payment is taken',
+      ],
+      expectLinks: ['/discover', '/cart'],
+      maxImages: 0,
+      forbidAll: [
+        ...transactionPhrases,
+        // No payment card field may exist anywhere in the build.
+        'Card number',
+        'Security code',
+        'Expiry date',
+      ],
+      forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/orders',
+      expect: 'Orders',
+      expectAll: [
+        orderModel.ORDERS_EMPTY_TITLE,
+        orderModel.ORDERS_EMPTY_TEXT,
+        orderModel.ORDERS_PREVIEW_NOTICE,
+        orderModel.ORDER_STRUCTURE_NOTICE,
+        'Demonstration data',
+        'Not a real order',
+        // Every row of the structure, label and value alike.
+        ...orderModel.orderStructure().map((row) => row.label),
+        ...orderModel.orderStructure().map((row) => row.value),
+        'No payment taken',
+      ],
+      // The structure card is built around a real record, so its link resolves.
+      expectArtworks: [data.SAMPLE_ARTWORKS[0].id],
+      forbidAll: [
+        ...transactionPhrases,
+        'Delivered',
+        'Shipped',
+        'Dispatched on',
+        'Paid',
+        'Payout',
+      ],
+      // No reference number and no date may appear, in any format.
+      forbidPatterns: [currencyPattern, /\b\d{4}-\d{2}-\d{2}\b/, /[A-Z]{2,}-\d{3,}/],
+    },
+  )
+
+  const buyerCasesEnd = CASES.length
 
   for (const testCase of CASES) {
     routesChecked += 1
@@ -1863,6 +2444,18 @@ try {
       `${testCase.path}: expected marker not found — ${testCase.expect}`,
     )
     check(html.includes('Skip to content'), `${testCase.path}: skip link missing`)
+
+    /*
+     * Phase 10 adds a buyer journey with no account behind it, and nothing in
+     * the build offers one. This is asserted on every page rather than only on
+     * the buyer screens: a sign-in link in the header would appear everywhere.
+     */
+    for (const phrase of ['Sign in', 'Sign up', 'Log in', 'Create an account', 'My account']) {
+      check(
+        !html.includes(phrase),
+        `${testCase.path}: an account entry point appeared — “${phrase}”`,
+      )
+    }
     check(
       html.includes('Where Art Finds Its Universe.') || testCase.path === '/404',
       `${testCase.path}: footer tagline missing from the shared layout`,
@@ -1979,6 +2572,10 @@ try {
   console.log(
     `workspace: ${workspaceCasesEnd - workspaceCasesStart} seller studio cases, plus direct ` +
       `assertions on the collection, draft and workspace models`,
+  )
+  console.log(
+    `buyer journey: ${buyerCasesEnd - buyerCasesStart} cases, plus direct assertions on the saved ` +
+      `list, the cart, its totals, the checkout sections and the order structure`,
   )
 
   await server.close()

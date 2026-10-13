@@ -19,6 +19,7 @@ import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS } from '@/data'
 import { buildCollectionEntry } from '@/utils/collections'
 import { buildStudioEntry } from '@/utils/studioProfile'
 import { ILLUSTRATIVE_PRICE, ILLUSTRATIVE_PRICE_LABEL, formatPrice } from '@/utils/pricing'
+import { cartTotal } from '@/utils/buyerJourney'
 import { PreviewBlock } from './PreviewBlock'
 import styles from './ComponentSections.module.css'
 
@@ -32,6 +33,25 @@ export function ComponentSections() {
   const sampleStudio = useMemo(() => buildStudioEntry(SAMPLE_CREATORS[0]), [])
   const sampleCollectionEntry = useMemo(() => buildCollectionEntry(SAMPLE_COLLECTIONS[0]), [])
   const samplePrice = useMemo(() => formatPrice(ILLUSTRATIVE_PRICE), [])
+
+  /*
+   * The four states a cart total can be in, built from the model the cart uses.
+   * They are specimens, not data: the two priced carts below are assembled here
+   * from the illustrative amount, and no record in the catalogue carries one.
+   */
+  const pricedSpecimen = (amount: number, currency: string) => ({
+    ...SAMPLE_ARTWORKS[0],
+    price: { amount, currency },
+  })
+  const totalSpecimens = useMemo(
+    () => [
+      { label: 'A cart with no prices in it', total: cartTotal(SAMPLE_ARTWORKS.slice(0, 2)) },
+      { label: 'A cart priced in one currency', total: cartTotal([pricedSpecimen(2400, 'USD'), pricedSpecimen(600, 'USD')]) },
+      { label: 'A cart priced in two currencies', total: cartTotal([pricedSpecimen(2400, 'USD'), pricedSpecimen(600, 'INR')]) },
+      { label: 'A cart priced in one currency, with an unpriced work beside it', total: cartTotal([pricedSpecimen(2400, 'USD'), SAMPLE_ARTWORKS[1]]) },
+    ],
+    [],
+  )
 
   return (
     <>
@@ -272,6 +292,30 @@ export function ComponentSections() {
           <p className={styles.caption}>
             The loading indicator is reserved for asynchronous moments such as a lazily loaded route
             chunk. ArtVerse currently ships one static bundle, so page content does not use it yet.
+          </p>
+        </div>
+      </PreviewBlock>
+
+      <PreviewBlock
+        id="ds-cart-totals"
+        title="Cart totals"
+        description="A cart total is either one figure or one of four named states. A figure is only produced when every work is priced in a single currency; every other case names itself and explains why no number can be shown. Nothing is converted, and no shipping, tax, discount or fee is ever added."
+      >
+        <div className={styles.stack}>
+          {totalSpecimens.map((specimen) => (
+            <div key={specimen.label} className={styles.specimen}>
+              <p className={styles.specimenLabel}>{specimen.label}</p>
+              <p className={styles.specimenHeading}>{specimen.total.heading}</p>
+              {specimen.total.groups.map((group) => (
+                <PriceLine key={group.code} price={group.subtotal} />
+              ))}
+              <p className={styles.specimenNote}>{specimen.total.message}</p>
+            </div>
+          ))}
+          <p className={styles.caption}>
+            The priced carts above are built from the single illustrative amount, which belongs to no
+            record. A cart holding the catalogue's own records is the first specimen: no sample work
+            carries a price, so no total exists for it and none is shown.
           </p>
         </div>
       </PreviewBlock>

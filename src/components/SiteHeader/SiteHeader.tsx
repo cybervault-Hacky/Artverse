@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { MOBILE_NAV, PRIMARY_NAV } from '@/app/navigation'
+import { useBuyerState } from '@/app/buyerState'
 import { NavRoutes } from '@/app/routes'
 import { Brand } from '@/components/Brand/Brand'
 import { Button } from '@/components/Button/Button'
 import { PageContainer } from '@/components/PageContainer/PageContainer'
-import { CloseIcon, MenuIcon, SearchIcon } from '@/components/icons/Icons'
+import { CartIcon, CloseIcon, HeartIcon, MenuIcon, SearchIcon } from '@/components/icons/Icons'
 import { cn } from '@/utils/cn'
+import { cartArtworks, savedArtworks } from '@/utils/buyerJourney'
 import styles from './SiteHeader.module.css'
 
 /**
@@ -19,6 +21,15 @@ import styles from './SiteHeader.module.css'
 export function SiteHeader() {
   const location = useLocation()
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const { state: buyerState } = useBuyerState()
+
+  /*
+   * Counts of what this visitor has collected in this tab — not popularity, not
+   * stock, and never a figure from anywhere but the local list. The label says
+   * so, and a count of zero shows no badge at all.
+   */
+  const savedCount = savedArtworks(buyerState).length
+  const cartCount = cartArtworks(buyerState).length
 
   /**
    * The open menu remembers the path it was opened on, so any navigation —
@@ -86,6 +97,34 @@ export function SiteHeader() {
         </nav>
 
         <div className={styles.actions}>
+          <NavLink
+            to={NavRoutes.wishlist}
+            className={styles.iconButton}
+            aria-label={savedCount === 0 ? 'Saved works' : `Saved works (${savedCount})`}
+            title="Saved works"
+          >
+            <HeartIcon />
+            {savedCount > 0 ? (
+              <span className={styles.count} aria-hidden="true">
+                {savedCount > 9 ? '9+' : savedCount}
+              </span>
+            ) : null}
+          </NavLink>
+
+          <NavLink
+            to={NavRoutes.cart}
+            className={styles.iconButton}
+            aria-label={cartCount === 0 ? 'Cart' : `Cart (${cartCount})`}
+            title="Cart"
+          >
+            <CartIcon />
+            {cartCount > 0 ? (
+              <span className={styles.count} aria-hidden="true">
+                {cartCount > 9 ? '9+' : cartCount}
+              </span>
+            ) : null}
+          </NavLink>
+
           <NavLink
             to={NavRoutes.search}
             className={styles.iconButton}

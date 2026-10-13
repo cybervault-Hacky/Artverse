@@ -18,9 +18,9 @@ export interface PriceLineProps {
  * always visible — `USD 2,400` rather than `$2,400` — because a symbol alone is
  * ambiguous and this build never converts between currencies.
  *
- * Nothing here is a control. There is no basket, no enquiry button and no
- * “buy”, and the note is where a caller states that, so a price can be shown
- * without anything about it being clickable.
+ * Nothing here is a control. There is no enquiry button and no “buy”, and the
+ * note is where a caller states what a price is not — a cart line may hold one,
+ * but a cart is a list to think with and cannot be paid for.
  */
 export function PriceLine({ price, note, className }: PriceLineProps) {
   return (

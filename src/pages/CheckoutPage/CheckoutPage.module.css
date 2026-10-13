@@ -1,0 +1,313 @@
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/*
+ * The sections on the left, the order summary on the right from 1024px. The
+ * summary is what a buyer re-reads while filling in a form, so it follows the
+ * scroll down the page; below 1024px it sits under the form, which is the order
+ * it is read in on a phone.
+ */
+.layout {
+  display: grid;
+  gap: var(--space-7);
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .summary {
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-6));
+  }
+}
+
+.sections {
+  min-width: 0;
+}
+
+.stepLine {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-accent-ink);
+}
+
+.stageTitle {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.stageDescription {
+  margin-top: var(--space-3);
+  max-width: 58ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── The stepper ───────────────────────────────────────────────────────── */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.step:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+  color: var(--color-ink);
+}
+
+/* The current section is marked by its words, its rule and its weight — not by colour alone. */
+.step[aria-current='step'] {
+  border-color: var(--color-accent-strong);
+  color: var(--color-ink);
+  font-weight: var(--weight-medium);
+}
+
+/* A section that has not been reached yet is visibly unavailable. */
+.step:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.errorSummary {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-accent-strong);
+  background-color: var(--color-surface-muted);
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+/* ── Fields and the review ─────────────────────────────────────────────── */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+  max-width: 34rem;
+}
+
+/* What the delivery section can honestly say, above the address fields. */
+.deliveryNote {
+  max-width: 62ch;
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-accent-strong);
+  background-color: var(--color-surface-muted);
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+.blockTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.blockNote {
+  margin-top: var(--space-3);
+  max-width: 62ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.reviewBlock {
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.reviewHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.reviewTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.reviewList {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.reviewRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border-hairline);
+  font-size: var(--text-small);
+}
+
+.reviewLabel {
+  min-width: 9rem;
+  color: var(--color-ink-muted);
+}
+
+.reviewValue {
+  color: var(--color-ink);
+}
+
+/* ── The order action ──────────────────────────────────────────────────── */
+
+.orderAction {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.reason {
+  max-width: 62ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── Controls and the closing note ─────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.tabNote {
+  margin-top: var(--space-4);
+  max-width: 62ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── Order summary ─────────────────────────────────────────────────────── */
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-muted);
+}
+
+.summaryTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.summaryList {
+  border-top: var(--border-hairline);
+}
+
+.summaryTotal {
+  padding-top: var(--space-3);
+  border-top: var(--border-hairline);
+  font-family: var(--font-display);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.summaryMessage {
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.summaryNote {
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step {
+    transition: none;
+  }
+}
+
+@media print {
+  /*
+   * A printed checkout is a record of what was filled in, not a form: the
+   * stepper, the controls and the sticky summary controls are dropped, and the
+   * reason the order cannot be placed stays — it is text, not a disabled state.
+   */
+  .steps,
+  .controls {
+    display: none;
+  }
+
+  .summary {
+    position: static;
+    background: none;
+  }
+}

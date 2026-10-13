@@ -5,7 +5,7 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 9 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 10 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
 signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
 filtering, sorting and honest empty states, an immersive artwork page for every record, a studio
@@ -14,8 +14,10 @@ collection's own works, the seller studio illustrated at `/sell/studio` — an o
 studio's records, its listings, a listing draft you can edit, and a profile preview — and the
 commerce groundwork: a price shown only when a record genuinely carries one, a provenance section
 that states what is held and what is not, and a seller certificate shown as a design preview marked
-*not issued*. It is still a frontend build: there is no backend, no database, no authentication, no
-accounts, no storage, no payments, no checkout and no real listings.
+*not issued* — and the buyer journey: a saved list, a cart, a staged checkout preview and an orders
+page, all four held in the browser tab with no account behind them. It is still a frontend build:
+there is no backend, no database, no authentication, no accounts, no storage, no payment and no
+order anywhere in it.
 
 ---
 
@@ -33,6 +35,7 @@ accounts, no storage, no payments, no checkout and no real listings.
 - [The collections directory and pages](#the-collections-directory-and-pages)
 - [The seller studio preview](#the-seller-studio-preview)
 - [Price, provenance and the certificate preview](#price-provenance-and-the-certificate-preview)
+- [The buyer journey](#the-buyer-journey)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -174,16 +177,42 @@ listing tools and publication are all still to come.
   incomplete, and a currency with no amount likewise — with hint text that says what the value is
   not: published, converted, or buyable.
 
+**Phase 10 — the buyer journey, as a preview**
+
+- Four routes that need no account: `/wishlist` (presented as **Saved works**), `/cart`, `/checkout`
+  and `/orders`, all reachable from the header, the mobile panel and the footer.
+- The state is two lists of record ids in `src/utils/buyerJourney.ts`, held by `MainLayout` in a
+  `useReducer` for the visit. No storage API is touched, so a reload starts over — and every screen
+  says so rather than implying a saved list somewhere else. The header shows a count of what this
+  visitor has collected, which is their own list and never a stock or popularity figure.
+- A real save control on the artwork page and beside each saved work, with `aria-pressed` and a
+  constant accessible name; a real add-to-cart control in the same two places. Neither reserves
+  anything, and both carry a note saying exactly that.
+- The cart's total is a named state rather than a number: `empty`, `unpriced`, `partial`, `mixed` or
+  `complete`, each with the sentence that explains it. A figure appears only when every work is
+  priced in a single currency, and even then it is a subtotal with no shipping, tax, discount or fee
+  — because ArtVerse has no rule for any of them. Since no sample record carries a price, the
+  catalogue's own cart is always `unpriced`.
+- The checkout is staged: contact, delivery and review, validated for real, with typed values kept
+  across sections. The order action is permanently disabled with its reason connected by
+  `aria-describedby`, no card field exists anywhere, and the review step lists what a real checkout
+  would need. **No order can be placed, and none is.**
+- The orders page reports the truth — no account holds an order and no checkout can create one — and
+  shows one clearly labelled **structure preview** built around a real sample record, in which the
+  reference, date and despatch lines are bracketed placeholders that nothing generates.
+
 ## What is deliberately not included
 
 Catalogue pagination, medium/size/material filters and indexed search; editorial curation tools;
-artwork commerce (real prices, availability, baskets, checkout, payment, orders or refunds); seller accounts, sign-in, seller
+artwork commerce (real prices, availability, payment, order records, refunds or payouts); seller accounts, sign-in, seller
 verification and approval; file uploads, stored listings, drafts that outlive the tab,
 publication, orders, commissions and payouts; seller verification, issued certificates, certificate
 identifiers, QR endpoints and PDF generation. There is no backend, database, authentication,
 payment, storage or AI service anywhere in this repository, and no page simulates one — the seller
 workspace at `/sell/studio` and the certificate design at `/sell/studio/certificate` are frontend
-previews that say on every screen that they are.
+previews that say on every screen that they are. The buyer journey is a preview for the same
+reason: its cart, checkout and orders pages are real interfaces over state that lives in one browser
+tab, and nothing in them can take a payment or place an order.
 
 ## Stack
 
@@ -602,6 +631,35 @@ printing. Printing drops the site header, the footer, the workspace navigation a
 controls, and keeps the document's own rules — the design reads on plain paper and never depends on
 a background printing.
 
+## The buyer journey
+
+Four screens that a visitor can use without signing in — because there is nothing to sign in to.
+Everything they hold lives in one `useReducer` in `MainLayout`, over the pure model in
+`src/utils/buyerJourney.ts`, and nothing is written to the device.
+
+**What is real.** Saving a work, adding it to the cart, removing it, emptying the cart, moving
+between checkout sections, validating a field, correcting it and reading the order summary back are
+all genuinely implemented. The controls do what they say.
+
+**What is not, and says so on screen.**
+
+| The temptation | What this build does instead |
+| --- | --- |
+| Show a cart total from whatever numbers exist | `cartTotal` returns a state, and produces a figure only when every work is priced in one currency |
+| Convert two currencies into one subtotal | Two currencies are two groups, each labelled, with a sentence saying they are never added together |
+| Invent a price for a record that has none | The line, the page and the total all carry the same “no price has been provided” sentence |
+| Add shipping, tax or a fee line | There is no rule for any of them, so no such line exists — and the checkout says why that matters |
+| Reserve a work once it is in the cart | Every surface says the cart is a list to think with and a save is a bookmark, not a hold |
+| Let the checkout end in a confirmation | The order action is disabled with its reason attached, and the state model has no flag for a placed order |
+| Show what a real order looks like by inventing one | The orders page shows a labelled structure — placeholders for the reference, date and despatch, and the true values “No order placed” and “No payment taken” |
+| Imply the cart follows the visitor around | Every buyer screen states the lists live in this browser tab, are not saved and are shared with nobody |
+
+**Where the state lives, and what that means.** `MainLayout` holds it; stepping between pages keeps
+it and a reload discards it. The reduction is idempotent and refuses an id the catalogue does not
+hold, so a control pressed twice changes nothing and a stale reference cannot be stored. Reading is
+equally forgiving: `normaliseIdList` and `resolveArtworks` skip a non-array, a duplicate, a number
+or an id with no record, so a corrupted list produces a shorter page rather than an error.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -612,6 +670,10 @@ a background printing.
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5, extended in Phase 9) — the work in full, its record, its studio, its price and provenance states, related works |
 | `/artists` | `ArtistsPage` | Complete (Phase 6) — studio directory, every creator record |
 | `/artists/:artistId` | `ArtistProfilePage` | Complete (Phase 6) — practice, location, note, own records |
+| `/wishlist` | `WishlistPage` | Complete (Phase 10) — saved works, each with a save toggle and an add-to-cart control, and an honest empty state |
+| `/cart` | `CartPage` | Complete (Phase 10) — the collected works, a total only where one can be worked out, and the way on to the checkout preview |
+| `/checkout` | `CheckoutPage` | Preview (Phase 10) — contact, delivery and review sections with real validation, no payment surface, and a permanently disabled order action |
+| `/orders` | `OrdersPage` | Preview (Phase 10) — the true empty state, and one labelled structure preview of an order record |
 | `/collections` | `CollectionsPage` | Complete (Phase 7) — the directory of the groupings this build holds |
 | `/sell` | `SellPage` | Complete (Phase 8) — the studio workflow, and an honest account of what does not exist yet |
 | `/sell/studio` | `StudioOverviewPage` | Preview (Phase 8) — the records this studio holds, the sections, and what the workspace does not do |
@@ -843,10 +905,22 @@ Executed in this repository:
 | Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS 415.85 kB (125.43 kB gzip), CSS 90.04 kB (14.52 kB gzip) |
+| Production build | `npm run build` | Passes — `dist/` JS 467.01 kB (140.61 kB gzip), CSS 113.66 kB (17.43 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 24 swept URLs return HTTP 200 with the app shell — every destination, `/discover` with search, filter and sort parameters, all five workspace screens, and an unknown artwork, collection, artist or record id |
-| Route rendering | `npm run verify:routes` | 71 route cases (including every artwork, creator and collection id in the data layer, and every seller workspace screen), all assertions pass |
-| Internal links | included above | 960 links resolved against the route table and the data layer — no broken destinations |
+| Route rendering | `npm run verify:routes` | 77 route cases (including every artwork, creator and collection id in the data layer, every seller workspace screen and the four buyer destinations), all assertions pass |
+| Internal links | included above | 1323 links resolved against the route table and the data layer — no broken destinations |
+| No account entry point | asserted on every route | No page in the build offers a sign-in, a sign-up or an account link — the buyer journey is reachable without one because nothing needs one |
+| Saved list and cart | reducer assertions | Saving or adding the same work twice changes nothing; a work the catalogue does not hold, a number, an empty string or `null` is refused by both actions; emptying the cart leaves the saved list alone; the reducer never mutates the state it is handed |
+| Stale and malformed state | model assertions | A non-array, a duplicate, a number and an id with no record all degrade to the usable ids rather than throwing, on the saved list and the cart alike |
+| Cart totals | model assertions | An empty cart, a cart with no prices, a half-priced cart, a two-currency cart and a fully-priced one each report their own state; the sum is right to the cent (`USD 2,400 + USD 600 = USD 3,000`); a two-currency cart prints each currency separately and never a combined figure |
+| The catalogue's own cart | model assertions | Every sample record is unpriced, so a cart of real records always reports `unpriced` and produces no subtotal, no group and no figure |
+| Checkout sections | model assertions | An empty contact section cannot be continued past and reports a message per required field; an optional telephone number stays optional; a malformed email, an unusable telephone number and an over-long postal code are all rejected; the review section asks for no field of its own |
+| Checkout state | model assertions | Continuing requires a valid section, opens the next one and keeps every typed value; going back keeps them too; the review section cannot be opened before delivery; the state model carries no flag for a placed, confirmed or paid order |
+| Disabled order action | component assertions | The review step renders one button with `id="place-order"`, it carries `disabled`, and it is connected to its reason by `aria-describedby`; the reason, the payment note and the list of what a real checkout needs are all present |
+| No payment surface | markup assertions | No card number, security code or expiry field exists in the checkout model, the checkout page or the review step — asserted in all three places |
+| Orders structure | model assertions | Five rows, exactly three of them bracketed placeholders, each with an explanation; no row contains a date or a reference number; the status row states “No order placed” and the payment row “No payment taken”; the card is anchored to a real record so its link resolves |
+| Seeded buyer screens | rendered with state | The saved page lists two works with two pressed toggles and a control named after the work; the cart shows a line per work, a remove action each, “A total cannot be shown” and no currency figure at all; the checkout opens on contact with a labelled first field, the delivery fields withheld, the sections marked `aria-current="step"` and no card field |
+| Unknown buyer paths | included above | `/orders/unknown-order-id` and `/cart/checkout` reach the not-found experience, and the catch-all keeps working |
 | Price rules | included above | No sample record carries a price, and none is reported as carrying one; USD and INR format to different strings that each contain their own code; a symbol alone, a missing code, a non-numeric amount, a zero, a negative and a three-decimal amount all format to nothing |
 | Typed price handling | included above | An amount with no currency and a currency with no amount each fail on their own field; separators, symbols and over-precise amounts are reported rather than stripped; a complete price and an empty one are both valid |
 | Provenance rules | included above | For all 6 records: no statement is claimed, the attribution links to that work's own creator record or says none is recorded, the holding matches the collection relationship, and the authenticity and documents rows state what is not held |
@@ -902,15 +976,15 @@ Executed in this repository:
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
 | CSS Module integrity | script over `src/**` | 53 modules, 602 `styles.*` references resolve; 17 further rules are variant tokens resolved through bracket access; 2 unused rules remain, both pre-existing in untouched files |
-| Heading outline | script over 29 routes | One `h1` per route, no skipped levels (275 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page and every workspace screen |
+| Heading outline | script over 35 routes | One `h1` per route, no skipped levels (340 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page, every workspace screen and all four buyer destinations |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
 | Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
 | Workspace layout | computed from the stylesheets | At 360/390/430px the shell is a single column with a scrolling nav row; from 1024px it is a 15rem sidebar beside the content with both the nav and the editor's preview sticky. Form columns run 1/1/1/2/2/2 and image tiles 1/1/1/2/2/2 across the six widths; the content box is 320px at the narrowest and every track is guarded by `minmax(0, …)` |
 | Workspace tokens | script over the new stylesheets | 392 `var()` references, all defined in `tokens.css` — no colour literal, no undeclared token, no silently-falling-back value |
-| Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset`, and the certificate's two preview inputs are labelled the same way |
+| Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset`; the certificate's two preview inputs and the checkout's contact field are labelled the same way |
 | Contrast | computed from the tokens | Every foreground/background pair the new price, provenance and certificate rules can produce clears 4.5:1 — the lowest is 4.70:1 — including the italic placeholder, the field notes and the status line |
 | Certificate geometry | computed from the stylesheets | At 360/390/430/768/1024/1440px the certificate's content box is 270/300/340/628/838/990px, its frame padding never drops below 24px, the code frame stays 120px and always fits, and the code note carries a minimum width so it wraps rather than squeezing the frame |
-| Print stylesheet | inspection of the modules | Six modules carry `@media print` rules: the site header, the footer, the workspace navigation, the certificate page's controls and the document itself are dropped or restated. No print rule depends on a background image, a gradient or `print-color-adjust`, and the document's borders carry the structure |
+| Print stylesheet | inspection of the modules | Twelve modules carry `@media print` rules: the site header, the footer, the workspace navigation, the certificate page's controls, the checkout's stepper and controls, the cart's summary actions and the buyer controls are dropped or restated. No print rule depends on a background image, a gradient or `print-color-adjust`, and what carries meaning — the document's borders, a price, the reason an order cannot be placed — is text and structure |
 | Image integrity | markup assertions | Every image on the workspace screens carries `width`, `height`, descriptive `alt` and an aspect-ratio frame; no screen emits an image without a `src`, and no element is wider than a 360px viewport |
 | Workspace price field | markup assertions | The listing editor renders a labelled price pair (`id`/`for` asserted for both), and the preview column shows the draft's amount with its currency code once a seller types one — a value that lives in the tab, is labelled as a draft, and is never published. As emitted, every workspace screen is checked to carry no price-shaped value at all |
 | Collection layout | computed from the stylesheets | At the six widths the directory's grid runs 1/1/1/2/3/3 cards after a full-scale opening composition, the feature card splits at 768px only and with `minmax(0, …)` guards, cards stay 282px or wider, and every image on the collection pages is rendered inside an aspect-ratio frame — no page emits an image without a src, a size or alternative text |
@@ -1008,11 +1082,13 @@ return a real 404 status at the edge; that is deliberately out of scope here (no
 One plan in twelve phases. The About page presents the same twelve in the same order, so the two
 never disagree about what a phase covers.
 
-The numbering of the *work* and the numbering of the *plan* diverge once, and only here: the eighth
-piece of work delivered is the seller studio preview, which is the frontend of what this plan lists
-as Phases 9 and 10. It shipped ahead of its place in the plan and is labelled as a preview on every
-screen, because the capability behind it — accounts, storage, listings, publication — is not built.
-The plan below keeps its own numbering so the README and the About page continue to agree.
+The numbering of the *work* and the numbering of the *plan* diverge in two places. The eighth piece
+of work delivered is the seller studio preview, which is the frontend of what this plan lists as
+Phases 9 and 10; the tenth is the buyer journey, which is the frontend of what this plan lists as
+Phases 11 and 12. Both shipped ahead of their place in the plan and are labelled as previews on
+every screen, because the capability behind them — accounts, storage, listings, payment, order
+records — is not built. The plan below keeps its own numbering so the README and the About page
+continue to agree.
 
 - **Phase 1 — Foundation and design system** _(delivered)_: setup, tokens, components, routes, page
   shells, design-system preview.
@@ -1041,9 +1117,13 @@ The plan below keeps its own numbering so the README and the About page continue
   availability, with drafts before anything is published. _The listing draft editor exists as a
   preview: it validates every field and saves none of them._
 - **Phase 11 — Orders, fulfilment and payouts**: order handling, shipping options, fees stated
-  plainly and payouts to the studios.
+  plainly and payouts to the studios. _The buyer-facing side exists as a preview — a checkout that
+  validates every section and disables its order action, and an orders page whose reference, date
+  and despatch lines are placeholders — with no order record anywhere behind it._
 - **Phase 12 — Artwork commerce and provenance**: availability, pricing and currency handling;
-  enquiry and purchase flows; certificates, edition records and provenance history.
+  enquiry and purchase flows; certificates, edition records and provenance history. _Pricing,
+  provenance and the certificate design are in place as presentation (Phase 9 of the work), and a
+  cart totals only what it can honestly total._
 
 ## Scripts reference
 

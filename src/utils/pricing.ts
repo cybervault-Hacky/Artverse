@@ -13,8 +13,8 @@
  *    record without a price says. It is never rendered as “free”, “price on
  *    application”, “from …” or a struck-through comparison.
  * 3. **A price is not an offer.** `PRICE_NOT_PURCHASABLE` sits with every price
- *    the build shows, because there is no basket, checkout, payment or order
- *    anywhere behind it.
+ *    the build shows, because Phase 10's cart is a list to think with: there is
+ *    no payment and no order anywhere behind it.
  *
  * The one amount in this file is `ILLUSTRATIVE_PRICE`, used only by the
  * design-system reference so the price display can be seen working. It belongs
@@ -44,7 +44,7 @@ export const PRICE_NOT_PROVIDED =
 
 /** Shown with every price, because nothing in this build can sell anything. */
 export const PRICE_NOT_PURCHASABLE =
-  'Nothing here can be purchased: ArtVerse has no basket, checkout, payment or order, and a price is a fact about a record rather than an offer.'
+  'Nothing here can be purchased: ArtVerse takes no payment and places no order, and a price is a fact about a record rather than an offer. A cart can hold this work, but a cart is a list to think with, not a sale.'
 
 /** Shown beside a value typed into a listing draft. */
 export const PRICE_DRAFT_NOTE =
@@ -122,6 +122,12 @@ export interface FormattedPrice {
   code: string
   /** The amount, grouped, without the code. */
   amount: string
+  /**
+   * The amount as a number, so a caller that has to add figures up — the cart's
+   * subtotal — adds the value this formatter already parsed rather than reading
+   * digits back out of formatted text.
+   */
+  value: number
   /** Spelled-out currency name where the runtime can supply one. */
   name?: string
   /** What a screen reader should hear, e.g. `USD 2,400 (US Dollar)`. */
@@ -154,7 +160,14 @@ export function formatPrice(price: ArtworkPrice | undefined): FormattedPrice | u
   }
 
   const text = `${code} ${amountText}`
-  return { text, code, amount: amountText, name, spoken: name ? `${text} (${name})` : text }
+  return {
+    text,
+    code,
+    amount: amountText,
+    value: amount,
+    name,
+    spoken: name ? `${text} (${name})` : text,
+  }
 }
 
 /** The price of a record, formatted — undefined unless the record really holds one. */

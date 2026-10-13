@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Artwork, ArtworkAspect } from '@/types'
 import { ArtworkCard } from '@/components/ArtworkCard/ArtworkCard'
 import { cn } from '@/utils/cn'
@@ -16,6 +17,12 @@ interface ArtworkGridProps {
    */
   eagerCount?: number
   headingLevel?: 'h2' | 'h3'
+  /**
+   * Controls rendered under a card, e.g. the save and cart actions on the saved
+   * works page. Kept as a render prop so the grid stays one implementation while
+   * a page that needs controls beside each work can have them.
+   */
+  renderActions?: (artwork: Artwork) => ReactNode
   className?: string
 }
 
@@ -29,6 +36,7 @@ export function ArtworkGrid({
   aspect,
   eagerCount = 0,
   headingLevel = 'h3',
+  renderActions,
   className,
 }: ArtworkGridProps) {
   if (artworks.length === 0) return null
@@ -44,6 +52,9 @@ export function ArtworkGrid({
             loading={index < eagerCount ? 'eager' : 'lazy'}
             sizes="(max-width: 539px) 92vw, (max-width: 899px) 45vw, 30vw"
           />
+          {renderActions ? (
+            <div className={styles.itemActions}>{renderActions(artwork)}</div>
+          ) : null}
         </li>
       ))}
     </ul>

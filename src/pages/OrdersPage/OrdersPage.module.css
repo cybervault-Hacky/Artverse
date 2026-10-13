@@ -1,0 +1,174 @@
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* The cart, when it holds something: context rather than an order. */
+.cartContext {
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.cartContextTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.cartContextNote {
+  margin-top: var(--space-2);
+  max-width: 62ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.cartContextList {
+  margin-top: var(--space-4);
+}
+
+/* ── The structure card ────────────────────────────────────────────────── */
+
+.card {
+  margin-top: var(--space-6);
+  max-width: 48rem;
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-frame);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cardLabel {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.cardTitle {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.cardNotice {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--color-accent-strong);
+  background-color: var(--color-surface-muted);
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+.cardWork {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+}
+
+.cardWorkLabel {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.cardWorkTitle {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.cardWorkLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cardWorkLink:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+.cardWorkLink:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-xs);
+}
+
+.cardWorkMeta {
+  margin-top: var(--space-2);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.rows {
+  margin-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.row {
+  display: grid;
+  gap: var(--space-1) var(--space-5);
+  padding-block: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+@media (min-width: 600px) {
+  .row {
+    grid-template-columns: 10rem minmax(0, 1fr);
+  }
+}
+
+.rowLabel {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.rowValue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* A placeholder is bracketed, italic and explained — not merely a different colour. */
+.placeholder {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+.fact {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+}
+
+.rowNote {
+  max-width: 54ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}

@@ -24,7 +24,19 @@ export const PRIMARY_NAV: NavItem[] = [
  * point is stated once, in the header's own link, and repeated here for the
  * panel rather than given a second destination.
  */
-export const MOBILE_NAV: NavItem[] = [...PRIMARY_NAV, { label: 'For Artists', to: '/sell' }]
+export const MOBILE_NAV: NavItem[] = [
+  ...PRIMARY_NAV,
+  /*
+   * The buyer journey. Both destinations are also in the header, where they
+   * carry a count of what the visitor has collected; in the panel they are
+   * named in words, because a panel has the room and an icon does not explain
+   * itself.
+   */
+  { label: 'Saved works', to: '/wishlist' },
+  { label: 'Cart', to: '/cart' },
+  { label: 'Orders', to: '/orders' },
+  { label: 'For Artists', to: '/sell' },
+]
 
 export interface FooterNavGroup {
   title: string
@@ -40,6 +52,15 @@ export const FOOTER_NAV: FooterNavGroup[] = [
       { label: 'Collections', to: '/collections' },
       { label: 'Artists & Studios', to: '/artists' },
       { label: 'Search', to: '/search' },
+    ],
+  },
+  {
+    title: 'Buying',
+    items: [
+      { label: 'Saved works', to: '/wishlist' },
+      { label: 'Cart', to: '/cart' },
+      { label: 'Checkout preview', to: '/checkout' },
+      { label: 'Orders', to: '/orders' },
     ],
   },
   {

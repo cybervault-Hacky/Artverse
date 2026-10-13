@@ -11,6 +11,16 @@ export const NavRoutes = {
   artwork: (artworkId: string) => `/artwork/${artworkId}`,
   artists: '/artists',
   artist: (artistId: string) => `/artists/${artistId}`,
+  /**
+   * The buyer journey. Four destinations a visitor can reach without an
+   * account, because none of them needs one: a saved list, a cart, a checkout
+   * preview and an orders page. Nothing in the journey is stored or sent
+   * anywhere — the state lives in the browser tab for the visit.
+   */
+  wishlist: '/wishlist',
+  cart: '/cart',
+  checkout: '/checkout',
+  orders: '/orders',
   sell: '/sell',
   /**
    * The seller workspace preview. Every workspace destination sits under
@@ -88,6 +98,34 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     status: 'implemented',
     purpose:
       'A studio profile: practice, location, practice note, its sample records, and the routes onward.',
+  },
+  {
+    pattern: '/wishlist',
+    page: 'WishlistPage',
+    status: 'implemented',
+    purpose:
+      'Saved works: the records bookmarked from their own pages, each with the two buyer controls beside it, and an honest empty state when nothing is saved. The list lives in the browser tab for the visit.',
+  },
+  {
+    pattern: '/cart',
+    page: 'CartPage',
+    status: 'implemented',
+    purpose:
+      'The cart: each work with its studio attribution and its price where the catalogue holds one, and a total only when every work is priced in a single currency. Where it cannot be worked out, the page names the reason instead of printing a figure.',
+  },
+  {
+    pattern: '/checkout',
+    page: 'CheckoutPage',
+    status: 'implemented',
+    purpose:
+      'Checkout preview: contact, delivery and review sections with real validation, the order summary beside them, and a permanently disabled place-order action with the list of things a real checkout would need. No payment is taken, no order is placed and no card field exists.',
+  },
+  {
+    pattern: '/orders',
+    page: 'OrdersPage',
+    status: 'implemented',
+    purpose:
+      'Orders: the true empty state — no account holds an order and no checkout can create one — and one clearly labelled structure preview built around a real sample record, whose reference, date, status and despatch lines are placeholders nothing generates.',
   },
   {
     pattern: '/sell',

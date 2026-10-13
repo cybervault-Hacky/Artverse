@@ -4,12 +4,15 @@ import { AboutPage } from '@/pages/AboutPage/AboutPage'
 import { ArtistProfilePage } from '@/pages/ArtistProfilePage/ArtistProfilePage'
 import { ArtistsPage } from '@/pages/ArtistsPage/ArtistsPage'
 import { ArtworkDetailPage } from '@/pages/ArtworkDetailPage/ArtworkDetailPage'
+import { CartPage } from '@/pages/CartPage/CartPage'
+import { CheckoutPage } from '@/pages/CheckoutPage/CheckoutPage'
 import { CollectionDetailPage } from '@/pages/CollectionDetailPage/CollectionDetailPage'
 import { CollectionsPage } from '@/pages/CollectionsPage/CollectionsPage'
 import { DesignSystemPage } from '@/pages/DesignSystemPage/DesignSystemPage'
 import { DiscoverPage } from '@/pages/DiscoverPage/DiscoverPage'
 import { HomePage } from '@/pages/HomePage/HomePage'
 import { NotFoundPage } from '@/pages/NotFoundPage/NotFoundPage'
+import { OrdersPage } from '@/pages/OrdersPage/OrdersPage'
 import { SearchPage } from '@/pages/SearchPage/SearchPage'
 import { SellPage } from '@/pages/SellPage/SellPage'
 import { SellerStudioLayout } from '@/layouts/SellerStudioLayout'
@@ -18,6 +21,7 @@ import { StudioListingEditorPage } from '@/pages/StudioListingEditorPage/StudioL
 import { StudioListingsPage } from '@/pages/StudioListingsPage/StudioListingsPage'
 import { StudioOverviewPage } from '@/pages/StudioOverviewPage/StudioOverviewPage'
 import { StudioProfilePreviewPage } from '@/pages/StudioProfilePreviewPage/StudioProfilePreviewPage'
+import { WishlistPage } from '@/pages/WishlistPage/WishlistPage'
 
 /**
  * The route tree itself, kept separate from the router so it can be mounted
@@ -43,6 +47,12 @@ export function AppRoutes() {
         <Route path="artists" element={<ArtistsPage />} />
         <Route path="artists/:artistId" element={<ArtistProfilePage />} />
         <Route path="collections" element={<CollectionsPage />} />
+        {/* The buyer journey. Four destinations that need no account, and that
+            hold their state in the tab rather than anywhere else. */}
+        <Route path="wishlist" element={<WishlistPage />} />
+        <Route path="cart" element={<CartPage />} />
+        <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="orders" element={<OrdersPage />} />
         {/* For Artists, and the seller workspace preview beneath it. The
             workspace has its own layout, so its navigation and its in-tab draft
             stay mounted while moving between its sections. */}

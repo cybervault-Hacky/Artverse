@@ -21,3 +21,18 @@
 .item {
   min-width: 0;
 }
+
+/*
+ * The control row under a card, used by the saved works page.
+ *
+ * It sits outside the card's own link — the whole card is one anchor — so the
+ * controls are separately reachable with the keyboard rather than nested inside
+ * a link, which would be invalid and unreadable.
+ */
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}

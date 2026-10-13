@@ -75,6 +75,35 @@
  * The one part of the record that leads somewhere, so it gets its own block
  * rather than a row in the table below it.
  */
+/*
+ * The buyer controls. The block sits in the reading column under the record's
+ * description, because that is where a visitor looks for them — and it carries
+ * its own two notes rather than borrowing the price section's, so the honest
+ * scope of a save and a cart is stated exactly where they are used.
+ */
+.buyer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.buyerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.buyerNote {
+  max-width: 56ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
 .studio {
   margin-top: var(--space-7);
   padding: var(--space-5);

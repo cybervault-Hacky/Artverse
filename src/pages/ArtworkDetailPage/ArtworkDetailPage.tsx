@@ -5,6 +5,7 @@ import { ArtworkFrame } from '@/components/ArtworkFrame/ArtworkFrame'
 import { ArtworkGrid } from '@/components/ArtworkGrid/ArtworkGrid'
 import { Breadcrumb } from '@/components/Breadcrumb/Breadcrumb'
 import { Button } from '@/components/Button/Button'
+import { CartAction, WishlistButton } from '@/components/BuyerActions/BuyerActions'
 import { NotFoundView } from '@/components/NotFoundView/NotFoundView'
 import { PageContainer } from '@/components/PageContainer/PageContainer'
 import { PhaseNote } from '@/components/PhaseNote/PhaseNote'
@@ -15,6 +16,7 @@ import { TextLink } from '@/components/TextLink/TextLink'
 import { categoryLabel, getArtworkById, getCreatorForArtwork } from '@/data'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { PRICE_NOT_PROVIDED, PRICE_NOT_PURCHASABLE, artworkPrice } from '@/utils/pricing'
+import { BUYER_ACTION_NOTE, BUYER_STATE_NOTE } from '@/utils/buyerJourney'
 import { NO_PROVENANCE_STATEMENT, buildProvenance } from '@/utils/provenance'
 import type { DetailRow } from '@/utils/artworkDetail'
 import {
@@ -46,10 +48,12 @@ import styles from './ArtworkDetailPage.module.css'
  * 4. Related works are chosen by discipline, then by shared collections. That
  *    rule is stated on the page; nothing here claims a model chose them.
  *
- * There is no purchase, favourite or share control, and the section below the
- * record says so plainly rather than dressing up an action that does not exist.
- * The record carries one image, so there is no gallery navigation to fake
- * either.
+ * Phase 10 added the two buyer controls: saving a work to the local list, and
+ * adding it to the cart. Both are real — they change state on the page — and
+ * neither is a purchase: the cart has no checkout that can take an order, the
+ * price section says nothing can be bought, and the note beside the controls
+ * says both things in one sentence. There is still no share control, and the
+ * record carries one image, so there is no gallery navigation to fake either.
  *
  * Phase 9 added the price and provenance section. It shows a price only when the
  * record genuinely holds one with its currency, and otherwise states that none
@@ -134,6 +138,21 @@ export function ArtworkDetailPage() {
                 {artwork.title}
               </h1>
               <p className={styles.description}>{artwork.description}</p>
+
+              <div className={styles.buyer} aria-labelledby="artwork-buyer-label">
+                <p className={styles.blockLabel} id="artwork-buyer-label">
+                  Your list
+                </p>
+                <div className={styles.buyerRow}>
+                  <WishlistButton
+                    artworkId={artwork.id}
+                    ariaLabel={`Save ${artwork.title} to your saved works`}
+                  />
+                  <CartAction artworkId={artwork.id} />
+                </div>
+                <p className={styles.buyerNote}>{BUYER_ACTION_NOTE}</p>
+                <p className={styles.buyerNote}>{BUYER_STATE_NOTE}</p>
+              </div>
 
               <div className={styles.studio}>
                 <p className={styles.blockLabel}>Studio</p>

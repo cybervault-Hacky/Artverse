@@ -20,6 +20,13 @@ interface ButtonProps {
   className?: string
   title?: string
   'aria-label'?: string
+  /**
+   * An id for the control itself, so a page can point at it — the checkout
+   * preview needs a stable handle on the action it keeps disabled.
+   */
+  id?: string
+  /** Ids of the elements that explain this control, read out with its name. */
+  'aria-describedby'?: string
   onClick?: () => void
 }
 
@@ -41,6 +48,8 @@ export function Button({
   className,
   title,
   'aria-label': ariaLabel,
+  id,
+  'aria-describedby': ariaDescribedBy,
   onClick,
 }: ButtonProps) {
   const classes = cn(styles.button, styles[variant], styles[size], block && styles.block, className)
@@ -91,8 +100,10 @@ export function Button({
     <button
       className={classes}
       type={type}
+      id={id}
       title={title}
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       disabled={disabled}
       onClick={onClick}
     >

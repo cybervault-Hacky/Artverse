@@ -1,0 +1,80 @@
+/*
+ * The buyer journey's two controls.
+ *
+ * The toggle is sized like the shared button so a save control and an
+ * add-to-cart control sit level with each other, but it is its own component:
+ * a button that carries `aria-pressed` is a different thing from a button that
+ * navigates, and pretending otherwise would mean teaching `Button` about
+ * pressed state.
+ */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.toggle:hover {
+  background-color: var(--color-surface-muted);
+}
+
+/*
+ * Saved state: the champagne wash, the stronger rule and the changed word.
+ * The text is full ink rather than the accent ink: accent-ink on accent-soft
+ * measures 3.95:1, which is under the 4.5:1 body-text minimum, so the gold is
+ * used as a surface and a border and the words are read at full contrast.
+ */
+.toggleOn {
+  border-color: var(--color-accent-strong);
+  background-color: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+.toggleOn:hover {
+  background-color: var(--color-accent-soft);
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.inCart {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+}
+
+.inCartText {
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle {
+    transition: none;
+  }
+}
+
+@media print {
+  /* Controls are not content: a printed page shows the works, not the buttons. */
+  .toggle,
+  .inCart {
+    display: none;
+  }
+}

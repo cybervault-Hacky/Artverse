@@ -97,15 +97,16 @@ const PHASES = [
   {
     label: 'Phase 11',
     title: 'Orders, fulfilment and payouts',
-    detail: 'Order handling, shipping options, fees stated plainly and payouts to the studios.',
-    status: 'Not started',
+    detail:
+      'Order handling, shipping options, fees stated plainly and payouts to the studios. The buyer-facing side exists as a preview ahead of its place in the plan: a checkout that validates every section and keeps its order action disabled, and an orders page whose reference, date and despatch lines are placeholders rather than an invented history.',
+    status: 'Preview',
   },
   {
     label: 'Phase 12',
     title: 'Artwork commerce and provenance',
     detail:
-      'Availability, pricing and currency handling; enquiry and purchase flows; certificates, edition records and provenance history.',
-    status: 'Not started',
+      'Availability, pricing and currency handling; enquiry and purchase flows; certificates, edition records and provenance history. Pricing, provenance and the certificate design are in place as presentation, and a cart totals only what it can honestly total — nothing here can be bought yet.',
+    status: 'Preview',
   },
 ]
 

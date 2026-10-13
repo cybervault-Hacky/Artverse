@@ -71,3 +71,22 @@ export function ChevronDownIcon(props: IconProps) {
     </Icon>
   )
 }
+
+/** Saved works: a heart outline, matching the stroke of the rest of the set. */
+export function HeartIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 19.5S4.75 15.4 4.75 9.9A3.65 3.65 0 0 1 12 7.9a3.65 3.65 0 0 1 7.25 2c0 5.5-7.25 9.6-7.25 9.6Z" />
+    </Icon>
+  )
+}
+
+/** The cart: a keepsake box with a handle, drawn in the same hand. */
+export function CartIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 9h14l-1 10.25H6L5 9Z" />
+      <path d="M9 9V6.75a3 3 0 0 1 6 0V9" />
+    </Icon>
+  )
+}
