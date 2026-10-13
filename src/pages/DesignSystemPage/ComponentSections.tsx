@@ -297,6 +297,43 @@ export function ComponentSections() {
       </PreviewBlock>
 
       <PreviewBlock
+        id="ds-fields"
+        title="Form fields, as the account previews use them"
+        description="One field component, used by every form in the build — the seller workspace, the checkout, the three account previews and the application. The label, the hint, the error and the ARIA wiring are the same everywhere; only the control differs."
+      >
+        <div className={styles.stack}>
+          <div className={styles.formSpecimen}>
+            <FormField
+              id="ds-field-required"
+              label="Studio name"
+              hint="A required field says so in its label and in aria-required, and the form reports its own messages rather than the browser’s."
+              required
+            >
+              <input type="text" placeholder="The name a studio would trade under" />
+            </FormField>
+            <FormField
+              id="ds-field-acknowledgement"
+              label="I have read the marketplace guidelines for sellers"
+              hint="An acknowledgement is a checkbox, and the inline layout puts it before its label, which is the order it is read in. It is not a signature and it is not an agreement to terms that do not exist."
+              layout="inline"
+            >
+              <input type="checkbox" />
+            </FormField>
+          </div>
+          <p className={styles.caption}>
+            These are the controls the three account previews are built from:{' '}
+            <TextLink to={NavRoutes.signIn}>the sign-in preview</TextLink>,{' '}
+            <TextLink to={NavRoutes.createAccount}>the create-account preview</TextLink> and{' '}
+            <TextLink to={NavRoutes.resetPassword}>the password-reset preview</TextLink>. A password
+            control exists on those screens alone, because the warning about what must not be typed
+            into one belongs beside it — and it is not shown here for the same reason. They validate
+            for real and report a browser-side check, never a session, a created account or a sent
+            message, and no password is stored, logged or transmitted anywhere.
+          </p>
+        </div>
+      </PreviewBlock>
+
+      <PreviewBlock
         id="ds-cart-totals"
         title="Cart totals"
         description="A cart total is either one figure or one of four named states. A figure is only produced when every work is priced in a single currency; every other case names itself and explains why no number can be shown. Nothing is converted, and no shipping, tax, discount or fee is ever added."

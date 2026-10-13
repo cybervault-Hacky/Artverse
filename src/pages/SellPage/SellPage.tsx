@@ -12,11 +12,11 @@ import styles from './SellPage.module.css'
 /**
  * For Artists — the entry point to the seller experience.
  *
- * This page explains the workflow and hands over to the workspace preview. Two
- * things it deliberately does not do: offer a sign-up form, and describe any
- * part of the seller experience as working. There is no account system, no
- * application and no pricing anywhere in ArtVerse yet, and the page says so
- * before it offers anything to click.
+ * This page explains the workflow and hands over to two places: the application
+ * preview, where the details a studio applies with can be filled in and checked,
+ * and the workspace preview, where the work itself is prepared. It still offers
+ * no sign-up form, because there is no seller account system to sign up to, and
+ * it still describes no part of the seller experience as working.
  */
 export function SellPage() {
   useDocumentTitle({
@@ -33,9 +33,9 @@ export function SellPage() {
         intro="ArtVerse is being built so that independent artists, studios and makers can present their work properly — carefully, without noise, and on terms they control. The workspace where that will happen exists today as a frontend preview."
         actions={
           <>
-            <Button to={NavRoutes.studio}>Open the studio workspace</Button>
-            <Button to={NavRoutes.artists} variant="secondary">
-              See the directory
+            <Button to={NavRoutes.sellApply}>See the application preview</Button>
+            <Button to={NavRoutes.studio} variant="secondary">
+              Open the studio workspace
             </Button>
           </>
         }
@@ -66,6 +66,24 @@ export function SellPage() {
               </li>
             ))}
           </ol>
+
+          <div className={styles.handoff}>
+            <div className={styles.handoffBody}>
+              <h3 className={styles.handoffTitle}>Start where a seller starts</h3>
+              <p className={styles.handoffText}>
+                The application preview carries the details a studio would apply with — a name, a
+                discipline, a sentence about the practice — validated in the browser and submitted
+                nowhere. Beside it, the verification section describes what each state will mean and
+                reports the truth about every studio in this build.
+              </p>
+            </div>
+            <div className={styles.handoffActions}>
+              <Button to={NavRoutes.sellApply}>See the application preview</Button>
+              <Button to={NavRoutes.studioVerification} variant="quiet">
+                Verification status
+              </Button>
+            </div>
+          </div>
 
           <div className={styles.handoff}>
             <div className={styles.handoffBody}>
@@ -105,8 +123,8 @@ export function SellPage() {
 
           <p className={styles.honestyNote}>
             There is no sign-up form on this page, because there is no seller account system to sign
-            up to. Application, verification, listing tools and payouts are planned for later phases,
-            and this page will hand over to the real flow at that point.
+            up to. The application and account screens exist as previews: they validate what is typed
+            and submit nothing, and no studio is marked as applied, reviewed or verified.
           </p>
 
           <p className={styles.honestyNote}>

@@ -35,6 +35,9 @@ export const MOBILE_NAV: NavItem[] = [
   { label: 'Saved works', to: '/wishlist' },
   { label: 'Cart', to: '/cart' },
   { label: 'Orders', to: '/orders' },
+  /* The account previews, named as previews: a panel entry reading “Sign in”
+     would promise an account system this build does not have. */
+  { label: 'Account previews', to: '/account/sign-in' },
   { label: 'For Artists', to: '/sell' },
 ]
 
@@ -55,6 +58,14 @@ export const FOOTER_NAV: FooterNavGroup[] = [
     ],
   },
   {
+    title: 'Account previews',
+    items: [
+      { label: 'Sign in preview', to: '/account/sign-in' },
+      { label: 'Create account preview', to: '/account/create' },
+      { label: 'Password reset preview', to: '/account/reset' },
+    ],
+  },
+  {
     title: 'Buying',
     items: [
       { label: 'Saved works', to: '/wishlist' },
@@ -68,7 +79,9 @@ export const FOOTER_NAV: FooterNavGroup[] = [
     items: [
       { label: 'About', to: '/about' },
       { label: 'For Artists', to: '/sell' },
+      { label: 'Seller application preview', to: '/sell/apply' },
       { label: 'Artist studio preview', to: '/sell/studio' },
+      { label: 'Verification status', to: '/sell/studio/verification' },
       { label: 'Design system', to: '/design-system' },
     ],
   },

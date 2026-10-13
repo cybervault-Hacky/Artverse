@@ -20,7 +20,7 @@
 .hint {
   max-width: 40rem;
   font-size: var(--text-meta);
-  color: var(--color-ink-subtle);
+  color: var(--color-ink-muted);
 }
 
 /*
@@ -43,7 +43,7 @@
  * workspace has the same hit area, the same focus ring and the same refusal to
  * overflow a narrow column.
  */
-.field :is(input[type='text'], textarea, select) {
+.field :is(input[type='text'], input[type='email'], input[type='url'], input[type='password'], textarea, select) {
   width: 100%;
   min-width: 0;
   min-height: 2.75rem;
@@ -63,22 +63,69 @@
   line-height: var(--leading-body);
 }
 
-.field :is(input[type='text'], textarea, select):hover {
+.field :is(input[type='text'], input[type='email'], input[type='url'], input[type='password'], textarea, select):hover {
   border-color: var(--color-border-strong);
 }
 
-.field :is(input[type='text'], textarea, select):focus-visible {
+.field :is(input[type='text'], input[type='email'], input[type='url'], input[type='password'], textarea, select):focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
   border-color: var(--color-border-strong);
 }
 
-.field :is(input[type='text'], textarea, select)[aria-invalid='true'] {
+.field :is(input[type='text'], input[type='email'], input[type='url'], input[type='password'], textarea, select)[aria-invalid='true'] {
   border-color: var(--color-accent-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .field :is(input[type='text'], textarea, select) {
+  .field :is(input[type='text'], input[type='email'], input[type='url'], input[type='password'], textarea, select) {
     transition: none;
   }
+}
+
+/*
+ * A checkbox or radio with its label on one row.
+ *
+ * The control keeps its native size and shape — a restyled checkbox is a
+ * guessing game for everyone — and the label sits at body size beside it, with
+ * the hint and any error underneath the pair.
+ */
+.inline {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-1) var(--space-3);
+}
+
+.inline :is(input[type='checkbox'], input[type='radio']) {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--color-accent-strong);
+}
+
+.inline :is(input[type='checkbox'], input[type='radio']):focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+.inlineBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The label reads as a sentence in the inline layout, not as a field name. */
+.inline .label {
+  font-size: var(--text-small);
+  font-weight: var(--weight-regular);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--color-ink);
+  line-height: var(--leading-body);
+}
+
+.inline :is(.hint, .error) {
+  grid-column: 2;
 }

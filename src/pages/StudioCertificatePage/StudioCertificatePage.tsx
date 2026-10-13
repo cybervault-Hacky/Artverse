@@ -8,6 +8,7 @@ import { PhaseNote } from '@/components/PhaseNote/PhaseNote'
 import { PreviewNotice } from '@/components/PreviewNotice/PreviewNotice'
 import { Section } from '@/components/Section/Section'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
+import { TextLink } from '@/components/TextLink/TextLink'
 import { SellerCertificatePreview } from '@/components/SellerCertificatePreview/SellerCertificatePreview'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { CERTIFICATE_LOCAL_INPUT_NOTE, CERTIFICATE_STATUS } from '@/utils/certificate'
@@ -126,7 +127,9 @@ export function StudioCertificatePage() {
               <p className={styles.statusLine}>
                 The document below always reads{' '}
                 <span className={styles.statusValue}>{CERTIFICATE_STATUS}</span> — it is written by
-                the certificate model and cannot be changed from this page.
+                the certificate model and cannot be changed from this page. What verification itself
+                will mean, and where a studio stands in it, is set out on the{' '}
+                <TextLink to={NavRoutes.studioVerification}>verification status</TextLink> screen.
               </p>
             </form>
 

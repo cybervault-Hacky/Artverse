@@ -1,0 +1,112 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 34rem;
+}
+
+/*
+ * The credential warning.
+ *
+ * It is the first thing in the form and it is not quiet: a champagne rule, a
+ * tinted field and full-strength ink. Everything else on these screens can be
+ * understated — this cannot.
+ */
+.warning {
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--color-accent-strong);
+  background-color: var(--color-accent-soft);
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.tabNote {
+  max-width: 56ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── The outcome of a check ────────────────────────────────────────────── */
+
+.outcome:empty {
+  display: none;
+}
+
+.outcome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-muted);
+}
+
+.outcomeLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.outcomeText {
+  max-width: 58ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── The links to the other two screens ────────────────────────────────── */
+
+.crossLinks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.crossNote {
+  max-width: 56ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.crossList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+}
+
+@media print {
+  /* A printed preview is the form's wording, not its controls. */
+  .warning {
+    background: none;
+    font-weight: var(--weight-regular);
+  }
+
+  .actions {
+    display: none;
+  }
+
+  .outcome {
+    background: none;
+  }
+}

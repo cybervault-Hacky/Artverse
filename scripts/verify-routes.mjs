@@ -28,6 +28,7 @@ const failures = []
 const notes = []
 let linksChecked = 0
 let routesChecked = 0
+let headingsChecked = 0
 
 function check(condition, message) {
   if (!condition) failures.push(message)
@@ -52,6 +53,9 @@ try {
   const pricing = await server.ssrLoadModule('/src/utils/pricing.ts')
   const provenance = await server.ssrLoadModule('/src/utils/provenance.ts')
   const certificate = await server.ssrLoadModule('/src/utils/certificate.ts')
+  const account = await server.ssrLoadModule('/src/utils/account.ts')
+  const application = await server.ssrLoadModule('/src/utils/sellerApplication.ts')
+  const verification = await server.ssrLoadModule('/src/utils/verification.ts')
   const buyer = await server.ssrLoadModule('/src/utils/buyerJourney.ts')
   const checkoutModel = await server.ssrLoadModule('/src/utils/checkout.ts')
   const orderModel = await server.ssrLoadModule('/src/utils/orders.ts')
@@ -93,6 +97,17 @@ try {
     { pattern: /^\/collections$/, resolve: () => true, label: 'collections' },
     // The buyer journey: four literal paths, none of them parameterised, all of
     // them reachable without an account.
+    // The account previews and the seller application. Literal paths, and the
+    // three account screens sit behind one segment so they read as one subject.
+    { pattern: /^\/account\/sign-in$/, resolve: () => true, label: 'sign-in preview' },
+    { pattern: /^\/account\/create$/, resolve: () => true, label: 'create-account preview' },
+    { pattern: /^\/account\/reset$/, resolve: () => true, label: 'password-reset preview' },
+    { pattern: /^\/sell\/apply$/, resolve: () => true, label: 'seller application preview' },
+    {
+      pattern: /^\/sell\/studio\/verification$/,
+      resolve: () => true,
+      label: 'verification status',
+    },
     { pattern: /^\/wishlist$/, resolve: () => true, label: 'saved works' },
     { pattern: /^\/cart$/, resolve: () => true, label: 'cart' },
     { pattern: /^\/checkout$/, resolve: () => true, label: 'checkout preview' },
@@ -163,6 +178,46 @@ try {
    * language of a completed sale: nothing has been bought, nothing is in stock,
    * nothing is reserved, and nobody has an account to sign in to.
    */
+  /*
+   * What an account screen must never claim.
+   *
+   * There is no account system, no session and no mail service in this build, so
+   * none of these sentences can be true anywhere — not on the previews, not in a
+   * footer, not in a stray confirmation. The account previews' own links are
+   * stripped before the check, so nothing hides behind a legitimate label.
+   */
+  const signedInClaims = [
+    'Signed in',
+    'Sign out',
+    'Log out',
+    'Welcome back',
+    'Your account is',
+    'Account created',
+    'Successfully signed',
+    'Email sent',
+    'Check your inbox',
+    'We have sent',
+    'We’ve sent',
+    'Reset link',
+    'Password updated',
+    'Password changed',
+    'Session',
+    'Application received',
+    'Application approved',
+    'Application is under review',
+    'Documents received',
+    'You are verified',
+    'Verification complete',
+    // The account words themselves. They are checked against the page with the
+    // preview links stripped, so a footer link may read “Sign in preview” while
+    // a button that simply says “Sign in” is still caught.
+    'Sign in',
+    'Sign up',
+    'Log in',
+    'Create an account',
+    'My account',
+  ]
+
   const transactionPhrases = [
     'Buy now',
     'Pay now',
@@ -180,10 +235,6 @@ try {
     'Reserved for you',
     'Free shipping',
     'Estimated delivery',
-    'Sign in',
-    'Sign up',
-    'Create an account',
-    'My account',
     'Saved to your account',
     'Add to basket',
     'Enquire about this work',
@@ -313,12 +364,15 @@ try {
         'See it in the workspace',
         'What is not here yet',
         ...workspace.WORKSPACE_NOT_INCLUDED,
-        // The preview state is stated before anything is offered.
+        // The preview state is stated before anything is offered, and the
+        // application screen is named as a preview rather than as a sign-up.
+        'See the application preview',
+        'Verification status',
         'there is no seller account system to sign up to',
       ],
       expectLinks: ['/sell/studio', '/sell/studio/listings', '/artists', '/discover'],
       // No sign-up, no application, no seller claim, no money.
-      forbidAll: ['Create account', 'Sign up', 'Apply now', 'Verified seller', 'Commission rate'],
+      forbidAll: ['Apply now', 'Verified seller', 'Commission rate'],
       forbidPatterns: [currencyPattern],
     },
     { path: '/about', expect: 'A marketplace built calmly, in the open' },
@@ -1588,6 +1642,411 @@ try {
   )
 
   /*
+   * ── The account previews, checked directly ──────────────────────────────
+   * Three forms with no account system behind them. What is asserted here is
+   * mostly the shape of the absence: nothing is transmitted, nothing is stored,
+   * a password is never checked against a credential, and no outcome in the
+   * model can mean signed in, created or sent.
+   */
+  check(
+    /no account system/i.test(account.ACCOUNT_PREVIEW_NOTICE) &&
+      /checked in your browser/i.test(account.ACCOUNT_PREVIEW_NOTICE),
+    'account: the preview notice no longer says what the screens are',
+  )
+  check(
+    /Do not enter a real password/.test(account.ACCOUNT_CREDENTIAL_WARNING),
+    'account: the password warning does not tell anybody to avoid a real credential',
+  )
+
+  // Each form holds exactly its own fields, and only the create form pairs one.
+  check(
+    account.accountFields('signIn').map((field) => field.name).join() === 'email,password',
+    'account: the sign-in form no longer holds an email and a password',
+  )
+  check(
+    account.accountFields('create').map((field) => field.name).join() ===
+      'displayName,email,password,confirmPassword',
+    'account: the create form has changed shape',
+  )
+  check(
+    account.accountFields('reset').map((field) => field.name).join() === 'email',
+    'account: the reset request asks for more than an address',
+  )
+  check(
+    !account.accountFormHasPassword('reset') &&
+      account.accountFormHasPassword('signIn') &&
+      account.accountFormHasPassword('create'),
+    'account: the reset request shows a password field, or a sign-in form lost its own',
+  )
+  const createPasswords = account.accountFields('create').filter((field) => field.type === 'password')
+  check(
+    createPasswords.length === 2 &&
+      createPasswords.filter((field) => field.pairsWith).length === 1 &&
+      createPasswords.find((field) => field.pairsWith)?.name === 'confirmPassword' &&
+      createPasswords.find((field) => field.pairsWith)?.pairsWith === 'password' &&
+      !account.accountFields('signIn').some((field) => field.pairsWith),
+    'account: the password pairing rule is attached to the wrong form or the wrong field',
+  )
+
+  // Validation: real, shape-only, and it reports rather than discards.
+  const blankSignIn = account.validateAccountForm('signIn', account.emptyAccountForm())
+  check(
+    Boolean(blankSignIn.email) && Boolean(blankSignIn.password),
+    'account: an empty sign-in form was accepted',
+  )
+  check(
+    Boolean(account.validateAccountForm('signIn', { ...account.emptyAccountForm(), email: 'not-an-address' }).email),
+    'account: an address that is not an email was accepted',
+  )
+  check(
+    Boolean(
+      account.validateAccountForm('signIn', {
+        ...account.emptyAccountForm(),
+        email: 'someone@example.com',
+        password: 'short',
+      }).password,
+    ),
+    `account: a password under ${account.ACCOUNT_PASSWORD_MIN_LENGTH} characters was accepted`,
+  )
+
+  const goodSignIn = {
+    ...account.emptyAccountForm(),
+    email: 'someone@example.com',
+    password: 'a-made-up-value',
+  }
+  check(
+    Object.keys(account.validateAccountForm('signIn', goodSignIn)).length === 0,
+    'account: a complete sign-in form was rejected',
+  )
+
+  const mismatched = {
+    ...goodSignIn,
+    displayName: 'A Seller',
+    confirmPassword: 'a-different-value',
+  }
+  check(
+    Boolean(account.validateAccountForm('create', mismatched).confirmPassword),
+    'account: two different password entries were accepted',
+  )
+  const matched = { ...mismatched, confirmPassword: 'a-made-up-value' }
+  check(
+    Object.keys(account.validateAccountForm('create', matched)).length === 0,
+    'account: a complete create form was rejected',
+  )
+  check(
+    Object.keys(account.validateAccountForm('reset', { ...account.emptyAccountForm(), email: 'someone@example.com' })).length === 0,
+    'account: a complete reset request was rejected',
+  )
+  check(
+    !account.validateAccountForm('create', matched).password &&
+      !account.validateAccountForm('create', matched).email,
+    'account: a valid entry reported an error it should not have',
+  )
+
+  /*
+   * The reducer: values are kept, errors are cleared as they are fixed, and the
+   * outcome can only ever be none, invalid or valid — never a success.
+   */
+  let accountState = account.initialAccountState('signIn')
+  check(
+    accountState.outcome === 'none' && accountState.checked === false,
+    'account: the sign-in preview does not start unchecked',
+  )
+  const outcomes = new Set(['none', 'invalid', 'valid'])
+  for (const [key, value] of Object.entries(accountState)) {
+    if (key !== 'form' && typeof value === 'string') {
+      check(outcomes.has(value), `account: the state holds the unexpected outcome “${value}”`)
+    }
+  }
+
+  accountState = account.accountFormReducer(accountState, { type: 'check' })
+  check(
+    accountState.outcome === 'invalid' && Object.keys(accountState.errors).length === 2,
+    'account: checking an empty form did not report both fields',
+  )
+
+  accountState = account.accountFormReducer(accountState, {
+    type: 'setField',
+    field: 'email',
+    value: 'someone@example.com',
+  })
+  check(
+    accountState.errors.email === undefined && accountState.outcome === 'none',
+    'account: editing a field left its old error or a stale verdict standing',
+  )
+  check(
+    accountState.values.email === 'someone@example.com',
+    'account: editing a field did not keep the value',
+  )
+
+  accountState = account.accountFormReducer(accountState, {
+    type: 'setField',
+    field: 'password',
+    value: 'a-made-up-value',
+  })
+  accountState = account.accountFormReducer(accountState, { type: 'check' })
+  check(
+    accountState.outcome === 'valid' && Object.keys(accountState.errors).length === 0,
+    'account: a complete form did not pass its own check',
+  )
+  check(
+    /Nothing was sent anywhere/.test(account.ACCOUNT_VALIDATED_NOTE) &&
+      /no session, account or message was created/.test(account.ACCOUNT_VALIDATED_NOTE),
+    'account: the passing message claims more than a browser-side check',
+  )
+  check(
+    account.accountFormReducer(accountState, { type: 'clear' }).values.password === '',
+    'account: clearing the form left a value behind',
+  )
+  check(
+    /preview/i.test(account.ACCOUNT_SUBMIT_LABELS.signIn) === false &&
+      !/^sign in$/i.test(account.ACCOUNT_SUBMIT_LABELS.signIn),
+    'account: the sign-in action promises a sign-in',
+  )
+  for (const link of account.accountCrossLinks('signIn')) {
+    check(
+      /preview/i.test(link.label),
+      `account: the cross-link “${link.label}” does not say preview`,
+    )
+  }
+  check(
+    account.passwordInputType(false) === 'password' &&
+      account.passwordInputType(true) === 'text' &&
+      account.passwordToggleLabel(false) === 'Show password' &&
+      account.passwordToggleLabel(true) === 'Hide password',
+    'account: the password visibility control does not say which way round it is',
+  )
+
+  /*
+   * ── The seller application, checked directly ────────────────────────────
+   * Real validation, no document fields, and a read-back rather than a
+   * confirmation.
+   */
+  const applicationFieldNames = application.APPLICATION_FIELDS.map((field) => field.name)
+  check(
+    applicationFieldNames.length === 6,
+    `application: ${applicationFieldNames.length} fields, expected 6`,
+  )
+  check(
+    !applicationFieldNames.some((name) => /document|passport|licence|license|tax|bank|id$/i.test(name)),
+    'application: the form asks for an identity or financial document',
+  )
+  check(
+    application.APPLICATION_FIELDS.some((field) => field.name === 'guidelines' && field.type === 'checkbox'),
+    'application: the acknowledgement is no longer a checkbox',
+  )
+  check(
+    /No identity document/.test(application.APPLICATION_NO_DOCUMENTS),
+    'application: the page no longer says that no document is asked for',
+  )
+
+  const blankApplication = application.emptyApplication()
+  const blankApplicationErrors = application.validateApplication(blankApplication)
+  check(
+    Object.keys(blankApplicationErrors).length === 5,
+    `application: an empty form reported ${Object.keys(blankApplicationErrors).length} problems, expected 5`,
+  )
+  check(
+    blankApplicationErrors.portfolioUrl === undefined,
+    'application: an empty optional portfolio address was rejected',
+  )
+
+  const filledApplication = {
+    ...blankApplication,
+    studioName: 'A Studio That Does Not Exist',
+    contactEmail: 'studio@example.com',
+    discipline: data.SAMPLE_DISCIPLINES[0].id,
+    description: 'A sentence long enough to describe a practice that does not exist either.',
+    guidelines: 'yes',
+  }
+  check(
+    Object.keys(application.validateApplication(filledApplication)).length === 0,
+    'application: a complete application was rejected',
+  )
+  check(
+    Boolean(application.validateApplication({ ...filledApplication, discipline: 'sculpture' }).discipline),
+    'application: a discipline outside the catalogue was accepted',
+  )
+  check(
+    Boolean(application.validateApplication({ ...filledApplication, portfolioUrl: 'example.com' }).portfolioUrl),
+    'application: a portfolio address without a scheme was accepted',
+  )
+  check(
+    application.validateApplication({ ...filledApplication, portfolioUrl: '' }).portfolioUrl === undefined,
+    'application: clearing the optional address made the form invalid',
+  )
+  check(
+    Boolean(application.validateApplication({ ...filledApplication, guidelines: '' }).guidelines),
+    'application: an application without the acknowledgement was accepted',
+  )
+  check(
+    Boolean(
+      application.validateApplication({
+        ...filledApplication,
+        description: 'Too short.',
+      }).description,
+    ),
+    'application: a description under the stated minimum was accepted',
+  )
+  check(
+    Boolean(
+      application.validateApplication({
+        ...filledApplication,
+        studioName: 'x'.repeat(application.APPLICATION_LIMITS.studioNameMax + 1),
+      }).studioName,
+    ),
+    'application: a name over the stated maximum was accepted',
+  )
+
+  // The read-back: every row is the form's own contents, and an empty optional
+  // field is stated rather than left blank.
+  const previewRows = application.applicationPreview(filledApplication)
+  check(
+    previewRows.length === 6 && previewRows.every((row) => row.value !== ''),
+    'application: the read-back lost a row or left a value blank',
+  )
+  check(
+    previewRows.some((row) => row.value === data.categoryLabel(data.SAMPLE_DISCIPLINES[0].id)),
+    'application: the read-back does not name the chosen discipline',
+  )
+  check(
+    application.applicationPreview(blankApplication).find((row) => row.label === 'Portfolio or website')
+      ?.value === 'Not provided',
+    'application: an empty optional field is not stated as absent',
+  )
+  check(
+    /submitted nowhere/i.test(application.APPLICATION_PREVIEW_LABEL),
+    'application: the read-back is not labelled as belonging to the form',
+  )
+  check(
+    /Nothing has been received/.test(application.APPLICATION_NO_SUBMISSION),
+    'application: the page stopped saying that nothing was received',
+  )
+
+  let applicationState = application.initialApplicationState()
+  check(
+    applicationState.outcome === 'none',
+    'application: the form does not start unchecked',
+  )
+  applicationState = application.applicationReducer(applicationState, { type: 'check' })
+  check(
+    applicationState.outcome === 'invalid',
+    'application: an empty application passed its check',
+  )
+  applicationState = application.applicationReducer(applicationState, {
+    type: 'setField',
+    field: 'studioName',
+    value: 'A Studio',
+  })
+  check(
+    applicationState.values.studioName === 'A Studio' &&
+      applicationState.outcome === 'none' &&
+      applicationState.errors.studioName === undefined,
+    'application: editing a field did not clear its error or the last verdict',
+  )
+  check(
+    application.applicationReducer(applicationState, { type: 'clear' }).values.studioName === '',
+    'application: clearing the form left a value behind',
+  )
+  check(
+    application.APPLICATION_BLOCKERS.length >= 5,
+    'application: the list of what a real application needs has shrunk',
+  )
+
+  /*
+   * ── Verification, checked directly ──────────────────────────────────────
+   * The five states are definitions; the state of every studio in the build is
+   * derived, and it is never verified.
+   */
+  check(
+    verification.VERIFICATION_STAGES.map((stage) => stage.id).join() ===
+      'not-started,information-needed,under-review,verified,action-required',
+    'verification: the five states have changed',
+  )
+  check(
+    verification.VERIFICATION_STAGES.every(
+      (stage) => stage.meaning.length > 30 && stage.next.length > 20 && stage.label.length > 3,
+    ),
+    'verification: a state is listed without saying what it means or what moves it on',
+  )
+  check(
+    data.SAMPLE_CREATORS.every((creator) => verification.isVerified(creator) === false),
+    'verification: a sample studio was reported as verified',
+  )
+  for (const creator of data.SAMPLE_CREATORS) {
+    const standing = verification.sellerVerification(creator.id)
+    check(
+      standing.stage.id === 'not-started' && standing.verified === false,
+      `verification: ${creator.id} is not reported as “not started”`,
+    )
+    check(
+      standing.basis.includes('no application'),
+      `verification: ${creator.id} has no explanation for its state`,
+    )
+  }
+  check(
+    verification.sellerVerification('no-such-studio').verified === false &&
+      verification.sellerVerification('no-such-studio').basis.includes('not in the sample data'),
+    'verification: an unknown studio id did not degrade to an honest answer',
+  )
+  check(
+    /^None of the 5 illustrative studios in this build/.test(verification.verificationSummaryLine()) &&
+      /no application system/.test(verification.verificationSummaryLine()),
+    'verification: the summary line does not report that nothing is verified',
+  )
+  check(
+    verification.TRUST_DISTINCTIONS.map((group) => group.id).join() ===
+      'illustrative,actual,absent',
+    'verification: the three kinds of statement are no longer distinguished',
+  )
+  check(
+    verification.TRUST_DISTINCTIONS.every((group) => group.items.length >= 3 && group.text.length > 30),
+    'verification: a kind of statement is listed without its own explanation',
+  )
+  check(
+    !verification.VERIFICATION_STAGES.some((stage) => /\d{4}/.test(stage.meaning)),
+    'verification: a date appears among the definitions',
+  )
+  check(
+    /Preview — Not Issued/.test(verification.CERTIFICATE_DESIGN_VS_ISSUED) &&
+      /design preview/.test(verification.CERTIFICATE_DESIGN_VS_ISSUED),
+    'verification: the certificate paragraph does not keep design and issuance apart',
+  )
+
+  /* The certificate preview is reused, never rebuilt: one implementation, one
+     status, and no second copy of its placeholders. */
+  check(
+    certificate.CERTIFICATE_STATUS === 'Preview — Not Issued',
+    'certificate: the status is no longer fixed at “Preview — Not Issued”',
+  )
+  const verificationHtml = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      { initialEntries: ['/sell/studio/verification'] },
+      createElement(AppRoutes),
+    ),
+  )
+  check(
+    verificationHtml.includes('href="/sell/studio/certificate"'),
+    'verification: the page does not link to the certificate preview',
+  )
+  check(
+    !verificationHtml.includes(certificate.CERTIFICATE_ID_PLACEHOLDER) &&
+      !verificationHtml.includes(certificate.CERTIFICATE_DATE_PLACEHOLDER) &&
+      !verificationHtml.includes(certificate.CERTIFICATE_QR_LABEL),
+    'verification: the page draws a second copy of the certificate',
+  )
+  check(
+    verificationHtml.includes(certificate.CERTIFICATE_STATUS),
+    'verification: the page does not carry the certificate’s own status wording',
+  )
+  check(
+    !/<svg|<img|<canvas/.test(verificationHtml.replace(/<svg[^>]*aria-hidden[\s\S]*?<\/svg>/g, '')) ||
+      !verificationHtml.includes(certificate.CERTIFICATE_QR_LABEL),
+    'verification: a graphic appeared where the certificate placeholders belong',
+  )
+
+  /*
    * ── The buyer journey, checked directly ─────────────────────────────────
    * The saved list and the cart are the only state Phase 10 adds, and every
    * promise the pages make is checked here against the model the pages use:
@@ -2428,6 +2887,419 @@ try {
 
   const buyerCasesEnd = CASES.length
 
+  /** Written into the model on the sign-in and create screens. */
+  const accountFields = [
+    ...account.accountFields('signIn'),
+    ...account.accountFields('create'),
+    ...account.accountFields('reset'),
+  ]
+
+  CASES.push(
+    {
+      path: '/account/sign-in',
+      expect: 'Sign in preview',
+      expectAll: [
+        account.ACCOUNT_PREVIEW_NOTICE,
+        account.ACCOUNT_CREDENTIAL_WARNING,
+        account.ACCOUNT_NO_SESSION,
+        ...account.SIGN_IN_BLOCKERS,
+        // Every label, hint and placeholder of the form, read from the model.
+        ...account.accountFields('signIn').map((field) => field.label),
+        ...account.accountFields('signIn').map((field) => field.hint ?? '').filter(Boolean),
+        // The action is a check, and the toggle names the state it is in.
+        account.ACCOUNT_SUBMIT_LABELS.signIn,
+        account.passwordToggleLabel(false),
+        'Clear the form',
+        'Two fields, checked in your browser',
+        'What a real sign-in needs',
+      ],
+      expectLinks: ['/account/create', '/account/reset', '/discover', '/artists', '/cart'],
+      // A preview form is a form, not a picture: no artwork appears on it.
+      maxImages: 0,
+      forbidAll: [
+        ...noSaveClaims,
+        ...fabricatedProvenance,
+        // Nothing on the screen may claim the visitor is in, or that a check
+        // reached anybody. The account words themselves are caught here as
+        // bare actions: the page may be *called* “Sign in preview”, but no
+        // control and no heading may promise a sign-in on its own.
+        'Forgot your password?',
+        'Remember me',
+      ],
+      forbidPatterns: [
+        /Sign in(?! preview)/,
+        /Create account(?! preview)/,
+        /\bLog ?in\b/,
+        /\bSign ?up\b/,
+        /\bMy account\b/,
+        /\bsigned in\b/i,
+        /name="password"/,
+        /autocomplete="current-password"/,
+      ],
+    },
+    {
+      path: '/account/create',
+      expect: 'Create account preview',
+      expectAll: [
+        account.ACCOUNT_PREVIEW_NOTICE,
+        account.ACCOUNT_CREDENTIAL_WARNING,
+        account.ACCOUNT_NO_SESSION,
+        ...account.CREATE_ACCOUNT_BLOCKERS,
+        ...account.accountFields('create').map((field) => field.label),
+        ...account.accountFields('create').map((field) => field.hint ?? '').filter(Boolean),
+        account.ACCOUNT_SUBMIT_LABELS.create,
+        account.passwordToggleLabel(false),
+        // What the passing message says is asserted against the model, above: it
+        // is rendered only after the check runs, so it is not in the markup.
+        account.ACCOUNT_SUBMIT_LABELS.create,
+        'Your details',
+        'What a real account would need',
+        // A form that creates nothing asks nobody to accept anything, and says so.
+        'nothing to agree to',
+      ],
+      expectLinks: ['/account/sign-in', '/account/reset', '/wishlist', '/cart'],
+      maxImages: 0,
+      forbidAll: [
+        ...noSaveClaims,
+        ...fabricatedProvenance,
+        'Welcome',
+        'Check your inbox',
+        'Confirm your email',
+        'Terms of service',
+        'Privacy policy',
+        'I agree',
+        'By continuing you agree',
+      ],
+      forbidPatterns: [
+        /Sign in(?! preview)/,
+        /Create account(?! preview)/,
+        /\bLog ?in\b/,
+        /\bSign ?up\b/,
+        /\bMy account\b/,
+        /\bsigned in\b/i,
+        /name="password"/,
+        /autocomplete="new-password"/,
+      ],
+    },
+    {
+      path: '/account/reset',
+      expect: 'Password reset preview',
+      expectAll: [
+        account.ACCOUNT_PREVIEW_NOTICE,
+        account.ACCOUNT_NO_EMAIL_NOTE,
+        account.accountFields('reset').map((field) => field.label)[0],
+        account.ACCOUNT_SUBMIT_LABELS.reset,
+        'Request a reset',
+        // The form asks for an address and says what will not follow from it.
+        account.ACCOUNT_NO_EMAIL_NOTE,
+        'What a real reset request needs',
+        'no message would ever arrive',
+      ],
+      expectLinks: ['/account/sign-in', '/account/create'],
+      maxImages: 0,
+      // A reset request asks for an address and nothing else: no password field,
+      // no second address, no security question.
+      forbidAll: [
+        ...noSaveClaims,
+        'Confirm',
+        'Security question',
+        'A message is on its way',
+        'Check your inbox',
+        'If an account exists',
+        'We have sent',
+      ],
+      // No password control of any kind, and no promise of a mail: the page is
+      // named for a reset, and the check is that it does nothing about one.
+      forbidPatterns: [
+        /Sign in(?! preview)/,
+        /Create account(?! preview)/,
+        /\bLog ?in\b/,
+        /\bSign ?up\b/,
+        /\bMy account\b/,
+        /\bsigned in\b/i,
+        /name="password"/,
+        /type="password"/,
+      ],
+    },
+    {
+      path: '/sell/apply',
+      expect: 'Seller application',
+      expectAll: [
+        application.APPLICATION_PREVIEW_NOTICE,
+        application.APPLICATION_NO_DOCUMENTS,
+        application.APPLICATION_NO_SUBMISSION,
+        application.APPLICATION_PREVIEW_LABEL,
+        application.APPLICATION_REVIEW_NOTE,
+        ...application.APPLICATION_BLOCKERS,
+        // Every field of the form, from the model: label, hint, and the choice
+        // list the discipline menu offers.
+        ...application.APPLICATION_FIELDS.map((field) => field.label),
+        ...application.APPLICATION_FIELDS.map((field) => field.hint ?? '').filter(Boolean),
+        'Choose a discipline',
+        ...application.applicationDisciplines().map((discipline) => discipline.label),
+        // The workflow the form sits in front of, and where verification comes in.
+        ...workspace.ARTIST_WORKFLOW.map((step) => step.title),
+        'The application',
+        'What happens after a real application',
+        'What a real application needs',
+        // The read-back of the typed values is a preview of the form, not a
+        // receipt: it exists before anything is typed.
+        'What you entered',
+        'See what verification would mean',
+      ],
+      expectLinks: ['/sell', '/discover', '/sell/studio', '/sell/studio/verification'],
+      // Nothing is uploaded and nothing is drawn: an application is text only.
+      maxImages: 0,
+      forbidAll: [
+        ...noSaveClaims,
+        ...fabricatedProvenance,
+        // No claim of receipt, review, approval or a queue position.
+        'We have received',
+        'Your application has been received',
+        'Application submitted',
+        'Under review',
+        'Approved',
+        'We will be in touch',
+        'Reference number',
+        'Upload',
+        'Attach',
+        'Bank details',
+        'Tax',
+        'Commission',
+        'Fee',
+      ],
+      // An identity or financial document by any other name, and any claim that
+      // the form reached a server.
+      forbidPatterns: [
+        /passport|driving licen[cs]e|national id|tax id|vat|iban|swift|sort code|account number/i,
+        /\bPOST\b|fetch\(|XMLHttpRequest|FormData/,
+      ],
+    },
+    {
+      path: '/sell/studio/verification',
+      expect: 'Verification status',
+      expectAll: [
+        verification.VERIFICATION_HEADLINE,
+        verification.verificationSummaryLine(),
+        verification.VERIFICATION_STATUS_NOTE,
+        verification.CERTIFICATE_DESIGN_VS_ISSUED,
+        ...verification.TRUST_DISTINCTIONS.map((group) => group.title),
+        ...verification.TRUST_DISTINCTIONS.flatMap((group) => group.items),
+        // All five states, labelled as definitions rather than as holders.
+        ...verification.VERIFICATION_STAGES.map((stage) => stage.label),
+        ...verification.VERIFICATION_STAGES.map((stage) => stage.meaning),
+        ...verification.VERIFICATION_STAGES.map((stage) => stage.next),
+        'No studio is in this state',
+        'Illustrative state',
+        'Standing of',
+        'What each state will mean',
+        'Three kinds of statement, kept apart',
+        'The certificate, and what is not one',
+        // The certificate's own status, carried onto this page rather than
+        // re-derived, because the document is only drawn at its own route.
+        certificate.CERTIFICATE_STATUS,
+      ],
+      expectLinks: ['/sell', '/sell/apply', '/sell/studio', '/sell/studio/certificate'],
+      maxImages: 0,
+      forbidAll: [
+        ...noSaveClaims,
+        ...fabricatedProvenance,
+        // States a studio could be in, but no claim that anybody is in them.
+        'You are verified',
+        'Your studio is verified',
+        'Verified seller',
+        'Verification failed',
+        'Rejected',
+        'Verified on',
+        'Approved on',
+        'Trust score',
+        'Rating',
+        'Reviews',
+      ],
+      // A date, a reference number and a score, in any format — and no second
+      // certificate is drawn here: the identifier and the code frame live on the
+      // certificate route and nowhere else.
+      forbidPatterns: [
+        /\b\d{4}-\d{2}-\d{2}\b/,
+        /\b(?:19|20)\d{2}\b(?=\s*(?:verified|approved|issued))/i,
+        /[A-Z]{2,}-\d{3,}/,
+        /\b\d(?:\.\d)?\s*\/\s*5\b/,
+        /\b\d{1,3}%\s*(?:verified|trusted)/i,
+        /\bverified\b[^.]{0,40}\bon\b[^.]{0,20}\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\b/i,
+      ],
+    },
+  )
+
+  const trustCasesEnd = CASES.length
+
+  /*
+   * The forms themselves, read out of the markup they render.
+   *
+   * The screens matter for the same reason the model does — a preview form is
+   * the one place a visitor is asked to type something — so what is checked here
+   * is the wiring: every control has a label that points at it, the password
+   * controls are the only ones and they say which way round they are, and no
+   * form anywhere has an address to send itself to.
+   */
+  function renderRoute(path) {
+    return renderToStaticMarkup(
+      createElement(MemoryRouter, { initialEntries: [path] }, createElement(AppRoutes)),
+    )
+  }
+
+  for (const path of ['/account/sign-in', '/account/create', '/account/reset', '/sell/apply']) {
+    const html = renderRoute(path)
+    const controls = [...html.matchAll(/<(?:input|textarea|select)\b[^>]*>/g)].map((match) => match[0])
+
+    check(controls.length > 0, `${path}: the form shows no control at all`)
+    for (const control of controls) {
+      const id = control.match(/\bid="([^"]+)"/)?.[1]
+      check(Boolean(id), `${path}: a control has no id — ${control.slice(0, 90)}`)
+      if (id) {
+        check(
+          html.includes(`for="${id}"`),
+          `${path}: the control #${id} has no label pointing at it`,
+        )
+      }
+    }
+
+    // A form with nowhere to go: no action, no method, no encoding, no target.
+    const forms = html.match(/<form\b[^>]*>/g) ?? []
+    check(forms.length === 1, `${path}: expected exactly one <form>, found ${forms.length}`)
+    for (const form of forms) {
+      check(
+        !/\baction=|\bmethod=|\benctype=|\btarget=/.test(form),
+        `${path}: the form declares somewhere to submit to — ${form.slice(0, 120)}`,
+      )
+      check(
+        /novalidate/i.test(form),
+        `${path}: the form leaves validation to the browser instead of reporting it in the page`,
+      )
+    }
+
+    const submits = html.match(/<button[^>]*type="submit"[^>]*>[\s\S]*?<\/button>/g) ?? []
+    check(submits.length === 1, `${path}: expected one submit button, found ${submits.length}`)
+
+    // The outcome region exists before anything is typed, and is empty.
+    check(
+      html.includes('role="status"') && html.includes('aria-live="polite"'),
+      `${path}: there is nowhere for a result to be reported`,
+    )
+  }
+
+  for (const path of ['/account/sign-in', '/account/create']) {
+    const html = renderRoute(path)
+    const form = account.accountFormHasPassword(path === '/account/sign-in' ? 'signIn' : 'create')
+      ? path.replace('/account/', '')
+      : ''
+    const ids = account
+      .accountFields(form === 'sign-in' ? 'signIn' : 'create')
+      .filter((field) => field.type === 'password')
+      .map((field) => `${form === 'sign-in' ? 'signIn' : 'create'}-${field.name}`)
+
+    const toggles = html.match(/<button[^>]*aria-pressed[^>]*>[\s\S]*?<\/button>/g) ?? []
+    check(toggles.length === ids.length, `${path}: expected ${ids.length} password toggles, found ${toggles.length}`)
+    for (const toggle of toggles) {
+      check(
+        /aria-pressed="false"/.test(toggle),
+        `${path}: a password toggle starts pressed, or says nothing about its state`,
+      )
+      const controls = toggle.match(/aria-controls="([^"]+)"/)?.[1]
+      check(
+        Boolean(controls) && ids.includes(controls),
+        `${path}: a password toggle does not name the field it controls`,
+      )
+      check(
+        toggle.includes(account.passwordToggleLabel(false)),
+        `${path}: a password toggle does not say what pressing it does`,
+      )
+      check(
+        toggle.includes('type="button"'),
+        `${path}: a password toggle would submit the form`,
+      )
+    }
+
+    // The field is masked to begin with, and the toggle is the only thing that
+    // can unmask it: no control in the markup starts as text with a password
+    // value behind it.
+    const passwordInputs = html.match(/<input[^>]*type="password"[^>]*>/g) ?? []
+    check(
+      passwordInputs.length === ids.length,
+      `${path}: ${passwordInputs.length} masked fields for ${ids.length} password definitions`,
+    )
+    for (const input of passwordInputs) {
+      const renderedValue = input.match(/\bvalue="([^"]*)"/)?.[1]
+      check(
+        renderedValue === undefined || renderedValue === '',
+        `${path}: a password field renders with a value in it`,
+      )
+      check(
+        /autocomplete="off"/i.test(input),
+        `${path}: a password field asks a browser or a password manager to fill it`,
+      )
+    }
+  }
+
+  // The reset request holds exactly one control, and it is an address.
+  const resetHtml = renderRoute('/account/reset')
+  const resetControls = (resetHtml.match(/<(?:input|textarea|select)\b[^>]*>/g) ?? []).length
+  check(resetControls === 1, `account: the reset request shows ${resetControls} controls, expected 1`)
+  check(
+    resetHtml.includes('type="email"'),
+    'account: the reset request does not ask for an email address',
+  )
+
+  // Requiredness is stated twice and is never left to the browser: it is in the
+  // label, in `aria-required`, and counted from the model that defines it.
+  const requiredForms = [
+    ['/account/sign-in', account.accountFields('signIn')],
+    ['/account/create', account.accountFields('create')],
+    ['/account/reset', account.accountFields('reset')],
+    ['/sell/apply', application.APPLICATION_FIELDS],
+  ]
+
+  for (const [path, fields] of requiredForms) {
+    const html = renderRoute(path)
+    const expected = fields.filter((field) => field.required).length
+    const marked = (html.match(/aria-required="true"/g) ?? []).length
+
+    check(
+      marked === expected,
+      `${path}: ${marked} field(s) marked required for ${expected} required definitions`,
+    )
+    check(
+      !/<(?:input|textarea|select)\b[^>]*\brequired(?:[\s/>])/.test(html),
+      `${path}: a control uses the browser's own validation instead of the page reporting it`,
+    )
+    check(
+      html.includes('aria-describedby='),
+      `${path}: a field’s hint or error is not associated with the field`,
+    )
+  }
+
+  /*
+   * The application form's read-back is a preview of the form's own contents: it
+   * exists, and is empty, before anything is typed — which is what makes it
+   * impossible to mistake for a confirmation.
+   */
+  const applicationHtml = renderRoute('/sell/apply')
+  check(
+    applicationHtml.includes('What you entered') &&
+      applicationHtml.includes('Not provided') &&
+      applicationHtml.includes(application.APPLICATION_PREVIEW_LABEL),
+    'application: the empty read-back is missing or is not labelled as the form’s own contents',
+  )
+  check(
+    // A receipt, by any of the shapes one takes — a claim about the application
+    // rather than about the form. The page does say that nothing has been
+    // received, which is the opposite of this.
+    !/(?:we|i) (?:have|’ve|'ve) received|(?<!no )(?<!not )application (?:has been|is|was) (?:received|submitted|approved)|received your application|your application (?:is|has)/i.test(
+      applicationHtml,
+    ),
+    'application: the read-back reads as a receipt',
+  )
+
+
   for (const testCase of CASES) {
     routesChecked += 1
     const html = renderToStaticMarkup(
@@ -2439,6 +3311,23 @@ try {
     const images = html.match(/<img[^>]*>/g) ?? []
 
     check(h1s.length === 1, `${testCase.path}: expected exactly one <h1>, found ${h1s.length}`)
+
+    /*
+     * The heading outline: headings carry the page's structure, so a level
+     * skipped in the markup is a section a reader using a screen reader cannot
+     * find. Each rendered page is walked in document order and every jump of
+     * more than one level is a failure.
+     */
+    const headingLevels = [...html.matchAll(/<h([1-6])\b/g)].map((match) => Number(match[1]))
+    headingsChecked += headingLevels.length
+    let previousLevel = 1
+    for (const level of headingLevels) {
+      check(
+        level <= previousLevel + 1,
+        `${testCase.path}: heading outline skips from h${previousLevel} to h${level}`,
+      )
+      previousLevel = level
+    }
     check(
       html.includes(testCase.expect),
       `${testCase.path}: expected marker not found — ${testCase.expect}`,
@@ -2446,14 +3335,56 @@ try {
     check(html.includes('Skip to content'), `${testCase.path}: skip link missing`)
 
     /*
-     * Phase 10 adds a buyer journey with no account behind it, and nothing in
-     * the build offers one. This is asserted on every page rather than only on
-     * the buyer screens: a sign-in link in the header would appear everywhere.
+     * Accounts, Phase 11: there are none. Three preview screens exist so the
+     * experience can be reviewed, and the rules that keep them honest are
+     * asserted on every route rather than only on those three:
+     *
+     * 1. Every link into the account previews says the word *preview* in its own
+     *    text or accessible name — a link is a promise, and “Sign in” on its own
+     *    would promise an account system that does not exist.
+     * 2. Nowhere may a page claim a signed-in state, a created account, a sent
+     *    message, a received application or a changed password. The links that
+     *    satisfy rule 1 are removed before this check, and so is each screen's
+     *    own preview-bearing name — “Sign in preview” is a title, while a bare
+     *    “Sign in” is a promise, and the difference is the word.
+     * 3. No page outside the account previews renders a password field at all.
      */
-    for (const phrase of ['Sign in', 'Sign up', 'Log in', 'Create an account', 'My account']) {
+    const accountAnchors = [...html.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)]
+      .map((match) => match[0])
+      .filter((anchor) => /href="\/account\//.test(anchor))
+
+    for (const anchor of accountAnchors) {
       check(
-        !html.includes(phrase),
-        `${testCase.path}: an account entry point appeared — “${phrase}”`,
+        /preview/i.test(anchor),
+        `${testCase.path}: a link into the account previews does not say “preview” — ${anchor.slice(0, 120)}`,
+      )
+    }
+
+    const withoutAccountLinks = accountAnchors
+      .reduce((remaining, anchor) => remaining.replace(anchor, ''), html)
+      .replace(
+        // The screens' own names, as long as they keep the word that makes them
+        // names. A page heading that drops it fails the check below.
+        new RegExp(
+          Object.values(account.ACCOUNT_FORM_TITLES)
+            .map((title) => title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|'),
+          'g',
+        ),
+        '',
+      )
+    for (const phrase of signedInClaims) {
+      check(
+        !withoutAccountLinks.includes(phrase),
+        `${testCase.path}: a signed-in state was claimed — “${phrase}”`,
+      )
+    }
+
+    const passwordInputs = (html.match(/<input[^>]*type="password"[^>]*>/g) ?? []).length
+    if (!testCase.path.startsWith('/account/')) {
+      check(
+        passwordInputs === 0,
+        `${testCase.path}: ${passwordInputs} password field(s) outside the account previews`,
       )
     }
     check(
@@ -2577,6 +3508,12 @@ try {
     `buyer journey: ${buyerCasesEnd - buyerCasesStart} cases, plus direct assertions on the saved ` +
       `list, the cart, its totals, the checkout sections and the order structure`,
   )
+  console.log(
+    `account and trust: ${trustCasesEnd - buyerCasesEnd} cases, plus direct assertions on the three ` +
+      `forms and their validation, the application read-back, the five verification states and the ` +
+      `certificate route the trust screens hand off to`,
+  )
+  console.log(`headings: ${headingsChecked} across ${routesChecked} rendered routes, with no level skipped`)
 
   await server.close()
 } catch (error) {

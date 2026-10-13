@@ -75,6 +75,12 @@ export const STUDIO_SECTIONS: StudioSection[] = [
     to: NavRoutes.studioProfile,
   },
   {
+    id: 'verification',
+    label: 'Verification status',
+    description: 'What verification will mean, and where this studio stands — which is nowhere yet.',
+    to: NavRoutes.studioVerification,
+  },
+  {
     id: 'certificate',
     label: 'Seller certificate',
     description: 'The verification certificate design, shown with placeholders and marked not issued.',
@@ -233,5 +239,5 @@ export const WORKSPACE_NOT_INCLUDED: string[] = [
   'No storage: closing the tab discards the draft.',
   'No publication: nothing prepared here appears anywhere else on ArtVerse.',
   'No availability, orders, fees or payouts — and no checkout of any kind.',
-  'No verification and no issued certificates: the certificate section draws the document and says on its face that nothing has been issued.',
+  'No verification, no reviewer and no issued certificates. The verification section describes the states and reports the truth — nothing submitted, nobody verified — and the certificate section draws the document with its status fixed at “Preview — Not Issued”.',
 ]

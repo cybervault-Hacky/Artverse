@@ -21,6 +21,16 @@ export const NavRoutes = {
   cart: '/cart',
   checkout: '/checkout',
   orders: '/orders',
+  /*
+   * The account previews. Three screens that show what signing in, creating an
+   * account and requesting a reset will look like — with no account system
+   * behind any of them: no credential is transmitted or stored, no session is
+   * created and no email is sent. Every label that points here says the word
+   * *preview*, because a link is a promise too.
+   */
+  signIn: '/account/sign-in',
+  createAccount: '/account/create',
+  resetPassword: '/account/reset',
   sell: '/sell',
   /**
    * The seller workspace preview. Every workspace destination sits under
@@ -33,6 +43,8 @@ export const NavRoutes = {
   studioListing: (artworkId: string) => `/sell/studio/listings/${artworkId}`,
   studioProfile: '/sell/studio/profile',
   studioCertificate: '/sell/studio/certificate',
+  studioVerification: '/sell/studio/verification',
+  sellApply: '/sell/apply',
   about: '/about',
   collections: '/collections',
   search: '/search',
@@ -100,6 +112,27 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
       'A studio profile: practice, location, practice note, its sample records, and the routes onward.',
   },
   {
+    pattern: '/account/sign-in',
+    page: 'SignInPage',
+    status: 'implemented',
+    purpose:
+      'Sign-in preview: an email and password field with a show/hide control, real shape validation and a closing statement of what a real sign-in would need. Nothing is transmitted, stored or checked against a credential, and no session can be created.',
+  },
+  {
+    pattern: '/account/create',
+    page: 'CreateAccountPage',
+    status: 'implemented',
+    purpose:
+      'Account-creation preview: name, email, password and confirmation with real validation including the matching rule, and an explicit instruction not to type a real password. No account is created.',
+  },
+  {
+    pattern: '/account/reset',
+    page: 'ResetPasswordPage',
+    status: 'implemented',
+    purpose:
+      'Password-reset request preview: a single address field and the plain statement that no email, link or password change follows it. No message is generated and no account is looked up.',
+  },
+  {
     pattern: '/wishlist',
     page: 'WishlistPage',
     status: 'implemented',
@@ -126,6 +159,13 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     status: 'implemented',
     purpose:
       'Orders: the true empty state — no account holds an order and no checkout can create one — and one clearly labelled structure preview built around a real sample record, whose reference, date, status and despatch lines are placeholders nothing generates.',
+  },
+  {
+    pattern: '/sell/apply',
+    page: 'SellerApplicationPage',
+    status: 'implemented',
+    purpose:
+      'Seller application preview: the fields a studio application will carry, validated in the browser, with no document asked for, nothing submitted, and a labelled read-back of what was entered instead of a confirmation.',
   },
   {
     pattern: '/sell',
@@ -161,6 +201,13 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     status: 'implemented',
     purpose:
       'Listing editor — a draft prepared from an existing sample record. The record itself is never modified.',
+  },
+  {
+    pattern: '/sell/studio/verification',
+    page: 'StudioVerificationPage',
+    status: 'implemented',
+    purpose:
+      'Seller verification status: the five states as definitions, the actual derived state of every studio in the build — none verified, none reviewed — the three kinds of statement kept apart, and the route to the certificate design preview.',
   },
   {
     pattern: '/sell/studio/certificate',

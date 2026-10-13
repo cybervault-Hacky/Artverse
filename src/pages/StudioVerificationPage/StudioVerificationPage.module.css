@@ -1,0 +1,263 @@
+/*
+ * The standing block.
+ *
+ * It is the first thing on the page and it reads like a record rather than a
+ * dashboard card: the studio's name, one status word, and the basis for it in
+ * sentences. No score, no ring, no percentage — a number here would be a trust
+ * metric, and a trust metric nobody can compute is a lie with a progress bar.
+ */
+.current {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.currentHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.currentLabel {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.currentName {
+  margin-top: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.currentMeta {
+  margin-top: var(--space-2);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}
+
+.currentHeadline {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.currentBasis {
+  max-width: 66ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.currentLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.statusNote {
+  margin-top: var(--space-5);
+  max-width: 68ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+/* ── The five definitions ──────────────────────────────────────────────── */
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.sectionIntro {
+  margin-top: var(--space-3);
+  max-width: 62ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.stages {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .stages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .stages {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.stageHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The marker says out loud what the tag cannot: this is a definition. */
+.stageMarker {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.stageMeaning {
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+.stageNext {
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.stageNextLabel {
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+/* ── The three kinds of statement ──────────────────────────────────────── */
+
+.distinctions {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+@media (min-width: 900px) {
+  .distinctions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.distinction {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.distinctionTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-heading);
+}
+
+.distinctionText {
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.distinctionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.distinctionItem {
+  display: flex;
+  gap: var(--space-3);
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.marker {
+  color: var(--color-accent-ink);
+}
+
+/* ── The certificate hand-off ──────────────────────────────────────────── */
+
+.certificate {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-6);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-muted);
+}
+
+@media (min-width: 900px) {
+  .certificate {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.certificateBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.certificateStatus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.certificateText {
+  max-width: 66ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.certificateLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+@media print {
+  .current,
+  .distinction,
+  .certificate {
+    background: none;
+  }
+}

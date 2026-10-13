@@ -36,6 +36,7 @@ order anywhere in it.
 - [The seller studio preview](#the-seller-studio-preview)
 - [Price, provenance and the certificate preview](#price-provenance-and-the-certificate-preview)
 - [The buyer journey](#the-buyer-journey)
+- [The account and trust screens](#the-account-and-trust-screens)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -201,6 +202,41 @@ listing tools and publication are all still to come.
   shows one clearly labelled **structure preview** built around a real sample record, in which the
   reference, date and despatch lines are bracketed placeholders that nothing generates.
 
+**Phase 11 — account and trust screens, as previews**
+
+- Five routes that create nothing: `/account/sign-in`, `/account/create` and `/account/reset` for the
+  three account screens, `/sell/apply` for the seller application, and `/sell/studio/verification`
+  for the verification status of the studio the workspace is previewed with. All five are reachable
+  from the footer, and the account previews also from the mobile panel.
+- There is no account system behind any of it — no request, no session, no cookie, no storage and no
+  mail service. Every account screen carries the same notice and the same warning (*use a made-up
+  password*), and each action is labelled as a check (“Check these details”, “Check this form”,
+  “Check this request”) rather than as a sign-in. A passing check reports the check, and the
+  reducer's outcomes are only *unchecked*, *invalid* and *valid* — there is no state that could mean
+  signed in, created or sent.
+- One `AccountForm` drives all three screens from the definitions in `src/utils/account.ts`, so a
+  label, a hint or a rule cannot drift between them. Validation is real and runs only when asked:
+  required fields, an email shape, a minimum password length and the two password entries matched,
+  each reported beside the field it belongs to, with the typed value kept exactly as entered.
+- `PasswordField` is the only password control in the build and appears on the two screens that need
+  one. It is masked, asks the browser not to fill it, is controlled by the form's own reducer state,
+  and pairs the field with a control carrying `aria-pressed`, `aria-controls` and a label that says
+  which way round it is (“Show password”, then “Hide password”). Nothing logs it, stores it or sends
+  it, and the harness fails the build if a password field appears anywhere else.
+- The seller application asks for six things — studio name, contact email, discipline, a description,
+  an optional portfolio address and an acknowledgement of the marketplace guidelines — and for no
+  document or payment detail of any kind. It validates for real and reads the typed values back
+  beside the form, labelled as the form's own contents rather than a receipt. The page states that
+  nothing has been received and that a real application and review come after the backend work.
+- The verification screen derives the preview studio's standing from the sample records instead of
+  asserting it. Every studio in this build is in the same state — verification has not started,
+  because no application exists — and the five workflow states are presented as definitions, with the
+  *verified* state marked as one no studio occupies. No badge, score, rating, review, approval or
+  date appears anywhere on it.
+- The certificate stays where it was: `/sell/studio/certificate` keeps its `Preview — Not Issued`
+  status, and the trust screen links to it and quotes its status rather than drawing a second
+  document.
+
 ## What is deliberately not included
 
 Catalogue pagination, medium/size/material filters and indexed search; editorial curation tools;
@@ -212,7 +248,10 @@ payment, storage or AI service anywhere in this repository, and no page simulate
 workspace at `/sell/studio` and the certificate design at `/sell/studio/certificate` are frontend
 previews that say on every screen that they are. The buyer journey is a preview for the same
 reason: its cart, checkout and orders pages are real interfaces over state that lives in one browser
-tab, and nothing in them can take a payment or place an order.
+tab, and nothing in them can take a payment or place an order. The account and trust screens are
+previews for the same reason — they check what is typed and create nothing: no account, no session,
+no message, no application, no review and no verification. No password is written to storage, a
+cookie, a log or anything but the field it was typed into.
 
 ## Stack
 
@@ -660,6 +699,50 @@ hold, so a control pressed twice changes nothing and a stale reference cannot be
 equally forgiving: `normaliseIdList` and `resolveArtworks` skip a non-array, a duplicate, a number
 or an id with no record, so a corrupted list produces a shorter page rather than an error.
 
+## The account and trust screens
+
+Five routes that describe how accounts and seller verification will work, and behind which there is
+nothing at all. Everything they hold is typed into the page, checked in the browser and dropped: no
+request is made, nothing is stored, no session exists, no message is generated and no password is
+kept — not in app state beyond the field itself, not in storage, and not in a log.
+
+**What is real.** The label, hint, error and ARIA wiring of every field; required fields; an email
+shape; a minimum password length; the two password entries matched; a discipline chosen from the five
+the catalogue is organised around; the acknowledgement checkbox; the error count; the read-back of an
+application; the five verification states and what each means; and the derived standing of every
+studio in the build. The controls do what they say.
+
+**What is not, and says so on screen.**
+
+| The temptation | What this build does instead |
+| --- | --- |
+| Let “Sign in” mean something | The action is labelled as a check, and a passing check reports the check — the model's outcomes are only *unchecked*, *invalid* and *valid* |
+| Show a spinner, a success banner or a redirect | Nothing here is asynchronous: there is no loading state, no confirmation and nowhere to go, because nothing happened |
+| Ask for a real password | A warning sits above every password field: use a made-up value, because there is no account for a real one to belong to and no policy is applied to it |
+| Keep the value so the form survives a reload | The value lives in the form's own reducer while the page is open and is dropped when it is left — no storage API is touched, and no password is logged |
+| Ask the visitor to agree to terms | Terms, a privacy notice and a retention rule would all have to exist first, so the create screen states that there is nothing to agree to and shows no consent checkbox |
+| Send a reset email | The reset screen says that no message is generated and no link is created, and asks for one thing only — an address |
+| Collect identity documents with an application | The application asks for six things, none of them a document, and has no upload or attach control of any kind |
+| Confirm that an application arrived | The typed values are read back beside the form and labelled as the form's own contents rather than a receipt; the page states that nothing has been received and explains what a real application and review would need |
+| Mark a sample studio verified | The state is derived from the records through `sellerVerification`, and all five studios report the same answer: verification has not started, because no application exists |
+| Draw a badge, a score or a date | The five states are definitions, under a heading that says so, with the verified state marked as one no studio is in; no badge, star, rating, review or timestamp appears anywhere |
+| Rebuild the certificate to show it | The trust screen links to `/sell/studio/certificate`, quotes its `Preview — Not Issued` status and draws no document of its own — one certificate implementation, one status |
+
+**What each screen is for.** The sign-in and create screens exist so the two layouts and their rules
+can be reviewed; the reset screen exists because a real account system would need one; the
+application exists so the fields, their limits and the workflow behind them are visible rather than
+guessed at; and the verification screen exists so that the words *verified* and *under review* can be
+defined before anybody uses them. Each screen closes with the list of what would have to exist first
+— a session policy, an accounts table, a mail service, a review queue, somebody responsible for
+approvals — so the distance between the preview and a working system is stated rather than implied.
+
+**One model per screen.** `src/utils/account.ts` holds the field definitions, validation rules,
+reducer, notices and cross-links behind all three account previews, and `AccountForm` renders
+whichever one it is given. `src/utils/sellerApplication.ts` holds the six application fields, their
+limits, the validator, the reducer and the read-back rows. `src/utils/verification.ts` holds the five
+states with what each means and what moves a studio on from it, the derived standing, the three kinds
+of statement the screen keeps apart, and the certificate paragraph.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -674,6 +757,11 @@ or an id with no record, so a corrupted list produces a shorter page rather than
 | `/cart` | `CartPage` | Complete (Phase 10) — the collected works, a total only where one can be worked out, and the way on to the checkout preview |
 | `/checkout` | `CheckoutPage` | Preview (Phase 10) — contact, delivery and review sections with real validation, no payment surface, and a permanently disabled order action |
 | `/orders` | `OrdersPage` | Preview (Phase 10) — the true empty state, and one labelled structure preview of an order record |
+| `/account/sign-in` | `SignInPage` | Preview (Phase 11) — the sign-in layout and its rules, with a real check and no session that could follow it |
+| `/account/create` | `CreateAccountPage` | Preview (Phase 11) — four fields, one matching rule, nothing created and nothing to agree to |
+| `/account/reset` | `ResetPasswordPage` | Preview (Phase 11) — one address field, and the statement that no message is generated |
+| `/sell/apply` | `SellerApplicationPage` | Preview (Phase 11) — six fields validated for real, read back for review, submitted nowhere |
+| `/sell/studio/verification` | `StudioVerificationPage` | Preview (Phase 11) — the derived standing of the preview studio, the five states as definitions, and the hand-off to the certificate design |
 | `/collections` | `CollectionsPage` | Complete (Phase 7) — the directory of the groupings this build holds |
 | `/sell` | `SellPage` | Complete (Phase 8) — the studio workflow, and an honest account of what does not exist yet |
 | `/sell/studio` | `StudioOverviewPage` | Preview (Phase 8) — the records this studio holds, the sections, and what the workspace does not do |
@@ -733,8 +821,11 @@ and long headlines use `clamp()` so nothing dominates a phone screen.
 three soft shadows, and seven motion tokens.
 
 Visit `/design-system` for the live reference: palette, type scale, spacing, radii, buttons (all four
-variants), links, navigation, frames, cards, grids, states, the floating-art prototype with controls,
-responsive behaviour and the route table.
+variants), links, navigation, frames, cards, grids, states, form fields (including a required field,
+the inline checkbox layout and an error state), the floating-art prototype with controls, responsive
+behaviour and the route table. A password control is deliberately absent from that page: the only
+screens in the build that render one are the account previews, which carry the warning that belongs
+beside it.
 
 ## The floating-art composition
 
@@ -844,6 +935,15 @@ from the `fieldset` — so the group is announced once with its instructions rat
 unrelated radios. Validation messages appear in the page and are described, not only coloured, and a
 field's message is cleared by editing that field. The draft summary is text, never a badge.
 
+On the account and trust screens, every control is named by its own `<label for>` and every message
+is tied to its field; a required field says so twice — in the label and in `aria-required` — and the
+form reports its own messages rather than leaving them to the browser. The password control is a
+`type="button"` toggle with `aria-pressed`, an `aria-controls` pointing at the field it acts on and a
+label that changes with its state, so the value being shown is never inferred from a glyph. The
+result of a check is announced in a polite live region that exists before anything is typed, and the
+verification screen's five definitions are a list under a heading that says they are definitions —
+with the state no studio occupies marked in words rather than by a colour.
+
 On the artwork page, the studio link is the only link inside the record; the metadata is a proper
 `dl`; the image carries its real descriptive alt text and intrinsic dimensions; the placeholder panel
 and the “Studio not recorded” line are text rather than unlabelled graphics; and the related grid is a
@@ -902,14 +1002,24 @@ Executed in this repository:
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Dependency install | `npm ci` | 168 packages installed. Audits were disabled for this run, so no vulnerability audit was performed |
+| Dependency install | `npm ci` | 168 packages installed, 169 audited, no vulnerabilities reported |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS 467.01 kB (140.61 kB gzip), CSS 113.66 kB (17.43 kB gzip) |
-| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 24 swept URLs return HTTP 200 with the app shell — every destination, `/discover` with search, filter and sort parameters, all five workspace screens, and an unknown artwork, collection, artist or record id |
-| Route rendering | `npm run verify:routes` | 77 route cases (including every artwork, creator and collection id in the data layer, every seller workspace screen and the four buyer destinations), all assertions pass |
-| Internal links | included above | 1323 links resolved against the route table and the data layer — no broken destinations |
-| No account entry point | asserted on every route | No page in the build offers a sign-in, a sign-up or an account link — the buyer journey is reachable without one because nothing needs one |
+| Production build | `npm run build` | Passes — `dist/` JS 510.27 kB (152.06 kB gzip), CSS 129.03 kB (19.03 kB gzip) |
+| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 30 swept URLs return HTTP 200 with the app shell — every destination including the five account and trust routes, `/discover` with search, filter and sort parameters, all six workspace screens, and an unknown artwork, collection, artist or record id |
+| Route rendering | `npm run verify:routes` | 82 route cases (including every artwork, creator and collection id in the data layer, every seller workspace screen, the four buyer destinations and the five account and trust screens), all assertions pass |
+| Internal links | included above | 1802 links resolved against the route table and the data layer — no broken destinations |
+| Account previews, not accounts | asserted on every route | Every link into `/account/*` says the word *preview* in its own text or accessible name; with those links removed, no page in the build contains a signed-in claim (`Signed in`, `Account created`, `Email sent`, `Reset link`, `Password updated`, …); and no page outside the account previews renders a password field at all |
+| Account validation | model assertions | An empty sign-in form reports both fields; a malformed address, a password under the minimum, two entries that do not match and a name under two characters are each rejected on their own field; a complete form passes; editing a field clears its message and the last verdict |
+| Honest submit behaviour | model and markup assertions | The reducer's outcomes are only `none`, `invalid` and `valid`; the passing message describes a browser-side check and says that no session, account or message was created; no submit label says “Sign in”; clearing the form leaves no value behind; the cross-links between the three screens all say *preview* |
+| Password visibility | markup assertions | The sign-in and create screens render two masked fields and two matching toggles; each toggle starts `aria-pressed="false"`, names the field it controls with `aria-controls`, says what pressing it does, is `type="button"`, and no password field renders a value or asks a browser to fill it |
+| Reset request | model and markup assertions | The reset screen holds exactly one control, it is an email field, the form shows no password input, no second address and no security question, and the page states that no message is generated |
+| Seller application | model assertions | An empty form reports exactly five problems and none for the optional address; a discipline outside the five in the data, an address without a scheme, a missing acknowledgement, a description under the minimum and a name over the maximum are each rejected; clearing the optional address keeps the form valid; the read-back prints six rows, states “Not provided” for an empty optional field and names the chosen discipline |
+| No documents, no receipt | markup assertions | The application asks for no passport, licence, tax, bank or card detail; it contains no upload or attach control and no `fetch`, `FormData` or `XMLHttpRequest`; no reference number, approval, review position, fee or commission appears on it, and the copy states that nothing has been received |
+| Verification states | model assertions | All five states are present with what each means and what moves a studio on from it; the standing of every one of the 5 sample creators is derived rather than asserted, and every one reports *not started* with its reason; an unknown studio id degrades to an honest answer instead of being marked verified |
+| No verification claim | markup assertions | The verification screen renders no badge, score, rating, review, approval, date or reference number; `isVerified` is false for every sample creator because the set of verified ids is empty; the three kinds of statement are kept apart; and the certificate paragraph keeps a design apart from an issued document |
+| Certificate hand-off | model and markup assertions | `/sell/studio/verification` links to `/sell/studio/certificate` and quotes that page's own `Preview — Not Issued` wording; it draws no second copy of the certificate identifier, date or code frame and renders no `svg`, `image` or `canvas` |
+| Form wiring | markup assertions | On the three account previews and the application: every rendered control has an id and a `<label for>` pointing at it, the required fields carry `aria-required` (counted from the model that defines them), the browser's own validation is never relied on, each form declares no `action`, `method`, `enctype` or `target`, and each has exactly one submit action |
 | Saved list and cart | reducer assertions | Saving or adding the same work twice changes nothing; a work the catalogue does not hold, a number, an empty string or `null` is refused by both actions; emptying the cart leaves the saved list alone; the reducer never mutates the state it is handed |
 | Stale and malformed state | model assertions | A non-array, a duplicate, a number and an id with no record all degrade to the usable ids rather than throwing, on the saved list and the cart alike |
 | Cart totals | model assertions | An empty cart, a cart with no prices, a half-priced cart, a two-currency cart and a fully-priced one each report their own state; the sum is right to the cent (`USD 2,400 + USD 600 = USD 3,000`); a two-currency cart prints each currency separately and never a combined figure |
@@ -975,16 +1085,17 @@ Executed in this repository:
 | No rankings or claims | included above | No studio page contains a currency amount, a purchase phrase, or the words `Verified seller`, `Verified studio`, `Award-winning` |
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
-| CSS Module integrity | script over `src/**` | 53 modules, 602 `styles.*` references resolve; 17 further rules are variant tokens resolved through bracket access; 2 unused rules remain, both pre-existing in untouched files |
-| Heading outline | script over 35 routes | One `h1` per route, no skipped levels (340 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page, every workspace screen and all four buyer destinations |
+| CSS Module integrity | script over `src/**` | 73 modules, 756 `styles.*` references resolve; the remaining unused rules are variant tokens resolved through bracket access and a handful of modifier class names built from variant props |
+| Heading outline | asserted by `verify:routes` on all 82 rendered routes | One `h1` per route and no level ever skipped, walked in document order (957 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page, every workspace screen, all four buyer destinations and the five account and trust screens |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
 | Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
 | Workspace layout | computed from the stylesheets | At 360/390/430px the shell is a single column with a scrolling nav row; from 1024px it is a 15rem sidebar beside the content with both the nav and the editor's preview sticky. Form columns run 1/1/1/2/2/2 and image tiles 1/1/1/2/2/2 across the six widths; the content box is 320px at the narrowest and every track is guarded by `minmax(0, …)` |
 | Workspace tokens | script over the new stylesheets | 392 `var()` references, all defined in `tokens.css` — no colour literal, no undeclared token, no silently-falling-back value |
 | Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset`; the certificate's two preview inputs and the checkout's contact field are labelled the same way |
 | Contrast | computed from the tokens | Every foreground/background pair the new price, provenance and certificate rules can produce clears 4.5:1 — the lowest is 4.70:1 — including the italic placeholder, the field notes and the status line |
+| Trust-screen contrast | computed from the tokens | The 49 colour declarations the new account, field and trust rules produce all clear 4.5:1; the lowest is 4.53:1, the marker beside a required field. Two shared-field hints and three marker rules were moved off the faint grey and the strong accent so that hint text carrying “nothing is sent” language is readable |
 | Certificate geometry | computed from the stylesheets | At 360/390/430/768/1024/1440px the certificate's content box is 270/300/340/628/838/990px, its frame padding never drops below 24px, the code frame stays 120px and always fits, and the code note carries a minimum width so it wraps rather than squeezing the frame |
-| Print stylesheet | inspection of the modules | Twelve modules carry `@media print` rules: the site header, the footer, the workspace navigation, the certificate page's controls, the checkout's stepper and controls, the cart's summary actions and the buyer controls are dropped or restated. No print rule depends on a background image, a gradient or `print-color-adjust`, and what carries meaning — the document's borders, a price, the reason an order cannot be placed — is text and structure |
+| Print stylesheet | inspection of the modules | Seventeen modules carry `@media print` rules: the site header, the footer, the workspace navigation, the certificate page's controls, the checkout's stepper and controls, the cart's summary actions, the buyer controls, the account forms, the password control, the reset request, the application and the verification screen are dropped or restated. No print rule depends on a background image, a gradient or `print-color-adjust`, and what carries meaning — the document's borders, a price, the reason an order cannot be placed — is text and structure |
 | Image integrity | markup assertions | Every image on the workspace screens carries `width`, `height`, descriptive `alt` and an aspect-ratio frame; no screen emits an image without a `src`, and no element is wider than a 360px viewport |
 | Workspace price field | markup assertions | The listing editor renders a labelled price pair (`id`/`for` asserted for both), and the preview column shows the draft's amount with its currency code once a seller types one — a value that lives in the tab, is labelled as a draft, and is never published. As emitted, every workspace screen is checked to carry no price-shaped value at all |
 | Collection layout | computed from the stylesheets | At the six widths the directory's grid runs 1/1/1/2/3/3 cards after a full-scale opening composition, the feature card splits at 768px only and with `minmax(0, …)` guards, cards stay 282px or wider, and every image on the collection pages is rendered inside an aspect-ratio frame — no page emits an image without a src, a size or alternative text |
@@ -1112,7 +1223,9 @@ continue to agree.
   belongs to Phases 9 and 10._
 - **Phase 9 — Studio and seller accounts**: seller onboarding with an honest verification step, and
   profiles the studios maintain themselves. _The workspace these will live in exists as a frontend
-  preview — it holds no account and stores nothing._
+  preview — it holds no account and stores nothing — and so do the account screens, the seller
+  application and the verification status: they validate what is typed, create nothing, and mark no
+  studio verified, because there is no record that could support it._
 - **Phase 10 — Listings and inventory**: listing tools for images, metadata, dimensions and
   availability, with drafts before anything is published. _The listing draft editor exists as a
   preview: it validates every field and saves none of them._
