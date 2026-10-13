@@ -78,7 +78,7 @@ export function ArtistProfilePage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 6"
+            phase="Phase 7"
             title="What this profile will hold"
             items={[
               'A written practice statement from the studio itself.',

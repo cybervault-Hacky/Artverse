@@ -40,24 +40,31 @@ const PHASES = [
   },
   {
     label: 'Phase 3',
-    title: 'Explore and catalogue',
-    detail: 'Catalogue browsing with filters, sorting, pagination and an indexed search.',
-    status: 'Not started',
+    title: 'Art universe and immersive discovery',
+    detail:
+      'The discovery catalogue: a discipline index, every sample record in one balanced grid, and the collection groupings.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 4',
+    title: 'Catalogue filtering and search',
+    detail: 'Filtering, sorting, pagination and indexed search across the whole catalogue.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 5',
     title: 'Collections and curation',
     detail: 'Editorial collections, studio series and the curation tools behind them.',
     status: 'Not started',
   },
   {
-    label: 'Phase 5',
+    label: 'Phase 6',
     title: 'Artwork detail and commerce',
     detail: 'Provenance, certificates, availability and the purchase journey.',
     status: 'Not started',
   },
   {
-    label: 'Phase 6',
+    label: 'Phase 7',
     title: 'Studios and sellers',
     detail: 'Seller accounts, studio profiles, listing tools, orders and payouts.',
     status: 'Not started',

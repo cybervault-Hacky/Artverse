@@ -5,10 +5,11 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 2 delivered.** The repository contains the project foundation, the design system,
-the shared component set, the route architecture, the page shells for every destination, and the
-complete editorial homepage with its signature floating-art hero. It is still a frontend build: there
-is no backend, no database, no authentication, no payments and no real listings.
+**Status: Phase 3 delivered.** The repository contains the project foundation, the design system,
+the shared component set, the route architecture, the complete editorial homepage with its
+signature floating-art hero, and the immersive Explore Art discovery catalogue. It is still a
+frontend build: there is no backend, no database, no authentication, no payments and no real
+listings.
 
 ---
 
@@ -19,6 +20,7 @@ is no backend, no database, no authentication, no payments and no real listings.
 - [Stack](#stack)
 - [Getting started](#getting-started)
 - [The homepage](#the-homepage)
+- [The discovery catalogue](#the-discovery-catalogue)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -54,6 +56,19 @@ is no backend, no database, no authentication, no payments and no real listings.
 - Four redesigned sample collections matching the homepage's artistic worlds.
 - An `inverse` button variant for the charcoal contrast band, documented on `/design-system`.
 - Phase numbering across the site brought back in line with what has actually shipped.
+
+**Phase 3 — art universe and immersive discovery**
+
+- `/discover` rebuilt as a three-part discovery catalogue: a discipline index, every sample record
+  in one balanced grid, and the collection groupings.
+- A new `DisciplineNav` component: an accessible navigation row for the five disciplines that gives
+  each one a real, working destination instead of implying a filter that does not exist yet.
+- The whole catalogue (all six records) in one pass, cropped to a single 4:5 frame so rows align,
+  with the first row loading eagerly and the rest lazily.
+- Collection pages gained a clear route back to the catalogue, and both catalogue surfaces gained
+  honest empty states.
+- Phase references realigned across the site so nothing misstates the plan: filtering and indexed
+  search are Phase 4, not Phase 3.
 
 ## What is deliberately not included
 
@@ -121,13 +136,56 @@ collection ids and the invitation texture. Ids resolve through `getArtworksByIds
 `getCollectionsByIds`, which skip anything unknown, so a missing record removes a slot instead of
 rendering a broken image.
 
+## The discovery catalogue
+
+`/discover` is the art universe: what can be explored, then the works, then the groupings.
+
+1. **Introduction** — one `h1` (*Explore Art*), a two-sentence editorial introduction naming all five
+   disciplines and disclosing that every record is an illustrative placeholder. It stays short so the
+   first artwork appears quickly on a phone.
+2. **Explore by discipline** — a navigation row for the five disciplines. Phones get a snap-scrolling
+   strip so the catalogue stays close; from 768px the same five items align into one row. Each entry
+   opens a real, working destination and names the work it opens.
+3. **The catalogue** — every valid record in the data layer, not a curated subset: one column on
+   phones, two on tablets, three from 900px, all cropped to a consistent 4:5 frame. A quiet note
+   underneath explains the crop and links to the studio directory.
+4. **Collections to start from** — the same four collections the homepage introduces, each linking to
+   its own collection page, with a link on to the full collections directory.
+5. **Honest closure** — a note stating why there are no filter or sort controls yet, and what arrives
+   with them.
+
+### The routing decision behind the discipline row
+
+ArtVerse has no per-discipline route, and the catalogue cannot be filtered by discipline until Phase
+4. Rather than send all five disciplines to the same placeholder, or invent a query parameter that
+silently does nothing, each discipline links to the artwork page of the work that represents it — and
+the link is labelled with that work's title, so the destination is never a surprise:
+
+| Discipline | Opens |
+| --- | --- |
+| Fine Paintings | *Layered Light, Study I* |
+| Digital Artwork | *Arc of Quiet Light* |
+| Decorative Lamps | *Sandstone Table Lamp* |
+| Handmade Products | *Speckled Stoneware Vessel* |
+| Custom Creations | *Carved Oak Relief Panel* |
+
+The section says plainly that filtering arrives with the later phase, so nothing here implies a
+filter that does not exist. Full functional filtering is Phase 4.
+
+### Collection pages
+
+`/discover/:collectionId` renders the collection's editorial description, the works it holds in the
+same consistent crop, and two clear routes onward — **Back to Explore Art** and **All collections**.
+An unknown id renders the shared not-found experience with the requested id shown back to the
+visitor, so a stale link is never mistaken for a real page.
+
 ## Route architecture
 
 | Route | Page component | Status |
 | --- | --- | --- |
 | `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
-| `/discover` | `DiscoverPage` | Foundation — sample catalogue and category overview |
-| `/discover/:collectionId` | `CollectionDetailPage` | Foundation — collection with its works |
+| `/discover` | `DiscoverPage` | Complete (Phase 3) — discipline index, full catalogue, collections |
+| `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 3) — collection, its works, route back |
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Foundation — full metadata, no commerce |
 | `/artists` | `ArtistsPage` | Foundation — editorial directory list |
 | `/artists/:artistId` | `ArtistProfilePage` | Foundation — placeholder profile and its records |
@@ -147,7 +205,7 @@ for a real page.
 ```
 src/
 ├── app/          Application shell: route tree, path registry, navigation config, scroll handling
-├── components/   Reusable UI, each with a colocated CSS Module
+├── components/   Reusable UI, each with a colocated CSS Module (incl. DisciplineNav)
 ├── data/         Illustrative sample records, homepage curation, design-system documentation
 ├── hooks/        useDocumentTitle, useReducedMotion
 ├── layouts/      MainLayout — skip link, header, routed page, footer
@@ -256,30 +314,41 @@ Executed in this repository:
 | Dependency install | `npm install` | 166 packages, no vulnerabilities reported by npm |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 349 kB (≈ 108 kB gzip), CSS ≈ 53 kB (≈ 9.7 kB gzip) |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 351 kB (≈ 109 kB gzip), CSS ≈ 55 kB (≈ 10 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200 |
-| Route rendering | `npm run verify:routes` | 19 route cases rendered through Vite's SSR pipeline, all assertions pass |
-| Homepage structure | included above | All five sections present, all internal destinations rendered (hero CTAs, spotlight artwork, creator, four collections, seller) |
+| Route rendering | `npm run verify:routes` | 30 route cases (including every artwork and creator id in the data layer), all assertions pass |
+| Internal links | included above | 300 links resolved against the route table and the data layer — no broken destinations |
+| Catalogue completeness | included above | All 6 artwork titles and all 4 collection titles render on `/discover` |
+| Consistent crops | included above | `/discover` contains no square or 2:3 frames; the catalogue is uniformly 4:5 |
+| Eager loading | included above | The first 3 catalogue images load eagerly, every other image lazily |
+| Empty and invalid ids | included above | Unknown artwork, collection and artist ids all reach the not-found experience |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
-| CSS Module integrity | script over `src/**` | 303 `styles.*` references resolve; no stale class names |
-| Heading outline | script over all routes | One `h1` per route, no skipped levels |
+| CSS Module integrity | script over `src/**` | 309 `styles.*` references resolve; no stale class names |
+| Heading outline | script over 8 routes | One `h1` per route, no skipped levels |
+| Layout geometry | computed from the stylesheets | Grid arithmetic at 360/390/430/768/1024/1440px: every grid fits its content box, no column below 115px |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
-| Overflow audit | grep over layout CSS | No `100vw`, no fixed widths wider than the smallest viewport |
+| Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
 
-`verify:routes` renders the real route tree for every destination and asserts: the intended page
-renders for each path, unknown paths and unknown detail ids reach the not-found experience, each page
-has exactly one `h1`, no element ids are duplicated, every image has descriptive `alt` text and
-intrinsic dimensions, the shared skip link and footer are present, the homepage carries all five
-sections, and every homepage link points at a route that exists.
+`verify:routes` renders the real route tree for every destination — every route, plus every artwork
+and creator id in the data layer — and asserts: the intended page renders for each path, unknown
+paths and unknown detail ids reach the not-found experience, each page has exactly one `h1`, no
+element ids are duplicated, every image has descriptive `alt` text and intrinsic dimensions, the
+shared skip link and footer are present, and **every internal link resolves to a destination that
+genuinely exists** — parameterised links are matched against the actual artwork, collection and
+creator records, so a link to a record that does not exist fails the build check.
 
-**Not executed — stated plainly:** no automated browser session, screenshot pass, visual regression
-suite or Lighthouse run was available in this environment, and no browser binary is installed in the
-sandbox. Rendering has therefore been verified at the markup, link and layout-rule level rather than
-by screenshot, and the floating composition's motion has been verified by inspecting the generated
-CSS (properties, durations, coverage) rather than by watching it. A manual pass at the six widths
-above — with a slow-motion eye on the hero drift, and with the OS reduced-motion setting toggled — is
-the recommended next step.
+**Not executed — stated plainly:** there is still no browser binary in this environment (no Chromium,
+Firefox, Playwright or Puppeteer), so no screenshot, visual regression, Lighthouse or cross-browser
+pass was performed. Rendering is verified at the markup, link and layout-rule level, and the grid
+arithmetic above is computed from the stylesheet values rather than measured in a rendered page.
+Motion was verified by inspecting the generated CSS, not by watching it. A manual pass at the six
+widths — including scrolling the discipline strip on a phone and toggling the OS reduced-motion
+setting — remains the recommended next step.
+
+One SPA characteristic worth knowing: every route returns HTTP 200 from the dev server, including
+unknown ids, because the not-found view renders client-side. A production deployment would need to
+return a real 404 status at the edge; that is deliberately out of scope here (no deployment).
 
 ## Roadmap
 
@@ -287,10 +356,12 @@ the recommended next step.
   shells, design-system preview.
 - **Phase 2 — Homepage and floating art** _(delivered)_: the editorial homepage, the floating-art
   hero, the five disciplines, the artwork spotlight and the artist invitation.
-- **Phase 3**: Explore Art — catalogue browsing with filters, sorting, pagination and indexed search.
-- **Phase 4**: collections and curation — editorial collections, studio series, curation tools.
-- **Phase 5**: artwork detail and commerce — provenance, certificates, availability, purchase flow.
-- **Phase 6**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
+- **Phase 3 — Art universe and immersive discovery** _(delivered)_: the discovery catalogue, the
+  discipline index, the full sample catalogue and the collection groupings.
+- **Phase 4**: catalogue filtering, sorting, pagination and indexed search.
+- **Phase 5**: collections and curation — editorial collections, studio series, curation tools.
+- **Phase 6**: artwork detail and commerce — provenance, certificates, availability, purchase flow.
+- **Phase 7**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
 
 ## Scripts reference
 

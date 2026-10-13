@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Artwork, ArtworkAspect } from '@/types'
 import { categoryLabel } from '@/data'
+import { NavRoutes } from '@/app/routes'
 import { cn } from '@/utils/cn'
 import { ArtworkFrame } from '@/components/ArtworkFrame/ArtworkFrame'
 import styles from './ArtworkCard.module.css'
@@ -13,6 +14,11 @@ interface ArtworkCardProps {
   headingLevel?: 'h2' | 'h3'
   /** Hides the category and medium line where space is tight. */
   showMeta?: boolean
+  /**
+   * Image loading strategy. Cards are lazy by default; a grid can mark its
+   * first row eager so above-the-fold work is not delayed.
+   */
+  loading?: 'lazy' | 'eager'
   /** Forwarded to the frame for responsive image selection. */
   sizes?: string
   className?: string
@@ -28,6 +34,7 @@ export function ArtworkCard({
   aspect,
   headingLevel: Heading = 'h3',
   showMeta = true,
+  loading = 'lazy',
   sizes,
   className,
 }: ArtworkCardProps) {
@@ -35,7 +42,7 @@ export function ArtworkCard({
     <article className={cn(styles.card, className)}>
       <Link
         className={styles.link}
-        to={`/artwork/${artwork.id}`}
+        to={NavRoutes.artwork(artwork.id)}
         aria-label={`${artwork.title} — view artwork`}
       >
         <ArtworkFrame
@@ -46,6 +53,7 @@ export function ArtworkCard({
           height={artwork.image.height}
           aspect={aspect ?? artwork.aspect}
           ratio={artwork.image.width / artwork.image.height}
+          loading={loading}
           sizes={sizes}
         />
         <div className={styles.body}>

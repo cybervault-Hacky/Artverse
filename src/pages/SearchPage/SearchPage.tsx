@@ -126,7 +126,7 @@ export function SearchPage() {
 
           <PhaseNote
             className={styles.results}
-            phase="Phase 3"
+            phase="Phase 4"
             items={[
               'Indexed search across titles, studios, mediums and materials.',
               'Filters for category, size, medium and availability.',

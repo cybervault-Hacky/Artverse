@@ -1,6 +1,8 @@
 import { useParams } from 'react-router-dom'
 import { NavRoutes } from '@/app/routes'
 import { ArtworkGrid } from '@/components/ArtworkGrid/ArtworkGrid'
+import { Button } from '@/components/Button/Button'
+import { EmptyState } from '@/components/EmptyState/EmptyState'
 import { NotFoundView } from '@/components/NotFoundView/NotFoundView'
 import { PageContainer } from '@/components/PageContainer/PageContainer'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
@@ -14,8 +16,10 @@ import styles from './CollectionDetailPage.module.css'
 /**
  * A single collection.
  *
- * An unknown `:collectionId` renders the shared not-found experience rather
- * than an empty shell, so a stale link is never mistaken for a real page.
+ * A valid `:collectionId` renders the collection's editorial introduction, the
+ * works it holds and a clear way back to the catalogue. An unknown id renders
+ * the shared not-found experience rather than an empty shell, so a stale link
+ * is never mistaken for a real page.
  */
 export function CollectionDetailPage() {
   const { collectionId } = useParams()
@@ -56,15 +60,34 @@ export function CollectionDetailPage() {
             Works in this collection
           </h2>
 
-          <ArtworkGrid
-            className={styles.grid}
-            artworks={works}
-            label={`Works in ${collection.title}`}
-          />
+          {works.length > 0 ? (
+            <ArtworkGrid
+              className={styles.grid}
+              artworks={works}
+              label={`Works in ${collection.title}`}
+              aspect="portrait"
+              eagerCount={3}
+            />
+          ) : (
+            <EmptyState
+              className={styles.grid}
+              title="No works in this collection yet"
+              description="This sample grouping has no illustrative records attached to it. The catalogue below holds every record in the build."
+            />
+          )}
+
+          <div className={styles.returnRow}>
+            <Button to={NavRoutes.discover} variant="secondary">
+              Back to Explore Art
+            </Button>
+            <Button to={NavRoutes.collections} variant="quiet">
+              All collections
+            </Button>
+          </div>
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 4"
+            phase="Phase 5"
             title="What this collection page will become"
             items={[
               'A curated introduction written with editorial context.',

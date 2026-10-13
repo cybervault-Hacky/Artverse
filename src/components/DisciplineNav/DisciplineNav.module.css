@@ -1,0 +1,128 @@
+.nav {
+  margin-top: var(--space-8);
+}
+
+/*
+ * Phones get a scroll strip so the catalogue stays close to the introduction;
+ * from 768px the same five items align into a row that spans the container.
+ * The strip only ever scrolls inside itself — the page never scrolls sideways.
+ */
+.list {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 8.5rem;
+  gap: var(--space-5);
+  /*
+   * The inline padding gives focus rings and frame shadows room inside the
+   * scroll container; the equal negative margin pulls the first item back into
+   * line with the page text, so the strip looks flush but the ring is never
+   * clipped at the edges.
+   */
+  padding-inline: var(--space-2);
+  margin-inline: calc(var(--space-2) * -1);
+  padding-block: var(--space-6) var(--space-2);
+  border-top: var(--border-hairline);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  /* Phone overlays hide scrollbars anyway; the peeking next item is the cue. */
+  scrollbar-width: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  scroll-snap-align: start;
+}
+
+.link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+}
+
+.thumb {
+  width: 100%;
+  box-shadow: var(--shadow-frame);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.label {
+  font-family: var(--font-display);
+  font-size: var(--text-small);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
+}
+
+.work {
+  /* The featured work is named so the link's destination is never a surprise. */
+  font-size: var(--text-meta);
+  line-height: 1.4;
+  color: var(--color-ink-muted);
+}
+
+.link:hover .label {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 6px;
+  border-radius: var(--radius-xs);
+}
+
+@media (min-width: 768px) {
+  .list {
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-5);
+    /* No scroll container from here up, so no need for bleed padding. */
+    padding-inline: 0;
+    margin-inline: 0;
+    padding-bottom: 0;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+
+  /* An index row, not a gallery: modest thumbnails centred in their column. */
+  .link {
+    max-width: 9.5rem;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .list {
+    gap: var(--space-6);
+  }
+}
+
+@media (hover: hover) {
+  .link:hover .thumb {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    transition: box-shadow var(--duration-fast) linear;
+  }
+
+  .link:hover .thumb {
+    transform: none;
+  }
+}

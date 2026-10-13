@@ -2,10 +2,6 @@
   margin-top: var(--space-8);
 }
 
-.note {
-  margin-top: var(--space-8);
-}
-
 .summary {
   display: flex;
   flex-wrap: wrap;
@@ -15,4 +11,18 @@
   border-top: var(--border-hairline);
   font-size: var(--text-meta);
   color: var(--color-ink-muted);
+}
+
+/* The clear route back to the catalogue, after the works. */
+.returnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-8);
+  padding-top: var(--space-6);
+  border-top: var(--border-hairline);
+}
+
+.note {
+  margin-top: var(--space-8);
 }

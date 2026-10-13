@@ -46,14 +46,15 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
   {
     pattern: '/discover',
     page: 'DiscoverPage',
-    status: 'foundation',
-    purpose: 'Explore Art — entry point to the sample catalogue.',
+    status: 'implemented',
+    purpose:
+      'Explore Art — discipline index, the whole sample catalogue and the collection groupings.',
   },
   {
     pattern: '/discover/:collectionId',
     page: 'CollectionDetailPage',
-    status: 'foundation',
-    purpose: 'A single collection with its works.',
+    status: 'implemented',
+    purpose: 'A single collection: introduction, its works and the route back to the catalogue.',
   },
   {
     pattern: '/artwork/:artworkId',
