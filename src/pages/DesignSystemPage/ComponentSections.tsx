@@ -38,6 +38,13 @@ export function ComponentSections() {
             <Button disabled>Disabled</Button>
           </div>
 
+          <div className={styles.inverseBed}>
+            <Button variant="inverse">Inverse</Button>
+            <span className={styles.inverseCaption}>
+              Used on the charcoal contrast band, where a dark button would disappear.
+            </span>
+          </div>
+
           <div className={styles.row}>
             <Button size="sm">Small</Button>
             <Button size="md">Medium</Button>
@@ -55,7 +62,7 @@ export function ComponentSections() {
           </div>
 
           <p className={styles.caption}>
-            Variants: primary, secondary, quiet. Sizes: sm, md, lg. A disabled link stays visible
+            Variants: primary, secondary, quiet, inverse. Sizes: sm, md, lg. A disabled link stays visible
             with <code>aria-disabled</code> rather than disappearing.
           </p>
         </div>
@@ -210,7 +217,7 @@ export function ComponentSections() {
           </div>
           <p className={styles.caption}>
             The loading indicator is reserved for asynchronous moments such as a lazily loaded route
-            chunk. Phase 1 ships one static bundle, so page content does not use it yet.
+            chunk. ArtVerse currently ships one static bundle, so page content does not use it yet.
           </p>
         </div>
       </PreviewBlock>

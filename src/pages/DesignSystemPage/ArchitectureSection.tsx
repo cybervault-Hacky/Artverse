@@ -11,6 +11,10 @@ const CHECKS = [
   { command: 'npm run lint', result: 'ESLint flat config passes with no warnings.' },
   { command: 'npm run build', result: 'Production build completes and emits dist/.' },
   { command: 'npm run preview', result: 'Built output serves the same routes from dist/.' },
+  {
+    command: 'npm run verify:routes',
+    result: 'Every route renders its own page, with one h1 and complete image alternative text.',
+  },
 ]
 
 /**
@@ -22,7 +26,7 @@ export function ArchitectureSection() {
       <PreviewBlock
         id="ds-responsive"
         title="Responsive behaviour"
-        description="Layout is driven by content width rather than device names. These are the widths Phase 1 was designed and reviewed against."
+        description="Layout is driven by content width rather than device names. These are the widths the interface is designed and reviewed against."
       >
         <div className={cn(table.wrapper, styles.table)}>
           <table className={table.table}>
@@ -60,7 +64,7 @@ export function ArchitectureSection() {
                 <th scope="col">Path</th>
                 <th scope="col">Page component</th>
                 <th scope="col">Status</th>
-                <th scope="col">Purpose in Phase 1</th>
+                <th scope="col">Purpose</th>
               </tr>
             </thead>
             <tbody>
@@ -97,7 +101,7 @@ export function ArchitectureSection() {
       <PreviewBlock
         id="ds-checks"
         title="Verification"
-        description="Phase 1 was validated with these commands. Re-run them at any time — each one is part of the repository."
+        description="The build is validated with these commands. Re-run them at any time — each one is part of the repository."
       >
         <div className={styles.checks}>
           {CHECKS.map((check) => (
@@ -110,7 +114,7 @@ export function ArchitectureSection() {
 
         <p className={styles.note}>
           Layouts were designed against 360, 390, 430, 768, 1024 and 1440 pixel widths. Automated
-          visual regression testing is not part of Phase 1, and no claim is made here about browser
+          visual regression testing is not set up yet, and no claim is made here about browser
           rendering that has not been checked directly.
         </p>
       </PreviewBlock>

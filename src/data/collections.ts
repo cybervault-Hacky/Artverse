@@ -1,38 +1,48 @@
 import type { Collection } from '@/types'
 
 /**
- * Illustrative sample groupings.
+ * Illustrative sample groupings — the four "artistic worlds" the homepage
+ * features, and the full set shown in the collections directory.
  *
- * Collections in Phase 1 are curated-by-hand placeholder sets that let the
- * collections directory and collection detail routes be built and reviewed.
- * They are not editorial marketplace collections.
+ * Every grouping draws on the placeholder records in `artworks.ts`. They are
+ * hand-assembled sample sets, not editorial marketplace collections, and every
+ * record carries `sample: true`.
  */
 export const SAMPLE_COLLECTIONS: Collection[] = [
   {
-    id: 'warm-minimalism',
-    title: 'Warm Minimalism',
-    summary: 'Quiet surfaces, warm neutrals and space left deliberately empty.',
+    id: 'quiet-landscapes',
+    title: 'Quiet Landscapes',
+    summary: 'Horizons, fields and standing light.',
     description:
-      'A sample grouping built around restraint: two paintings and a thrown vessel that share a low-contrast, warm palette.',
-    artworkIds: ['sample-painting-01', 'sample-painting-02', 'sample-handmade-01'],
+      'A sample grouping of abstract works that hold the qualities of landscape — layered ground, a low horizon and light left standing in the open.',
+    artworkIds: ['sample-painting-02', 'sample-painting-01', 'sample-digital-01'],
     sample: true,
   },
   {
-    id: 'light-and-form',
-    title: 'Light and Form',
-    summary: 'Objects that shape the light they sit in.',
+    id: 'objects-for-living',
+    title: 'Objects for Living',
+    summary: 'Pieces made to be used, not only looked at.',
     description:
-      'A sample grouping of pieces whose subject is light itself — a lamp, a digital arc and a carved panel.',
-    artworkIds: ['sample-decor-01', 'sample-digital-01', 'sample-custom-01'],
-    sample: true,
-  },
-  {
-    id: 'handmade-objects',
-    title: 'Handmade Objects',
-    summary: 'Studio-made pieces where the process stays visible.',
-    description:
-      'A sample grouping of ceramics, lighting and woodwork in which tool marks are part of the finish rather than something polished away.',
+      'A sample grouping of studio objects — ceramics, lighting and carved wood — chosen for rooms that are actually lived in.',
     artworkIds: ['sample-handmade-01', 'sample-decor-01', 'sample-custom-01'],
+    sample: true,
+  },
+  {
+    id: 'contemporary-colour',
+    title: 'Contemporary Colour',
+    summary: 'Ochre, charcoal and warm ivory, used with intent.',
+    description:
+      'A sample grouping built on a deliberately narrow palette, where colour is carried by surface and scale rather than by brightness.',
+    artworkIds: ['sample-painting-01', 'sample-digital-01', 'sample-painting-02'],
+    sample: true,
+  },
+  {
+    id: 'thoughtful-spaces',
+    title: 'Art for Thoughtful Spaces',
+    summary: 'Slower work for rooms that ask for it.',
+    description:
+      'A sample grouping of pieces that reward a second look — a carved relief, a single ochre form and an arc of quiet light.',
+    artworkIds: ['sample-custom-01', 'sample-painting-02', 'sample-digital-01'],
     sample: true,
   },
 ]

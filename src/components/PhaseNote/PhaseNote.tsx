@@ -14,7 +14,7 @@ interface PhaseNoteProps {
 /**
  * Honest "not built yet" block.
  *
- * Phase 1 pages are real routes with real introductions, but most of their
+ * Page foundations are real routes with real introductions, but some of their
  * features belong to later phases. This states that plainly instead of faking
  * content or functionality.
  */

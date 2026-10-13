@@ -38,7 +38,7 @@ export function MotionSection() {
       <PreviewBlock
         id="ds-floating"
         title="Floating-art prototype"
-        description="The signature ArtVerse composition: one dominant work with smaller pieces around it, drifting slowly left to right inside its own stage. This is the real component, with no animation library behind it — two very slow CSS keyframe loops per work, composited on transform and translate."
+        description="The signature ArtVerse composition, running live in the homepage hero: one dominant work with smaller pieces around it, drifting slowly left to right inside its own stage. This is the same component the homepage renders, with no animation library behind it — two very slow CSS keyframe loops per work, composited on transform and translate."
       >
         <div className={styles.prototypeStage}>
           <FloatingArtwork works={works} variant={variant} paused={paused} />
@@ -52,14 +52,16 @@ export function MotionSection() {
               never sits over the headline or the buttons.
             </p>
             <p>
-              <strong>Motion.</strong> Each work drifts left to right over 34 seconds while a
-              separate 29-second loop raises and lowers it. Negative delays stagger every element,
-              so the first paint already looks settled and the loop never restarts in unison.
+              <strong>Motion.</strong> Every work carries its own drift distance, duration and
+              delay — 30 to 46 seconds horizontally, 26 to 39 seconds vertically — and each loop
+              eases into its turnaround rather than stopping dead. Negative delays stagger the
+              works, so the first paint already looks settled and nothing restarts in unison.
             </p>
             <p>
-              <strong>Weight.</strong> Only transform and translate animate, with four small images
-              and three orbit lines in total — no canvas, no JavaScript per frame, and no layout
-              work while it runs, which keeps cheap Android devices comfortable.
+              <strong>Weight.</strong> Only transform and translate animate, with four images,
+              three orbit lines and a warm wash in total — no canvas, no JavaScript per frame and no
+              layout work while it runs, which keeps mid-range Android devices comfortable. Phones
+              drop to three works with shorter travel.
             </p>
           </div>
 

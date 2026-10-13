@@ -32,6 +32,23 @@
   max-width: 48rem;
 }
 
+/* A small charcoal bed so the inverse variant is shown in its real context. */
+.inverseBed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background-color: var(--color-charcoal);
+}
+
+.inverseCaption {
+  max-width: 30rem;
+  font-size: var(--text-meta);
+  color: var(--color-charcoal-muted);
+}
+
 .navNote {
   margin-top: var(--space-4);
   font-size: var(--text-small);

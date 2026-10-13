@@ -10,6 +10,8 @@ interface CollectionCardProps {
   collection: Collection
   /** Lead work shown as the card's image. */
   leadArtwork?: Artwork
+  /** Describes the rendered width, so a future srcset resolves correctly. */
+  sizes?: string
   headingLevel?: 'h2' | 'h3'
   className?: string
 }
@@ -21,6 +23,7 @@ interface CollectionCardProps {
 export function CollectionCard({
   collection,
   leadArtwork,
+  sizes = '(max-width: 539px) 92vw, (max-width: 899px) 45vw, 30vw',
   headingLevel: Heading = 'h3',
   className,
 }: CollectionCardProps) {
@@ -40,7 +43,7 @@ export function CollectionCard({
             height={leadArtwork.image.height}
             aspect="landscape"
             ratio={leadArtwork.image.width / leadArtwork.image.height}
-            sizes="(max-width: 539px) 92vw, (max-width: 899px) 45vw, 30vw"
+            sizes={sizes}
           />
         ) : null}
 

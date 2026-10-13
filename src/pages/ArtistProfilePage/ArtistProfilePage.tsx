@@ -16,7 +16,7 @@ import styles from './ArtistProfilePage.module.css'
  * A single artist or studio profile.
  *
  * Unknown ids render the shared not-found experience. Profiles hold only what
- * genuinely exists in Phase 1: the placeholder name, its discipline and any
+ * genuinely exists today: the placeholder name, its discipline and any
  * sample records attributed to it.
  */
 export function ArtistProfilePage() {
@@ -37,7 +37,7 @@ export function ArtistProfilePage() {
   return (
     <>
       <PageHeader
-        eyebrow={creator.discipline}
+        eyebrow={creator.location ? `${creator.discipline} · ${creator.location}` : creator.discipline}
         title={creator.name}
         intro="A placeholder profile in the ArtVerse directory. Real studios will add practice notes, process imagery and the works they are currently showing."
         crumbs={[
@@ -67,7 +67,7 @@ export function ArtistProfilePage() {
             <EmptyState
               className={styles.works}
               title="No sample records yet"
-              description="This placeholder creator has no illustrative records attached in Phase 1."
+              description="This placeholder creator has no illustrative records attached yet."
               action={
                 <span className={styles.placeholderNote}>
                   Real studio catalogues follow in a later phase.
@@ -78,7 +78,7 @@ export function ArtistProfilePage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 5"
+            phase="Phase 6"
             title="What this profile will hold"
             items={[
               'A written practice statement from the studio itself.',

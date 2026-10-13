@@ -28,29 +28,36 @@ const PHASES = [
     label: 'Phase 1',
     title: 'Foundation and design system',
     detail:
-      'Project setup, design tokens, shared components, route architecture and this set of page foundations.',
+      'Project setup, design tokens, shared components, route architecture and the page foundations behind every destination.',
     status: 'Delivered',
   },
   {
     label: 'Phase 2',
-    title: 'Explore and catalogue',
-    detail: 'Real browsing with filters, sorting, pagination and the full homepage experience.',
-    status: 'Not started',
+    title: 'Homepage and floating art',
+    detail:
+      'The editorial homepage: the floating-art hero, the five creative disciplines, the artwork spotlight and the artist invitation.',
+    status: 'Delivered',
   },
   {
     label: 'Phase 3',
+    title: 'Explore and catalogue',
+    detail: 'Catalogue browsing with filters, sorting, pagination and an indexed search.',
+    status: 'Not started',
+  },
+  {
+    label: 'Phase 4',
     title: 'Collections and curation',
     detail: 'Editorial collections, studio series and the curation tools behind them.',
     status: 'Not started',
   },
   {
-    label: 'Phase 4',
+    label: 'Phase 5',
     title: 'Artwork detail and commerce',
     detail: 'Provenance, certificates, availability and the purchase journey.',
     status: 'Not started',
   },
   {
-    label: 'Phase 5',
+    label: 'Phase 6',
     title: 'Studios and sellers',
     detail: 'Seller accounts, studio profiles, listing tools, orders and payouts.',
     status: 'Not started',
@@ -61,7 +68,7 @@ export function AboutPage() {
   useDocumentTitle({
     title: 'About',
     description:
-      'What ArtVerse is, the principles behind it, and exactly what Phase 1 delivers.',
+      'What ArtVerse is, the principles behind it, and exactly what has been delivered so far.',
   })
 
   return (

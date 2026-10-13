@@ -9,7 +9,7 @@ interface LoadingIndicatorProps {
 
 /**
  * Small, quiet progress indicator reserved for genuinely asynchronous moments
- * such as lazy-loading a route chunk. Phase 1 has no network calls, so this
+ * such as lazy-loading a route chunk. There are no network calls yet, so this
  * component stays unused by page content and is demonstrated on the
  * design-system page.
  */

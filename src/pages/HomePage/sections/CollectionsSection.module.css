@@ -1,0 +1,11 @@
+.grid {
+  margin-top: var(--space-8);
+}
+
+.note {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+  font-size: var(--text-meta);
+  color: var(--color-ink-muted);
+}

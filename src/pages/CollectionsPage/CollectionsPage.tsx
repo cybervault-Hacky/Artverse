@@ -20,7 +20,7 @@ export function CollectionsPage() {
       <PageHeader
         eyebrow="Collections"
         title="Groupings, not folders"
-        intro="Collections are how ArtVerse will hold works together across studios — by mood, material or a shared idea. The three below are sample groupings of the placeholder records."
+        intro="Collections are how ArtVerse holds works together across studios — by mood, material or a shared idea. The four below are sample groupings of the placeholder records, and the same four the homepage introduces as artistic worlds."
       />
 
       <Section spacing="tight" ariaLabelledBy="collections-directory">
@@ -39,7 +39,7 @@ export function CollectionsPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 3"
+            phase="Phase 4"
             title="How collections will grow"
             items={[
               'Editorial collections curated with context and notes.',

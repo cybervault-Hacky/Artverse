@@ -32,7 +32,10 @@ export interface ArtworkImage {
 export interface Creator {
   id: string
   name: string
+  /** Primary medium or craft, e.g. `Painting — placeholder record`. */
   discipline: string
+  /** City and country of practice, shown where a record provides one. */
+  location?: string
   illustrative: true
 }
 
@@ -65,6 +68,22 @@ export interface Collection {
 export interface CategoryOption {
   id: ArtworkCategory
   label: string
+}
+
+/**
+ * A creative discipline as presented on the homepage.
+ *
+ * Disciplines are the five directions the marketplace is organised around.
+ * Each one points at a sample record used as its cover image, so the section is
+ * driven by data rather than by hard-coded image paths in a page component.
+ */
+export interface Discipline {
+  id: ArtworkCategory
+  label: string
+  /** One short editorial sentence. */
+  description: string
+  /** Sample record used as the discipline's cover image. */
+  sampleArtworkId: string
 }
 
 /** A breadcrumb entry used by the Breadcrumb component. */

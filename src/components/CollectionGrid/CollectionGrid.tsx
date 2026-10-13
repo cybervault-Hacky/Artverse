@@ -8,6 +8,13 @@ interface CollectionGridProps {
   /** Resolves each collection's lead work; return `undefined` to omit one. */
   leadArtworkFor: (collection: Collection) => Artwork | undefined
   label: string
+  /**
+   * `auto` grows to three columns on wide screens; `two` stays at two, for
+   * calmer editorial rows such as the homepage.
+   */
+  columns?: 'auto' | 'two'
+  /** Describes the rendered image width for each card. */
+  sizes?: string
   headingLevel?: 'h2' | 'h3'
   className?: string
 }
@@ -17,18 +24,24 @@ export function CollectionGrid({
   collections,
   leadArtworkFor,
   label,
+  columns = 'auto',
+  sizes,
   headingLevel = 'h3',
   className,
 }: CollectionGridProps) {
   if (collections.length === 0) return null
 
   return (
-    <ul className={cn(styles.grid, className)} aria-label={label}>
+    <ul
+      className={cn(styles.grid, columns === 'two' && styles.gridTwo, className)}
+      aria-label={label}
+    >
       {collections.map((collection) => (
         <li key={collection.id} className={styles.item}>
           <CollectionCard
             collection={collection}
             leadArtwork={leadArtworkFor(collection)}
+            sizes={sizes}
             headingLevel={headingLevel}
           />
         </li>

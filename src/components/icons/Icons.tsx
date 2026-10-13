@@ -1,7 +1,7 @@
 import type { SVGProps } from 'react'
 
 /**
- * The small set of interface glyphs ArtVerse needs in Phase 1.
+ * The small set of interface glyphs ArtVerse needs today.
  * Decorative by default — every icon is `aria-hidden` and the surrounding
  * control carries the accessible name.
  */

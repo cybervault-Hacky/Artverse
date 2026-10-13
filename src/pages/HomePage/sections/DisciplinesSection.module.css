@@ -1,0 +1,131 @@
+.list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6) var(--space-5);
+  margin-top: var(--space-8);
+}
+
+/* Guards the grid against long titles forcing a column wider than its track. */
+.item {
+  min-width: 0;
+}
+
+.link {
+  display: grid;
+  grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.media {
+  box-shadow: var(--shadow-frame);
+  transition:
+    transform var(--duration-base) var(--ease-out),
+    box-shadow var(--duration-base) var(--ease-out);
+}
+
+.body {
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-tight);
+}
+
+.arrow {
+  flex-shrink: 0;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+.text {
+  margin-top: var(--space-2);
+  max-width: 30ch;
+  font-size: var(--text-small);
+  color: var(--color-ink-muted);
+}
+
+.link:hover .title {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+.link:hover .arrow {
+  transform: translateX(0.2rem);
+  color: var(--color-ink);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 6px;
+  border-radius: var(--radius-xs);
+}
+
+/* From 640px each discipline becomes an image-led column. */
+@media (min-width: 640px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-7) var(--space-5);
+  }
+
+  .link {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .title {
+    display: block;
+  }
+
+  .arrow {
+    margin-left: var(--space-2);
+  }
+}
+
+@media (min-width: 900px) {
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Five balanced items in one row on wide screens. */
+@media (min-width: 1140px) {
+  .list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-5);
+  }
+}
+
+@media (hover: hover) {
+  .link:hover .media {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media {
+    transition: box-shadow var(--duration-fast) linear;
+  }
+
+  .link:hover .media {
+    transform: none;
+  }
+
+  .link:hover .arrow {
+    transform: none;
+  }
+}

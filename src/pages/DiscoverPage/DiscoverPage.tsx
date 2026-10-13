@@ -16,7 +16,7 @@ import styles from './DiscoverPage.module.css'
  * Explore Art — the entry point to browsing.
  *
  * Phase 1 renders the illustrative sample set so the grid, frames and card
- * behaviour can be reviewed. Real catalogue browsing arrives in Phase 2.
+ * behaviour can be reviewed. Real catalogue browsing arrives in Phase 3.
  */
 export function DiscoverPage() {
   useDocumentTitle({
@@ -44,7 +44,7 @@ export function DiscoverPage() {
           <SectionHeading
             eyebrow="Categories"
             title="Five directions the marketplace is built around"
-            description="Category browsing with filters, sorting and pagination is planned for Phase 2. For now this is a plain overview of how the sample set is distributed."
+            description="Category browsing with filters, sorting and pagination is planned for Phase 3. For now this is a plain overview of how the sample set is distributed."
             id="categories-title"
           />
 
@@ -87,7 +87,7 @@ export function DiscoverPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 2"
+            phase="Phase 3"
             items={[
               'Real catalogue browsing built on paginated data.',
               'Filtering by category, medium, size and availability.',

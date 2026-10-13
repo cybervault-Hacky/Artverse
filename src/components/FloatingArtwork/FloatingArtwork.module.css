@@ -1,20 +1,27 @@
 /*
  * Signature ArtVerse composition.
  *
- * Positioning model — the stage is a fixed 1:1 canvas where every work, orbit
- * line and accent dot is placed with percentage insets. The composition
+ * Positioning model — the stage is a fixed 1:1 canvas and every work, orbit
+ * line and accent detail is placed with percentage insets. The composition
  * therefore scales with the stage, and the stage sits inside an
- * `overflow: hidden` wrapper, so it can never widen the page and never
- * overlaps neighbouring text or controls.
+ * `overflow: hidden` wrapper, so it can never widen the page and never overlaps
+ * neighbouring text or controls. Insets are chosen to stay clear of the drift
+ * distances below, so no work is ever clipped at a stage edge.
  *
  * Motion model — each work owns two independent, very slow animations: a
  * left-to-right drift driven by `transform`, and a gentle vertical float
- * driven by the separate `translate` property. Because the browser composes
- * `translate` and `transform` independently, neither animation cancels the
- * other, and both stay on the compositor (no layout, no paint) which keeps
- * Android devices comfortable. Negative delays stagger the loops so the first
- * paint already shows a settled arrangement instead of four works starting
- * together.
+ * driven by the separate `translate` property. The browser composes `translate`
+ * and `transform` independently, so neither animation cancels the other, and
+ * both stay on the compositor (no layout, no paint) which keeps mid-range
+ * Android devices comfortable.
+ *
+ * Per-work timing lives in custom properties — distance, duration and delay all
+ * differ between slots — and every loop uses `alternate` with `ease-in-out`, so
+ * each work decelerates into its turnaround instead of stopping dead. Negative
+ * delays mean the first paint already shows a settled arrangement.
+ *
+ * Only `transform`, `translate` and `opacity` ever animate. No JavaScript runs
+ * per frame, and no animation library is added for this effect.
  */
 
 .stageWrapper {
@@ -31,13 +38,25 @@
   isolation: isolate;
 }
 
-/* ── Orbits ───────────────────────────────────────────────────────────── */
+/* ── Background detail ────────────────────────────────────────────────── */
 
-.orbitLayer {
+.details {
   position: absolute;
   inset: 0;
   z-index: var(--z-base);
   pointer-events: none;
+}
+
+/* A barely-there warm wash behind the dominant work, for depth. */
+.glow {
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 68%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius-circle);
+  background: radial-gradient(closest-side, var(--color-accent-soft), transparent 72%);
+  opacity: 0.75;
 }
 
 .orbit {
@@ -48,25 +67,25 @@
   border-radius: var(--radius-circle);
 }
 
-.orbitInner {
-  width: 60%;
+.orbitOuter {
+  width: 92%;
   aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%);
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
-.orbitOuter {
-  width: 94%;
+.orbitInner {
+  width: 56%;
   aspect-ratio: 1 / 1;
   transform: translate(-50%, -50%);
-  opacity: 0.38;
+  opacity: 0.42;
 }
 
 .orbitTilted {
-  width: 86%;
+  width: 84%;
   aspect-ratio: 1 / 1;
-  transform: translate(-50%, -50%) rotate(-17deg) scaleY(0.6);
-  opacity: 0.32;
+  transform: translate(-50%, -50%) rotate(-16deg) scaleY(0.56);
+  opacity: 0.26;
 }
 
 /* ── Works ────────────────────────────────────────────────────────────── */
@@ -74,46 +93,77 @@
 .work {
   position: absolute;
   z-index: var(--z-raised);
-  animation:
-    drift-x var(--duration-float) linear infinite alternate,
-    drift-y calc(var(--duration-float) * 0.86) var(--ease-inout) infinite alternate;
+
+  /* Fallbacks, overridden per slot below. */
+  --drift-x: 1.2%;
+  --drift-y: 8px;
+  --drift-duration: 38s;
+  --float-duration: 31s;
+  --drift-delay: -6s;
+  --float-delay: -9s;
+
+  animation-name: drift-x, drift-y;
+  animation-duration: var(--drift-duration), var(--float-duration);
+  animation-timing-function: var(--ease-inout), var(--ease-inout);
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+  animation-delay: var(--drift-delay), var(--float-delay);
   will-change: transform, translate;
 }
 
+/* Dominant painting: the anchor of the composition. */
 .workMain {
-  --drift-x: 1.4%;
-  --drift-y: 0.6rem;
-  top: 12%;
-  left: 20%;
-  width: 56%;
+  --drift-x: 0.9%;
+  --drift-y: 7px;
+  --drift-duration: 46s;
+  --float-duration: 39s;
+  --drift-delay: -8s;
+  --float-delay: -11s;
+  top: 7%;
+  left: 19%;
+  width: 54%;
   z-index: calc(var(--z-raised) + 2);
 }
 
-.workLeft {
-  --drift-x: 1.8%;
-  --drift-y: 0.8rem;
-  top: 38%;
-  left: 1%;
-  width: 26%;
-  animation-delay: -12s;
-}
-
-.workRight {
-  --drift-x: 1.6%;
-  --drift-y: 0.7rem;
-  top: 6%;
+/* Smaller artwork floating higher, to the right of the anchor. */
+.workUpper {
+  --drift-x: 1.7%;
+  --drift-y: 9px;
+  --drift-duration: 33s;
+  --float-duration: 28s;
+  --drift-delay: -19s;
+  --float-delay: -22s;
+  top: 3%;
   right: 2%;
-  width: 23%;
-  animation-delay: -21s;
+  width: 24%;
+  z-index: calc(var(--z-raised) + 1);
 }
 
-.workLowerRight {
-  --drift-x: 2.2%;
-  --drift-y: 0.9rem;
-  right: 6%;
-  bottom: 5%;
+/* Sculptural object, resting low and overlapping the anchor by a corner. */
+.workLower {
+  --drift-x: 1.4%;
+  --drift-y: 8px;
+  --drift-duration: 41s;
+  --float-duration: 34s;
+  --drift-delay: -27s;
+  --float-delay: -24s;
+  bottom: 8%;
+  left: 2%;
+  width: 21%;
+  z-index: calc(var(--z-raised) + 3);
+}
+
+/* Lamp, holding the right edge at mid height. */
+.workSide {
+  --drift-x: 1.9%;
+  --drift-y: 10px;
+  --drift-duration: 30s;
+  --float-duration: 26s;
+  --drift-delay: -4s;
+  --float-delay: -6s;
+  top: 41%;
+  right: 1%;
   width: 20%;
-  animation-delay: -6s;
 }
 
 /* A single champagne dot travelling the outer orbit. */
@@ -125,18 +175,20 @@
   border-radius: var(--radius-circle);
   background-color: var(--color-accent);
   pointer-events: none;
-  animation:
-    drift-x calc(var(--duration-float) * 0.7) linear infinite alternate,
-    drift-y calc(var(--duration-float) * 0.5) var(--ease-inout) infinite alternate;
-  animation-delay: -9s;
+  animation-name: drift-x, drift-y;
+  animation-duration: 24s, 19s;
+  animation-timing-function: var(--ease-inout), var(--ease-inout);
+  animation-iteration-count: infinite, infinite;
+  animation-direction: alternate, alternate;
+  animation-delay: -9s, -14s;
   will-change: transform, translate;
 }
 
 .cometOne {
-  --drift-x: 2.4%;
-  --drift-y: 1rem;
-  top: 20%;
-  right: 9%;
+  --drift-x: 2.2%;
+  --drift-y: 12px;
+  top: 17%;
+  right: 12%;
 }
 
 @keyframes drift-x {
@@ -157,33 +209,42 @@
   }
 }
 
-/* ── Mobile: a simplified three-work composition ──────────────────────── */
+/* ── Phones: a simplified three-work composition ──────────────────────── */
 
 @media (max-width: 767px) {
   .stageWrapper {
-    /* Narrower, so the smaller works keep their breathing room on a phone. */
-    max-width: 24rem;
+    /* Narrower, so the smaller works keep their breathing room. */
+    max-width: 22rem;
   }
 
   .workMain {
-    top: 15%;
+    --drift-x: 0.7%;
+    --drift-y: 5px;
+    --drift-duration: 42s;
+    --float-duration: 35s;
+    top: 10%;
     left: 16%;
-    width: 64%;
+    width: 58%;
   }
 
-  .workLeft {
-    top: 52%;
-    left: 0;
-    width: 30%;
+  .workUpper {
+    --drift-x: 1.2%;
+    --drift-y: 6px;
+    top: 2%;
+    right: 0.5%;
+    width: 26%;
   }
 
-  .workRight {
-    top: 4%;
-    right: 0;
-    width: 28%;
+  .workLower {
+    --drift-x: 1%;
+    --drift-y: 5px;
+    bottom: 2%;
+    left: 2%;
+    width: 20%;
   }
 
-  .workLowerRight,
+  /* The lamp and the tilted orbit rest on phones. */
+  .workSide,
   .orbitTilted {
     display: none;
   }
@@ -196,14 +257,6 @@
   .comet {
     animation: none;
     will-change: auto;
-    transform: none;
-    /* Park each work near the middle of its drift path so the still
-       arrangement reads as intentional rather than stuck at an edge. */
-    translate: 0 calc(var(--drift-y) * -0.5);
-  }
-
-  .workMain {
-    translate: calc(var(--drift-x) * -0.25) calc(var(--drift-y) * -0.4);
   }
 }
 

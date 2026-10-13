@@ -39,8 +39,9 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
   {
     pattern: '/',
     page: 'HomePage',
-    status: 'foundation',
-    purpose: 'Editorial introduction plus the floating-art prototype.',
+    status: 'implemented',
+    purpose:
+      'Editorial homepage: floating-art hero, five disciplines, artwork spotlight, four worlds, artist invitation.',
   },
   {
     pattern: '/discover',

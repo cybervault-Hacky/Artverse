@@ -22,7 +22,7 @@ import styles from './ArtworkDetailPage.module.css'
  * A single artwork.
  *
  * The work is shown in full at its intrinsic ratio, with the metadata a
- * visitor genuinely needs in Phase 1. Commerce — price, availability,
+ * visitor genuinely needs today. Commerce — price, availability,
  * certificates — is deliberately absent and stated as such.
  */
 export function ArtworkDetailPage() {
@@ -141,7 +141,7 @@ export function ArtworkDetailPage() {
       <Section divided spacing="tight" ariaLabelledBy="artwork-later">
         <PageContainer>
           <PhaseNote
-            phase="Phase 4"
+            phase="Phase 5"
             title="What this artwork page will become"
             description="Commerce and provenance are the subjects of a later phase; nothing here pretends to offer them yet."
             items={[

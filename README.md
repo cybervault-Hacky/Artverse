@@ -5,23 +5,24 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 1 delivered.** This repository currently contains the project foundation, the design
-system, the shared component set, the route architecture and the page shells for every destination.
-It is a frontend foundation, not a working marketplace: there is no backend, no database, no
-authentication, no payments and no real listings.
+**Status: Phase 2 delivered.** The repository contains the project foundation, the design system,
+the shared component set, the route architecture, the page shells for every destination, and the
+complete editorial homepage with its signature floating-art hero. It is still a frontend build: there
+is no backend, no database, no authentication, no payments and no real listings.
 
 ---
 
 ## Contents
 
-- [What Phase 1 delivers](#what-phase-1-delivers)
-- [What Phase 1 deliberately does not include](#what-phase-1-deliberately-does-not-include)
+- [What has been built](#what-has-been-built)
+- [What is deliberately not included](#what-is-deliberately-not-included)
 - [Stack](#stack)
 - [Getting started](#getting-started)
+- [The homepage](#the-homepage)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
-- [The signature floating-art prototype](#the-signature-floating-art-prototype)
+- [The floating-art composition](#the-floating-art-composition)
 - [Sample data and assets](#sample-data-and-assets)
 - [Accessibility](#accessibility)
 - [Responsive behaviour](#responsive-behaviour)
@@ -30,28 +31,36 @@ authentication, no payments and no real listings.
 
 ---
 
-## What Phase 1 delivers
+## What has been built
 
-- **A working frontend foundation** — React 19, TypeScript in strict mode, Vite, npm.
-- **A light-first, premium design system** — warm white (`#FAF9F6`), near-black text (`#171717`),
-  one muted champagne accent (`#C8AD78`), declared once in `src/styles/tokens.css`.
-- **Twelve dedicated pages on real routes** — no single giant page simulating multiple destinations
-  with sections or tabs.
-- **A responsive shared header and footer** — desktop navigation from 1024px, an accessible
-  disclosure panel below it, and a footer that lists only destinations that genuinely exist.
-- **Reusable foundational components** — button, text link, frames, cards, grids, headings,
-  breadcrumb, empty state, loading indicator, phase note, not-found view.
-- **A professional design-system preview** at `/design-system` — live specimens, not screenshots.
-- **A lightweight floating-art prototype** — pure CSS, no animation library.
-- **Honest coming-soon states** — later-phase work is described, never faked.
-- **Reduced-motion support** and keyboard-visible focus throughout.
+**Phase 1 — foundation and design system**
 
-## What Phase 1 deliberately does not include
+- React 19, TypeScript in strict mode, Vite, npm — no UI or animation libraries.
+- A light-first design system: warm white (`#FAF9F6`), near-black text (`#171717`), one muted
+  champagne accent (`#C8AD78`), all declared in `src/styles/tokens.css`.
+- Twelve dedicated pages on real routes, with a responsive shared header and footer.
+- Reusable components: button, text link, frames, cards, grids, headings, breadcrumb, empty state,
+  loading indicator, phase note, not-found view, skip link.
+- A live design-system reference at `/design-system`.
+- Honest coming-soon states, keyboard-visible focus and reduced-motion support throughout.
 
-The complete homepage content, full Explore/catalogue browsing with filters, artwork detail
-commerce, artist directory features, seller onboarding, account systems, certificates, checkout,
-payouts, databases and AI services all belong to later phases. Where a visitor would expect one of
-those features, the page says so plainly rather than simulating it.
+**Phase 2 — premium homepage and floating-art experience**
+
+- A five-section editorial homepage: hero, Five Creative Disciplines, artwork spotlight, Four
+  Artistic Worlds, artist invitation band.
+- The signature floating-art hero, rebuilt with per-work drift distance, duration and delay, a warm
+  wash behind the dominant work, and a simplified three-work arrangement on phones.
+- Homepage curation held in `src/data/homepage.ts`, so page components stay presentational.
+- Four redesigned sample collections matching the homepage's artistic worlds.
+- An `inverse` button variant for the charcoal contrast band, documented on `/design-system`.
+- Phase numbering across the site brought back in line with what has actually shipped.
+
+## What is deliberately not included
+
+Catalogue browsing with filters, sorting and pagination; indexed search; editorial curation tools;
+artwork commerce (prices, availability, certificates, purchase); seller accounts, verification,
+listing tools, orders and payouts. There is no backend, database, authentication, payment or AI
+service anywhere in this repository, and no page simulates one.
 
 ## Stack
 
@@ -64,7 +73,7 @@ those features, the page says so plainly rather than simulating it.
 | Styling | CSS Modules + custom properties | Scoped styles with tokens centralised in one file |
 | Fonts | Fontsource (self-hosted) | Playfair Display + Inter with no third-party requests |
 | Linting | ESLint 10 flat config, typescript-eslint, react-hooks | Catches real mistakes, no formatting noise |
-| Animation | None | The signature effect is two slow CSS keyframe loops |
+| Animation | None | The signature effect is two slow CSS keyframe loops per work |
 
 Requirements: **Node 22.12+** and npm. No other global tooling is needed.
 
@@ -77,18 +86,46 @@ npm run build      # type-check, then production build into dist/
 npm run preview    # serve the built output on http://localhost:4173
 npm run typecheck  # strict TypeScript project build
 npm run lint       # ESLint, zero warnings tolerated
-npm run verify:routes  # render every route and assert page, heading and a11y basics
+npm run verify:routes  # render every route and assert page, link and a11y basics
 npm run validate   # typecheck + lint + build + route verification
 ```
 
-Deployment is out of scope for Phase 1. When it does happen, the host must rewrite unknown paths to
-`index.html` (SPA fallback) so direct URLs and refreshes keep working.
+Deployment is out of scope. When it happens, the host must rewrite unknown paths to `index.html`
+(SPA fallback) so direct URLs and refreshes keep working.
+
+## The homepage
+
+Five sections, in this order, each its own component in `src/pages/HomePage/sections/`:
+
+1. **Hero** — the eyebrow `Independent art · Worldwide`, the headline *Where Art Finds Its
+   Universe.*, the supporting paragraph, and two real calls to action: **Explore Art** (`/discover`)
+   and **Browse Artists** (`/artists`). Beside it, the floating-art composition.
+2. **Five Creative Disciplines** — Fine Paintings, Digital Artwork, Decorative Lamps, Handmade
+   Products and Custom Creations, each with a sample cover image and one sentence. Every item links
+   to `/discover`: category filtering does not exist yet, so no filtered URL is implied. Five
+   balanced columns on wide screens, three on tablets, two on large phones, and a compact
+   image-and-text row on phones.
+3. **Artwork spotlight** — one real sample record (*Ochre Field*) shown large, with its category,
+   creator and creator location, description, medium, dimensions and year, an understated **View
+   Artwork** action to its detail route, and a plain note that no price, availability or provenance
+   is attached to it.
+4. **Four Artistic Worlds** — Quiet Landscapes, Objects for Living, Contemporary Colour and Art for
+   Thoughtful Spaces, each linking to its own collection route, presented two-up so the rows stay
+   calm.
+5. **Artist invitation** — a charcoal band with the headline *Share Your Creative Vision.*, one
+   paragraph of intent, a **Become a Seller** action to `/sell`, and a line stating that seller
+   accounts arrive in a later phase. One cropped work supplies material texture on wide screens.
+
+Curation lives in `src/data/homepage.ts`: the hero slot order, the spotlight record, the four
+collection ids and the invitation texture. Ids resolve through `getArtworksByIds` /
+`getCollectionsByIds`, which skip anything unknown, so a missing record removes a slot instead of
+rendering a broken image.
 
 ## Route architecture
 
-| Route | Page component | Phase 1 status |
+| Route | Page component | Status |
 | --- | --- | --- |
-| `/` | `HomePage` | Foundation — editorial hero, floating-art prototype, stated scope |
+| `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
 | `/discover` | `DiscoverPage` | Foundation — sample catalogue and category overview |
 | `/discover/:collectionId` | `CollectionDetailPage` | Foundation — collection with its works |
 | `/artwork/:artworkId` | `ArtworkDetailPage` | Foundation — full metadata, no commerce |
@@ -96,14 +133,14 @@ Deployment is out of scope for Phase 1. When it does happen, the host must rewri
 | `/artists/:artistId` | `ArtistProfilePage` | Foundation — placeholder profile and its records |
 | `/collections` | `CollectionsPage` | Foundation — collection directory |
 | `/sell` | `SellPage` | Foundation — seller intent, no form or account |
-| `/about` | `AboutPage` | Complete — what ArtVerse is and what Phase 1 covers |
+| `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
 | `/search` | `SearchPage` | Foundation — URL-driven search over sample records |
 | `/design-system` | `DesignSystemPage` | Complete — internal token and component reference |
 | `/404`, any unknown path | `NotFoundPage` | Complete — also used for unknown artwork, collection and artist ids |
 
 Paths are declared once in `src/app/routes.ts` and registered in `src/app/AppRoutes.tsx`. Unknown
-detail ids (`/artwork/…`, `/discover/…`, `/artists/…`) render the same not-found experience as an
-unknown URL, so a stale link is never mistaken for a real page.
+detail ids render the same not-found experience as an unknown URL, so a stale link is never mistaken
+for a real page.
 
 ## Project structure
 
@@ -111,10 +148,10 @@ unknown URL, so a stale link is never mistaken for a real page.
 src/
 ├── app/          Application shell: route tree, path registry, navigation config, scroll handling
 ├── components/   Reusable UI, each with a colocated CSS Module
-├── data/         Illustrative sample records and design-system documentation
+├── data/         Illustrative sample records, homepage curation, design-system documentation
 ├── hooks/        useDocumentTitle, useReducedMotion
 ├── layouts/      MainLayout — skip link, header, routed page, footer
-├── pages/        One folder per destination, each with its own styles
+├── pages/        One folder per destination; the homepage is split into five section files
 ├── styles/       tokens.css, base.css and the global entry point
 ├── types/        Shared domain types
 └── utils/        Small helpers: cn, aspect ratios, text formatting
@@ -123,7 +160,7 @@ public/
 ├── favicon.svg   Brand symbol
 └── robots.txt    Crawling stays disabled until launch
 scripts/
-└── verify-routes.mjs   Route and accessibility render checks
+└── verify-routes.mjs   Route, link and accessibility render checks
 ```
 
 ## Design system
@@ -133,74 +170,82 @@ styles consume variables; a scan of every CSS Module confirms **no hard-coded co
 token file.
 
 **Colour** — canvas `#FAF9F6`, ink `#171717`, muted ink `#6E6B66`, hairline `#E5E2DC`, champagne
-accent `#C8AD78` (with `#8A6F35` for accent text at 4.5:1), charcoal `#1E1D1B` reserved for
-occasional contrast sections. The brand's soft neutral grey `#77746F` was nudged to `#6E6B66` for
-secondary text so body copy clears an AA contrast ratio; both values are documented on
-`/design-system`.
+accent `#C8AD78` (with `#8A6F35` for accent text at 4.5:1), charcoal `#1E1D1B` used for exactly one
+homepage band. The brand's soft neutral grey `#77746F` was nudged to `#6E6B66` for secondary text so
+body copy clears an AA contrast ratio; both values are documented on `/design-system`.
 
 **Typography** — Playfair Display for display, page titles, section headings and artwork titles;
-Inter for body copy, controls, labels and metadata. Nine tokens cover hero headline through
-caption, and long headlines use `clamp()` so nothing dominates a phone screen.
+Inter for body copy, controls, labels and metadata. Nine tokens cover hero headline through caption,
+and long headlines use `clamp()` so nothing dominates a phone screen.
 
 **Spacing, radii, elevation** — a 4px spacing scale plus two clamped section tokens, six radii,
 three soft shadows, and seven motion tokens.
 
-Visit `/design-system` for the live reference: palette, type scale, spacing, radii, buttons, links,
-navigation, frames, cards, grids, states, the floating-art prototype with controls, responsive
-behaviour and the route table.
+Visit `/design-system` for the live reference: palette, type scale, spacing, radii, buttons (all four
+variants), links, navigation, frames, cards, grids, states, the floating-art prototype with controls,
+responsive behaviour and the route table.
 
-## The signature floating-art prototype
+## The floating-art composition
 
-The homepage hero pairs editorial copy with a floating composition: one dominant work surrounded by
-smaller pieces inside a 1:1 stage.
+`src/components/FloatingArtwork/` renders the homepage's signature visual: one dominant painting,
+a smaller artwork floating higher, a sculptural vessel low and to the left, and a lamp holding the
+right edge.
 
-- **Positioning** — works are placed with percentage insets inside an `overflow: hidden` wrapper, so
-  the composition scales with the stage and can never widen the page or overlap the headline and
-  buttons.
-- **Motion** — each work runs two independent, very slow loops: a 34-second horizontal drift driven
-  by `transform`, and a ~29-second vertical float driven by the separate `translate` property. They
-  compose instead of cancelling each other, and negative delays stagger every element so the first
-  paint already looks settled.
-- **Performance** — only `transform` and `translate` animate, with four small images and three orbit
-  lines, so cheap Android devices composite rather than repaint.
-- **Mobile** — below 768px the composition narrows and drops to three works.
-- **Reduced motion** — `prefers-reduced-motion: reduce` stops the drift entirely and parks each work
-  in a deliberately composed still arrangement. Hover lifts and transitions collapse too.
+- **Positioning** — a fixed 1:1 stage with every work placed by percentage insets inside an
+  `overflow: hidden` wrapper. The stage can never widen the page, and insets are chosen to stay clear
+  of the drift distances, so no work is ever clipped at an edge.
+- **Motion** — two independent loops per work: a left-to-right drift on `transform`, and a vertical
+  float on the separate `translate` property. Because the browser composes them independently,
+  neither cancels the other. Distances (0.9%–1.9%), durations (30s–46s horizontal, 26s–39s vertical)
+  and delays all differ per slot, and every loop uses `alternate` with `ease-in-out`, so each work
+  decelerates into its turnaround instead of stopping dead. Negative delays mean the first paint
+  already looks settled.
+- **Depth** — a soft shelf shadow per work, three delicate orbit lines, a single champagne dot and a
+  barely-there warm wash behind the dominant piece.
+- **Weight** — only `transform`, `translate` and `opacity` animate. Four images, three orbit lines,
+  no canvas and no JavaScript per frame, so mid-range Android devices composite rather than repaint.
+- **Phones** — the arrangement drops to three works with shorter travel and a narrower stage.
+- **Reduced motion** — every animation stops, leaving the same arrangement perfectly still. Hover
+  lifts and transitions collapse too.
 
 ## Sample data and assets
 
-`src/data/` holds clearly flagged illustrative records: six sample works across painting, digital
-artwork, decorative lighting, handmade objects and a custom piece, five placeholder creators, three
-sample collections. Every record carries `sample: true` or `illustrative: true`, and pages label
-them as placeholders.
+`src/data/` holds clearly flagged illustrative records: six sample works across all five
+disciplines, five placeholder creators (with placeholder locations), and four sample collections.
+Every record carries `sample: true` or `illustrative: true`, and pages label them as placeholders.
 
 The six images in `public/artworks/` were generated for this project as visual stand-ins so frames,
-grids and ratios could be designed and reviewed. They are not real artworks and are intended to be
-replaced with genuine studio imagery in a later phase.
+grids, crops and ratios could be designed and reviewed. They are single-resolution files (752 kB in
+total, all reused across sections and cached after first load) and are intended to be replaced with
+genuine studio photography — and multiple resolutions — in a later phase.
 
 No real artists, prices, sales, verified sellers, testimonials or marketplace activity are
 represented anywhere in this repository.
 
 ## Accessibility
 
-- Semantic landmarks: one `header`, one `main`, one `footer`, one `h1` per page (verified per route).
+- Semantic landmarks: one `header`, one `main`, one `footer`, one `h1` per page; heading levels never
+  skip a step (verified per route).
 - A skip link that appears on focus.
 - Visible focus rings on every interactive element, via one global `:focus-visible` rule.
-- Buttons and header controls are at least 44px tall; text links keep comfortable targets.
-- Descriptive `alt` text on every image (verified per route); the decorative floating arrangement is
-  announced once through its figure label, and each work keeps its own description.
+- Buttons and header controls are at least 44px tall; the hero CTAs are 52px.
+- Descriptive `alt` text on every image, plus intrinsic `width` and `height` on every image so
+  nothing shifts while it loads (both verified per route).
 - Breadcrumbs on nested routes with the current page marked `aria-current="page"`.
-- The mobile navigation is a disclosure (`aria-expanded` / `aria-controls`) that closes on
-  navigation or `Escape` — it never traps focus.
+- The mobile navigation is a disclosure (`aria-expanded` / `aria-controls`) that closes on navigation
+  or `Escape` — it never traps focus.
+- The floating composition is decorative: announced once through its figure label, with each work
+  keeping its own alternative text, and removed from the tab order.
+- Card links carry a visually hidden action suffix, so a link's purpose is clear when read aloud.
 - `prefers-reduced-motion` is honoured globally and specifically in the floating composition.
 
 ## Responsive behaviour
 
 Designed and checked against 360, 390, 430, 768, 1024 and 1440 pixel widths. Grid columns step at
-540px (two) and 900px (three); collection grids step at 700px; desktop navigation appears at 1024px;
-the content container caps at 1200px so line length stays readable on large screens. No layout uses
-`100vw`, and every viewport-relative value sits inside a `clamp()` with a minimum and maximum, so
-horizontal overflow is designed out rather than hidden.
+540px (artwork), 640px (disciplines), 700px (collections), 900px and 1140px (disciplines, five up);
+desktop navigation appears at 1024px; the content container caps at 1200px so line length stays
+readable on large screens. No layout uses `100vw`, every viewport-relative value sits inside a
+`clamp()` with a minimum and maximum, and no element sets a fixed width wider than a 360px viewport.
 
 ## Verification
 
@@ -211,31 +256,41 @@ Executed in this repository:
 | Dependency install | `npm install` | 166 packages, no vulnerabilities reported by npm |
 | Type check | `npm run typecheck` | Passes, strict mode, no errors |
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
-| Production build | `npm run build` | Passes — `dist/` JS ≈ 342 kB (≈ 106 kB gzip), CSS ≈ 47 kB (≈ 8.9 kB gzip) |
-| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200 with the app shell |
+| Production build | `npm run build` | Passes — `dist/` JS ≈ 349 kB (≈ 108 kB gzip), CSS ≈ 53 kB (≈ 9.7 kB gzip) |
+| Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; every route returns HTTP 200 |
 | Route rendering | `npm run verify:routes` | 19 route cases rendered through Vite's SSR pipeline, all assertions pass |
-| Assets | `curl` against the dev server | `/favicon.svg`, `/artworks/*.jpg`, `/robots.txt` all HTTP 200 |
+| Homepage structure | included above | All five sections present, all internal destinations rendered (hero CTAs, spotlight artwork, creator, four collections, seller) |
+| Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
+| CSS Module integrity | script over `src/**` | 303 `styles.*` references resolve; no stale class names |
+| Heading outline | script over all routes | One `h1` per route, no skipped levels |
+| Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
+| Overflow audit | grep over layout CSS | No `100vw`, no fixed widths wider than the smallest viewport |
 | Secret and local-path scan | grep over tracked files | No credentials, keys, `.env` files or machine paths found |
-| Token audit | grep over CSS Modules | No hard-coded colours outside `tokens.css` |
 
 `verify:routes` renders the real route tree for every destination and asserts: the intended page
-renders for each path, unknown paths and unknown detail ids reach the not-found experience, each
-page has exactly one `h1`, no element ids are duplicated, every image has descriptive `alt` text,
-and the shared skip link and footer are present.
+renders for each path, unknown paths and unknown detail ids reach the not-found experience, each page
+has exactly one `h1`, no element ids are duplicated, every image has descriptive `alt` text and
+intrinsic dimensions, the shared skip link and footer are present, the homepage carries all five
+sections, and every homepage link points at a route that exists.
 
-**Not executed:** no automated browser session, visual regression suite, Lighthouse run or
-cross-browser matrix was available in this environment, so rendering has been verified at the markup
-and layout-rule level rather than by screenshot. Treat a manual pass at the six widths above as the
-next step before Phase 2 builds on these pages.
+**Not executed — stated plainly:** no automated browser session, screenshot pass, visual regression
+suite or Lighthouse run was available in this environment, and no browser binary is installed in the
+sandbox. Rendering has therefore been verified at the markup, link and layout-rule level rather than
+by screenshot, and the floating composition's motion has been verified by inspecting the generated
+CSS (properties, durations, coverage) rather than by watching it. A manual pass at the six widths
+above — with a slow-motion eye on the hero drift, and with the OS reduced-motion setting toggled — is
+the recommended next step.
 
 ## Roadmap
 
 - **Phase 1 — Foundation and design system** _(delivered)_: setup, tokens, components, routes, page
-  shells, design-system preview, floating-art prototype.
-- **Phase 2**: the complete homepage, real catalogue browsing with filters, sorting and pagination.
-- **Phase 3**: editorial collections, curation, studio series.
-- **Phase 4**: artwork detail depth — provenance, certificates, availability and purchase flow.
-- **Phase 5**: seller accounts, studio profiles, listing tools, orders and payouts.
+  shells, design-system preview.
+- **Phase 2 — Homepage and floating art** _(delivered)_: the editorial homepage, the floating-art
+  hero, the five disciplines, the artwork spotlight and the artist invitation.
+- **Phase 3**: Explore Art — catalogue browsing with filters, sorting, pagination and indexed search.
+- **Phase 4**: collections and curation — editorial collections, studio series, curation tools.
+- **Phase 5**: artwork detail and commerce — provenance, certificates, availability, purchase flow.
+- **Phase 6**: studios and sellers — seller accounts, studio profiles, listing tools, orders, payouts.
 
 ## Scripts reference
 
@@ -246,5 +301,5 @@ next step before Phase 2 builds on these pages.
 | `npm run preview` | Serve the built output locally |
 | `npm run typecheck` | Strict TypeScript build of both projects |
 | `npm run lint` | ESLint over the repository |
-| `npm run verify:routes` | Render every route and assert page and accessibility basics |
+| `npm run verify:routes` | Render every route and assert page, link and accessibility basics |
 | `npm run validate` | All of the above, in order |

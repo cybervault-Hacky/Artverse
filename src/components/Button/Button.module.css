@@ -77,6 +77,16 @@
   color: var(--color-accent-ink);
 }
 
+/* For charcoal contrast bands, where a dark button would disappear. */
+.inverse {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+.inverse:hover {
+  background-color: var(--color-surface-muted);
+}
+
 /* ── States ───────────────────────────────────────────────────────────── */
 
 .button:disabled,

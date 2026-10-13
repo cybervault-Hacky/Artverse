@@ -7,4 +7,5 @@ export type {
   Collection,
   Creator,
   Crumb,
+  Discipline,
 } from './artwork'

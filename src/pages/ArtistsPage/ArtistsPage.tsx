@@ -60,7 +60,7 @@ export function ArtistsPage() {
 
           <PhaseNote
             className={styles.note}
-            phase="Phase 5"
+            phase="Phase 6"
             title="What the directory will hold"
             items={[
               'Real studio profiles with practice, process and location.',

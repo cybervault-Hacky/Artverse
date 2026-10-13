@@ -22,8 +22,8 @@ export function SiteFooter() {
             <Brand size="md" />
             <p className={styles.tagline}>Where Art Finds Its Universe.</p>
             <p className={styles.note}>
-              Phase 1 foundation. Artwork records and creator names on these pages are illustrative
-              placeholders — there are no live listings, prices or transactions yet.
+              Artwork records and creator names on these pages are illustrative placeholders —
+              there are no live listings, prices or transactions anywhere on ArtVerse yet.
             </p>
           </div>
 
