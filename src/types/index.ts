@@ -3,6 +3,8 @@ export type {
   ArtworkAspect,
   ArtworkCategory,
   ArtworkImage,
+  ArtworkPrice,
+  ArtworkProvenance,
   CategoryOption,
   Collection,
   Creator,

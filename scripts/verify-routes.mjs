@@ -49,6 +49,9 @@ try {
   const collections = await server.ssrLoadModule('/src/utils/collections.ts')
   const drafts = await server.ssrLoadModule('/src/utils/listingDraft.ts')
   const workspace = await server.ssrLoadModule('/src/utils/sellerStudio.ts')
+  const pricing = await server.ssrLoadModule('/src/utils/pricing.ts')
+  const provenance = await server.ssrLoadModule('/src/utils/provenance.ts')
+  const certificate = await server.ssrLoadModule('/src/utils/certificate.ts')
 
   const artworkIds = new Set(data.SAMPLE_ARTWORKS.map((artwork) => artwork.id))
   const collectionIds = new Set(data.SAMPLE_COLLECTIONS.map((collection) => collection.id))
@@ -87,6 +90,11 @@ try {
       label: 'listing draft',
     },
     { pattern: /^\/sell\/studio\/profile$/, resolve: () => true, label: 'studio profile preview' },
+    {
+      pattern: /^\/sell\/studio\/certificate$/,
+      resolve: () => true,
+      label: 'seller certificate preview',
+    },
     { pattern: /^\/about$/, resolve: () => true, label: 'about' },
     { pattern: /^\/search$/, resolve: () => true, label: 'search' },
     { pattern: /^\/design-system$/, resolve: () => true, label: 'design system' },
@@ -112,6 +120,21 @@ try {
    * described as verified or award-winning, because nothing verifies anybody.
    */
   const currencyPattern = /[£$€¥₹]\s?\d|\d\s?(?:GBP|USD|EUR|INR)/
+  /*
+   * Words that would invent a history: an ownership chain, an authentication, a
+   * signature, an edition, an exhibition. No record in this build carries any of
+   * them, so no page may show one.
+   */
+  const fabricatedProvenance = [
+    'Certificate of Authenticity',
+    'Provenance verified',
+    'Previously owned',
+    'Acquired from',
+    'Signed by the artist',
+    'Edition 1 of',
+    'Exhibited at',
+    'Gallery history',
+  ]
   const purchasePhrases = [
     'Add to cart',
     'Add to basket',
@@ -271,6 +294,10 @@ try {
         'Nothing is simulated with tabs or in-page sections',
         ...routes.ROUTE_ARCHITECTURE.map((row) => row.pattern),
         ...routes.ROUTE_ARCHITECTURE.map((row) => row.page),
+        // The one amount in the build, and the label that says it belongs to no
+        // record. It is shown here rather than on an artwork page on purpose.
+        'USD 2,400',
+        pricing.ILLUSTRATIVE_PRICE_LABEL,
       ],
     },
     { path: '/404', expect: 'Error 404' },
@@ -321,6 +348,15 @@ try {
         creator.name,
         'Explore Related Art',
         'Illustrative placeholder record',
+        // Price and provenance: what this record holds, and what it does not.
+        'Price and provenance',
+        pricing.PRICE_NOT_PROVIDED,
+        pricing.PRICE_NOT_PURCHASABLE,
+        provenance.NO_PROVENANCE_STATEMENT,
+        provenance.AUTHENTICITY_NOT_VERIFIED,
+        provenance.NO_DOCUMENTS_NOTE,
+        'Attribution',
+        'Holding',
       ],
       // The studio links, and the collection trail resolves.
       expectLinks: [
@@ -329,7 +365,14 @@ try {
       ],
       // Only the related works appear as artwork links — never the work itself.
       expectArtworks: expectedRelated.slice(0, 4),
-      forbidAll: [...purchasePhrases, `href="/artwork/${artwork.id}"`],
+      forbidAll: [
+        ...purchasePhrases,
+        `href="/artwork/${artwork.id}"`,
+        // Provenance is never invented, for any record.
+        ...fabricatedProvenance,
+        'Authenticated',
+        'Verified authentic',
+      ],
       forbidPatterns: [currencyPattern],
       expectEagerImages: 1,
     })
@@ -1134,9 +1177,52 @@ try {
     drafts.listingDraftSummary(completeState)?.label === 'Every field checks out',
     'drafts: the status did not reflect a passing check',
   )
+  const priceFields = drafts.LISTING_FIELDS.filter(
+    (field) => field.name === 'priceAmount' || field.name === 'priceCurrency',
+  )
   check(
-    drafts.listingDraftFilledCount(validDraft) === drafts.LISTING_FIELDS.length,
-    'drafts: a draft prepared from a full record did not count every field',
+    priceFields.length === 2,
+    `drafts: expected a price pair in the form, found ${priceFields.length} price field(s)`,
+  )
+  check(
+    drafts.listingDraftFilledCount(validDraft) === drafts.LISTING_FIELDS.length - priceFields.length,
+    'drafts: a draft prepared from a record did not count exactly its non-price fields',
+  )
+  check(
+    validDraft.priceAmount === '' && validDraft.priceCurrency === '',
+    'drafts: a record-backed draft carried a price the record does not have',
+  )
+
+  // The price pair: optional, but never half-filled, and never guessed at.
+  const priceCases = [
+    [{ priceAmount: '2400' }, 'priceCurrency', 'an amount with no currency'],
+    [{ priceCurrency: 'USD' }, 'priceAmount', 'a currency with no amount'],
+    [{ priceAmount: '2,400', priceCurrency: 'USD' }, 'priceAmount', 'an amount with a separator'],
+    [{ priceAmount: '0', priceCurrency: 'USD' }, 'priceAmount', 'a zero amount'],
+    [{ priceAmount: '12.345', priceCurrency: 'USD' }, 'priceAmount', 'three decimal places'],
+    [{ priceAmount: 'abc', priceCurrency: 'USD' }, 'priceAmount', 'an amount that is not a number'],
+    [{ priceAmount: '2400', priceCurrency: 'usd' }, undefined, 'a lowercase currency code'],
+    [{ priceAmount: '2400', priceCurrency: 'USD' }, undefined, 'a complete price'],
+    [{ priceAmount: '2400', priceCurrency: 'DOLLARS' }, 'priceCurrency', 'a currency that is not a code'],
+  ]
+  for (const [patch, field, label] of priceCases) {
+    const errors = drafts.validateListingDraft({ ...validDraft, ...patch })
+    if (field === undefined) {
+      check(
+        errors.priceAmount === undefined && errors.priceCurrency === undefined,
+        `drafts: ${label} was rejected`,
+      )
+    } else {
+      check(Boolean(errors[field]), `drafts: ${label} was accepted`)
+    }
+  }
+  check(
+    Object.keys(drafts.validateListingDraft({
+      ...validDraft,
+      priceAmount: '',
+      priceCurrency: '',
+    })).length === 0,
+    'drafts: clearing the price made a valid draft invalid',
   )
 
   const fixing = drafts.listingDraftReducer(incomplete, {
@@ -1191,6 +1277,264 @@ try {
   check(
     drafts.listingDraftImage(validDraft)?.id === firstArtwork.id,
     'drafts: the chosen image did not resolve',
+  )
+
+  /*
+   * ── Price presentation, checked directly ────────────────────────────────
+   * The rules are the point here: a price without its currency is not a price,
+   * nothing is converted, and a record with no price says so rather than
+   * showing a zero, a range or a symbol on its own.
+   */
+  check(
+    data.SAMPLE_ARTWORKS.every((artwork) => artwork.price === undefined),
+    'pricing: a sample record carries a price — the catalogue has nothing for sale',
+  )
+  check(
+    data.SAMPLE_ARTWORKS.every((artwork) => !pricing.hasUsablePrice(artwork)),
+    'pricing: a sample record was reported as carrying a usable price',
+  )
+  check(
+    data.SAMPLE_ARTWORKS.every((artwork) => pricing.artworkPrice(artwork) === undefined),
+    'pricing: a sample record produced a formatted price',
+  )
+
+  const usd = pricing.formatPrice({ amount: 2400, currency: 'USD' })
+  const inr = pricing.formatPrice({ amount: 2400, currency: 'INR' })
+  check(usd?.text === 'USD 2,400', `pricing: USD formatted as “${usd?.text}”`)
+  check(inr?.text === 'INR 2,400', `pricing: INR formatted as “${inr?.text}”`)
+  check(
+    usd.text !== inr.text && usd.text.includes('USD') && inr.text.includes('INR'),
+    'pricing: two currencies formatted to the same string — currencies are not interchangeable',
+  )
+  check(
+    !usd.text.includes('$') && !inr.text.includes('₹'),
+    'pricing: a price fell back to a currency symbol instead of its code',
+  )
+  check(usd.amount === '2,400', `pricing: the amount was grouped as “${usd.amount}”`)
+  check(
+    pricing.formatPrice({ amount: 2400.5, currency: 'usd' })?.text === 'USD 2,400.50',
+    'pricing: a part amount was not written to two decimal places, or a lowercase code was rejected',
+  )
+  check(
+    pricing.formatPrice({ amount: 2400, currency: 'usd' })?.code === 'USD',
+    'pricing: a currency code was not normalised to uppercase',
+  )
+  check(Boolean(usd.spoken.includes('USD 2,400')), 'pricing: the spoken form lost the code')
+
+  // Nothing here may be displayed without both halves.
+  const unusablePrices = [
+    [{ amount: 2400 }, 'a price with no currency'],
+    [{ currency: 'USD' }, 'a currency with no amount'],
+    [{ amount: Number.NaN, currency: 'USD' }, 'an amount that is not a number'],
+    [{ amount: Number.POSITIVE_INFINITY, currency: 'USD' }, 'an infinite amount'],
+    [{ amount: 0, currency: 'USD' }, 'a zero amount'],
+    [{ amount: -1200, currency: 'USD' }, 'a negative amount'],
+    [{ amount: 2400, currency: '' }, 'a blank currency'],
+    [{ amount: 2400, currency: 'US' }, 'a two-letter currency'],
+    [{ amount: 2400, currency: 'DOLLARS' }, 'a currency that is not a code'],
+    [undefined, 'no price at all'],
+    [{ amount: '2,400', currency: 'USD' }, 'an amount with a thousands separator typed in'],
+    [{ amount: '2400.555', currency: 'USD' }, 'an amount with three decimal places'],
+    [{ amount: '12,00', currency: 'USD' }, 'an amount in a comma decimal style'],
+  ]
+  for (const [value, label] of unusablePrices) {
+    check(pricing.formatPrice(value) === undefined, `pricing: ${label} was formatted`)
+  }
+
+  check(
+    pricing.parsePriceAmount('2400') === 2400 && pricing.parsePriceAmount('2400.50') === 2400.5,
+    'pricing: a plain amount was not parsed',
+  )
+  check(
+    pricing.parsePriceAmount('2 400') === undefined && pricing.parsePriceAmount('£2400') === undefined,
+    'pricing: a separator or symbol was silently stripped',
+  )
+  check(
+    pricing.priceAmountError('2400') === undefined &&
+      pricing.priceAmountError('') === undefined &&
+      Boolean(pricing.priceAmountError('2,400')) &&
+      Boolean(pricing.priceAmountError('2400.555')),
+    'pricing: the typed-amount messages do not match the parsing rules',
+  )
+
+  // The one amount in the build belongs to the design-system page alone.
+  check(
+    pricing.ILLUSTRATIVE_PRICE.currency === 'USD' && pricing.ILLUSTRATIVE_PRICE.amount === 2400,
+    'pricing: the illustrative amount changed shape',
+  )
+  check(
+    data.SAMPLE_ARTWORKS.every(
+      (artwork) =>
+        artwork.price?.amount !== pricing.ILLUSTRATIVE_PRICE.amount ||
+        artwork.price?.currency !== pricing.ILLUSTRATIVE_PRICE.currency,
+    ),
+    'pricing: the illustrative amount is attached to a record',
+  )
+  check(
+    /[Nn]o record/.test(pricing.ILLUSTRATIVE_PRICE_LABEL),
+    'pricing: the illustrative amount is not labelled as belonging to no record',
+  )
+
+  /*
+   * ── Provenance and attribution, checked directly ────────────────────────
+   * What the section may and may not say, for every record in the catalogue.
+   */
+  for (const artwork of data.SAMPLE_ARTWORKS) {
+    const creator = data.SAMPLE_CREATORS.find((entry) => entry.id === artwork.creatorId)
+    const detail = provenance.buildProvenance(artwork, creator)
+
+    check(
+      detail.statementMissing && detail.statement === undefined,
+      `provenance: ${artwork.id} claimed a provenance statement it does not carry`,
+    )
+    check(
+      detail.rows.some((row) => row.label === 'Attribution'),
+      `provenance: ${artwork.id} has no attribution row`,
+    )
+    check(
+      detail.rows.some((row) => row.label === 'Authenticity'),
+      `provenance: ${artwork.id} does not distinguish attribution from authenticity`,
+    )
+    check(
+      detail.rows.some((row) => row.label === 'Verification' || row.label === 'Documents'),
+      `provenance: ${artwork.id} does not state what is not held`,
+    )
+
+    const attribution = detail.rows.find((row) => row.label === 'Attribution')
+    if (creator) {
+      check(
+        attribution.links?.[0]?.to === `/artists/${creator.id}`,
+        `provenance: ${artwork.id} did not attribute the work to its own creator record`,
+      )
+    } else {
+      check(
+        attribution.value === provenance.NO_ATTRIBUTION && !attribution.links,
+        `provenance: ${artwork.id} attributed the work to a creator that does not exist`,
+      )
+    }
+
+    const holding = detail.rows.find((row) => row.label === 'Holding')
+    const expectedHoldings = data.SAMPLE_COLLECTIONS.filter((collection) =>
+      collection.artworkIds.includes(artwork.id),
+    )
+    check(
+      expectedHoldings.length > 0
+        ? holding.links?.length === expectedHoldings.length
+        : holding.value === 'Not part of any collection in this build.',
+      `provenance: ${artwork.id} did not state its holding from the collection relationship`,
+    )
+  }
+
+  // A record that genuinely carries a statement shows it verbatim, with its
+  // source — and no "not provided" line is invented around it.
+  const statedRecord = {
+    ...data.SAMPLE_ARTWORKS[0],
+    provenance: { statement: 'Held in the studio since it was made.', source: 'Sample source note.' },
+  }
+  const statedDetail = provenance.buildProvenance(
+    statedRecord,
+    data.SAMPLE_CREATORS.find((entry) => entry.id === statedRecord.creatorId),
+  )
+  check(
+    statedDetail.statement === 'Held in the studio since it was made.' &&
+      statedDetail.source === 'Sample source note.' &&
+      !statedDetail.statementMissing,
+    'provenance: a statement the record carries was not shown as written',
+  )
+
+  const blankStatement = provenance.buildProvenance(
+    { ...data.SAMPLE_ARTWORKS[0], provenance: { statement: '   ', source: '  ' } },
+    undefined,
+  )
+  check(
+    blankStatement.statementMissing && blankStatement.source === undefined,
+    'provenance: a blank statement was treated as a value',
+  )
+  check(
+    blankStatement.rows[0].value === provenance.NO_ATTRIBUTION,
+    'provenance: a record without a creator did not say so',
+  )
+  check(
+    /not a claim about the work|Nothing about where it has been/.test(provenance.NO_PROVENANCE_STATEMENT),
+    'provenance: the missing-statement line no longer states that nothing is claimed',
+  )
+
+  /*
+   * ── The certificate preview, checked directly ───────────────────────────
+   * The document cannot be issued by anything in this build, and these are the
+   * assertions that keep it that way.
+   */
+  check(
+    certificate.CERTIFICATE_STATUS === 'Preview — Not Issued',
+    `certificate: the status reads “${certificate.CERTIFICATE_STATUS}”`,
+  )
+  check(
+    certificate.CERTIFICATE_TITLE === 'Seller Verification Certificate',
+    'certificate: the document is no longer titled precisely',
+  )
+  check(
+    /No certificate has been issued/.test(certificate.CERTIFICATE_NOT_ISSUED),
+    'certificate: the preview does not state that nothing has been issued',
+  )
+  check(
+    /No code is generated/.test(certificate.CERTIFICATE_QR_NOTE) &&
+      /nothing is scannable/.test(certificate.CERTIFICATE_QR_NOTE),
+    'certificate: the code space is not described as empty',
+  )
+
+  const blankFields = certificate.certificateFields()
+  check(
+    blankFields.length === 4,
+    `certificate: ${blankFields.length} fields, expected 4`,
+  )
+  check(
+    blankFields.every((field) => field.placeholder && certificate.isPlaceholderValue(field.value)),
+    'certificate: an empty preview did not show every field as a placeholder',
+  )
+  check(
+    blankFields.every((field) => /[Cc]ertificate|Assigned|Set on the day of issue|A studio name is optional/.test(field.note) || field.note.length > 20),
+    'certificate: a field was rendered without its explanation',
+  )
+
+  const typedFields = certificate.certificateFields({
+    recipient: 'A person who does not exist',
+    studio: 'A studio that does not exist',
+  })
+  const typedRecipient = typedFields.find((field) => field.id === 'certificate-recipient')
+  const typedStudio = typedFields.find((field) => field.id === 'certificate-studio')
+  check(
+    typedRecipient?.value === 'A person who does not exist' && !typedRecipient.placeholder,
+    'certificate: a typed recipient name did not reach the template',
+  )
+  check(
+    typedStudio?.value === 'A studio that does not exist' && !typedStudio.placeholder,
+    'certificate: a typed studio name did not reach the template',
+  )
+
+  // Two lines can never be filled in from the page, however it is used.
+  for (const entry of [{}, { recipient: 'Someone', studio: 'Something' }]) {
+    const fields = certificate.certificateFields(entry)
+    const id = fields.find((field) => field.id === 'certificate-id')
+    const date = fields.find((field) => field.id === 'certificate-date')
+    check(
+      id?.placeholder && id.value === certificate.CERTIFICATE_ID_PLACEHOLDER,
+      'certificate: a certificate id was generated for the preview',
+    )
+    check(
+      date?.placeholder && date.value === certificate.CERTIFICATE_DATE_PLACEHOLDER,
+      'certificate: an issue date was generated for the preview',
+    )
+    check(
+      !/\d{4}/.test(id.value) && !/\d{4}/.test(date.value),
+      'certificate: an identifier or a date is present in the preview',
+    )
+  }
+
+  check(
+    certificate.isPlaceholderValue('[Certificate ID]') &&
+      !certificate.isPlaceholderValue('Alison') &&
+      !certificate.isPlaceholderValue('[unterminated'),
+    'certificate: the placeholder check does not match the bracket convention',
   )
 
   /*
@@ -1321,6 +1665,8 @@ try {
    */
   const previewWorks = previewEntry.works
   const workspaceCasesStart = CASES.length
+  // Nothing on a workspace screen may claim a save, an upload, a publication, a
+  // verification or a sale — and nothing may show a price-shaped value.
   const noSaveClaims = [
     'Saved to your account',
     'Saved successfully',
@@ -1345,7 +1691,7 @@ try {
         previewEntry.name,
         'What the records carry',
         'not sales, revenue, views or any other measure of a marketplace',
-        'Three sections, all of them previews',
+        `${workspace.STUDIO_SECTIONS.length} sections, all of them previews`,
         ...workspace.STUDIO_SECTIONS.map((section) => section.label),
         'What this workspace does not do',
         ...workspace.WORKSPACE_NOT_INCLUDED,
@@ -1369,7 +1715,8 @@ try {
         'Sample record',
         'Prepare a draft from this record',
         'Open the public page',
-        'there is no upload, no storage, no availability and no price',
+        'there is no upload and no storage',
+        'a price prepared here is never published',
         ...previewWorks.map((artwork) => artwork.title),
       ],
       // The page lists its own records and links to their public pages.
@@ -1392,8 +1739,14 @@ try {
         'Not chosen yet',
         'Not in a collection',
         'No image selected',
-        'There is no price, availability or publication field here',
+        // The price pair is part of the draft, and the copy says what it is not.
+        pricing.PRICE_DRAFT_NOTE,
+        'There is no availability field and no publish action',
         'Nothing is checked until you ask',
+        'id="listing-price-amount"',
+        'for="listing-price-amount"',
+        'id="listing-price-currency"',
+        'for="listing-price-currency"',
       ],
       expectLinks: ['/sell/studio/listings'],
       // A draft with no image chosen renders no image at all — and no empty src.
@@ -1409,6 +1762,41 @@ try {
       maxImages: 0,
       forbidAll: noSaveClaims,
       forbidPatterns: [currencyPattern],
+    },
+    {
+      path: '/sell/studio/certificate',
+      expect: 'Seller certificate preview',
+      expectAll: [
+        'Frontend preview',
+        certificate.CERTIFICATE_TITLE,
+        certificate.CERTIFICATE_STATUS,
+        certificate.CERTIFICATE_NOT_ISSUED,
+        certificate.CERTIFICATE_QR_LABEL,
+        certificate.CERTIFICATE_QR_NOTE,
+        certificate.CERTIFICATE_LOCAL_INPUT_NOTE,
+        certificate.CERTIFICATE_STUDIO_NOTE,
+        // Both halves of the template: what can be typed, and what never can.
+        ...certificate.certificateFields().map((field) => field.value),
+        ...certificate.certificateFields().map((field) => field.label),
+        'What has to exist first',
+        'Recipient name',
+        'Studio name',
+      ],
+      expectLinks: ['/sell/studio', '/sell'],
+      // A document preview carries no image and no code of any kind.
+      maxImages: 0,
+      forbidAll: [
+        ...noSaveClaims,
+        ...fabricatedProvenance,
+        'Verified Artist',
+        'Officially Verified',
+        'Verified Studio',
+        'Signature',
+        'Accredited',
+      ],
+      // No bracketed placeholder may be replaced by a real-looking value, and no
+      // currency or day count may appear on the document.
+      forbidPatterns: [currencyPattern, /\b\d{4}-\d{2}-\d{2}\b/, /[A-Z]{2,}-\d{3,}/],
     },
     {
       path: '/sell/studio/profile',

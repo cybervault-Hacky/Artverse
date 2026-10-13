@@ -22,6 +22,7 @@ export const NavRoutes = {
   studioNewListing: '/sell/studio/listings/new',
   studioListing: (artworkId: string) => `/sell/studio/listings/${artworkId}`,
   studioProfile: '/sell/studio/profile',
+  studioCertificate: '/sell/studio/certificate',
   about: '/about',
   collections: '/collections',
   search: '/search',
@@ -122,6 +123,13 @@ export const ROUTE_ARCHITECTURE: RouteDefinition[] = [
     status: 'implemented',
     purpose:
       'Listing editor — a draft prepared from an existing sample record. The record itself is never modified.',
+  },
+  {
+    pattern: '/sell/studio/certificate',
+    page: 'StudioCertificatePage',
+    status: 'implemented',
+    purpose:
+      'Seller certificate design preview — the document a verified seller would eventually receive, shown with placeholders and the status “Preview — Not Issued”. Nothing is issued and nobody is verified.',
   },
   {
     pattern: '/sell/studio/profile',

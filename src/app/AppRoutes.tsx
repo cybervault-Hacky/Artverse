@@ -13,6 +13,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage/NotFoundPage'
 import { SearchPage } from '@/pages/SearchPage/SearchPage'
 import { SellPage } from '@/pages/SellPage/SellPage'
 import { SellerStudioLayout } from '@/layouts/SellerStudioLayout'
+import { StudioCertificatePage } from '@/pages/StudioCertificatePage/StudioCertificatePage'
 import { StudioListingEditorPage } from '@/pages/StudioListingEditorPage/StudioListingEditorPage'
 import { StudioListingsPage } from '@/pages/StudioListingsPage/StudioListingsPage'
 import { StudioOverviewPage } from '@/pages/StudioOverviewPage/StudioOverviewPage'
@@ -53,6 +54,7 @@ export function AppRoutes() {
             <Route path="listings/new" element={<StudioListingEditorPage />} />
             <Route path="listings/:artworkId" element={<StudioListingEditorPage />} />
             <Route path="profile" element={<StudioProfilePreviewPage />} />
+            <Route path="certificate" element={<StudioCertificatePage />} />
           </Route>
         </Route>
         <Route path="about" element={<AboutPage />} />

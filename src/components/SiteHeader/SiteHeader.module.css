@@ -194,3 +194,10 @@
     padding-inline: var(--space-3);
   }
 }
+
+@media print {
+  /* The header is navigation, not content: a printed page needs neither. */
+  .header {
+    display: none;
+  }
+}

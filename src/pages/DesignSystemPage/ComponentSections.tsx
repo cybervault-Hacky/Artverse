@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/EmptyState/EmptyState'
 import { FormField } from '@/components/FormField/FormField'
 import { LoadingIndicator } from '@/components/LoadingIndicator/LoadingIndicator'
 import { PreviewNotice } from '@/components/PreviewNotice/PreviewNotice'
+import { PriceLine } from '@/components/PriceLine/PriceLine'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
 import { StatusTag } from '@/components/StatusTag/StatusTag'
 import { StudioCard } from '@/components/StudioCard/StudioCard'
@@ -17,6 +18,7 @@ import { TextLink } from '@/components/TextLink/TextLink'
 import { SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, SAMPLE_CREATORS } from '@/data'
 import { buildCollectionEntry } from '@/utils/collections'
 import { buildStudioEntry } from '@/utils/studioProfile'
+import { ILLUSTRATIVE_PRICE, ILLUSTRATIVE_PRICE_LABEL, formatPrice } from '@/utils/pricing'
 import { PreviewBlock } from './PreviewBlock'
 import styles from './ComponentSections.module.css'
 
@@ -29,6 +31,7 @@ export function ComponentSections() {
   const cartWorks = useMemo(() => SAMPLE_ARTWORKS.slice(0, 3), [])
   const sampleStudio = useMemo(() => buildStudioEntry(SAMPLE_CREATORS[0]), [])
   const sampleCollectionEntry = useMemo(() => buildCollectionEntry(SAMPLE_COLLECTIONS[0]), [])
+  const samplePrice = useMemo(() => formatPrice(ILLUSTRATIVE_PRICE), [])
 
   return (
     <>
@@ -255,6 +258,17 @@ export function ComponentSections() {
               <input type="text" defaultValue="12" />
             </FormField>
           </div>
+          {samplePrice ? (
+            <PriceLine price={samplePrice} note={ILLUSTRATIVE_PRICE_LABEL} />
+          ) : null}
+          <p className={styles.caption}>
+            A price is always an amount *and* its ISO 4217 code, never a symbol on its own, and
+            nothing in the build converts one currency into another. The amount above is the only
+            one in the repository: it belongs to no record, which is why the label says so. Every
+            sample record without a price states that instead — provenance works the same way, so
+            attribution is presented as a catalogue record rather than an authentication, and a
+            record with no statement says it has none rather than being given one.
+          </p>
           <p className={styles.caption}>
             The loading indicator is reserved for asynchronous moments such as a lazily loaded route
             chunk. ArtVerse currently ships one static bundle, so page content does not use it yet.

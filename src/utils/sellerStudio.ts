@@ -74,6 +74,12 @@ export const STUDIO_SECTIONS: StudioSection[] = [
     description: 'How this studio appears in public, rendered from the same model the directory uses.',
     to: NavRoutes.studioProfile,
   },
+  {
+    id: 'certificate',
+    label: 'Seller certificate',
+    description: 'The verification certificate design, shown with placeholders and marked not issued.',
+    to: NavRoutes.studioCertificate,
+  },
 ]
 
 /**
@@ -226,5 +232,6 @@ export const WORKSPACE_NOT_INCLUDED: string[] = [
   'No image upload: a draft can only use the sample images shipped with this build.',
   'No storage: closing the tab discards the draft.',
   'No publication: nothing prepared here appears anywhere else on ArtVerse.',
-  'No prices, availability, orders, fees or payouts.',
+  'No availability, orders, fees or payouts — and no checkout of any kind.',
+  'No verification and no issued certificates: the certificate section draws the document and says on its face that nothing has been issued.',
 ]

@@ -9,13 +9,16 @@ import { FormField } from '@/components/FormField/FormField'
 import { PageContainer } from '@/components/PageContainer/PageContainer'
 import { PageHeader } from '@/components/PageHeader/PageHeader'
 import { PreviewNotice } from '@/components/PreviewNotice/PreviewNotice'
+import { PriceLine } from '@/components/PriceLine/PriceLine'
 import { Section } from '@/components/Section/Section'
 import { StatusTag } from '@/components/StatusTag/StatusTag'
 import { TextLink } from '@/components/TextLink/TextLink'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { ARTWORK_CATEGORIES, getArtworkById } from '@/data'
 import { hasText } from '@/utils/text'
+import { PRICE_DRAFT_NOTE, draftPrice, formatPrice } from '@/utils/pricing'
 import {
+  LISTING_CURRENCY_OPTIONS,
   LISTING_FIELDS,
   LISTING_LIMITS,
   emptyListingDraft,
@@ -42,7 +45,9 @@ import styles from './StudioListingEditorPage.module.css'
  *    button runs the pure validator and reports a message per field, linked to
  *    that field. Optional fields stay optional — blank dimensions are valid.
  * 3. **Nothing is published.** There is no publish action, because there is
- *    nowhere for it to publish to. The closing note says so in as many words.
+ *    nowhere for it to publish to. The closing note says so in as many words,
+ *    and it says the same about the price: a draft may carry one, and it stays
+ *    in this tab with its currency beside it.
  */
 export function StudioListingEditorPage() {
   const { artworkId } = useParams()
@@ -73,6 +78,9 @@ export function StudioListingEditorPage() {
   const collections = listingCollectionOptions()
   const selectedImage = listingDraftImage(draft)
   const filled = listingDraftFilledCount(draft)
+  // Formatted through the pricing model, so the preview can never show an
+  // amount whose currency was dropped.
+  const draftPriceValue = formatPrice(draftPrice(draft.priceAmount, draft.priceCurrency))
   const dirty = inSync && listingDraftIsDirty(state)
   const errorCount = Object.keys(errors).length
 
@@ -247,6 +255,43 @@ export function StudioListingEditorPage() {
                     value={draft.year}
                     onChange={(event) => setField('year', event.target.value)}
                   />
+                </FormField>
+
+                <FormField
+                  id="listing-price-amount"
+                  label="Price"
+                  hint={fieldHint('priceAmount')}
+                  error={errors.priceAmount}
+                >
+                  <input
+                    type="text"
+                    name="priceAmount"
+                    inputMode="decimal"
+                    autoComplete="off"
+                    value={draft.priceAmount}
+                    maxLength={14}
+                    onChange={(event) => setField('priceAmount', event.target.value)}
+                  />
+                </FormField>
+
+                <FormField
+                  id="listing-price-currency"
+                  label="Currency"
+                  hint={fieldHint('priceCurrency')}
+                  error={errors.priceCurrency}
+                >
+                  <select
+                    name="priceCurrency"
+                    value={draft.priceCurrency}
+                    onChange={(event) => setField('priceCurrency', event.target.value)}
+                  >
+                    <option value="">Not set</option>
+                    {LISTING_CURRENCY_OPTIONS.map((code) => (
+                      <option key={code} value={code}>
+                        {code}
+                      </option>
+                    ))}
+                  </select>
                 </FormField>
 
                 <FormField
@@ -442,6 +487,16 @@ export function StudioListingEditorPage() {
                   <dd>{hasText(draft.year) ? draft.year : 'Not recorded'}</dd>
                 </div>
                 <div className={styles.previewFact}>
+                  <dt>Price</dt>
+                  <dd>
+                    {draftPriceValue ? (
+                      <PriceLine price={draftPriceValue} />
+                    ) : (
+                      'No price entered yet'
+                    )}
+                  </dd>
+                </div>
+                <div className={styles.previewFact}>
                   <dt>Collection</dt>
                   <dd>
                     {hasText(draft.collectionId)
@@ -453,8 +508,8 @@ export function StudioListingEditorPage() {
               </dl>
 
               <p className={styles.priceNote}>
-                There is no price, availability or publication field here. ArtVerse has no commerce
-                yet, so a draft cannot claim any of them.
+                {PRICE_DRAFT_NOTE} There is no availability field and no publish action, because
+                there is nowhere for either to go.
               </p>
             </aside>
           </div>

@@ -5,15 +5,17 @@
 A global art marketplace for paintings, digital artwork, decorative lighting, handmade objects and
 custom creations — built in phases, in the open.
 
-**Status: Phase 8 delivered.** The repository contains the project foundation, the design system,
+**Status: Phase 9 delivered.** The repository contains the project foundation, the design system,
 the shared component set, the route architecture, the complete editorial homepage with its
 signature floating-art hero, the Explore Art discovery catalogue with live search, discipline
 filtering, sorting and honest empty states, an immersive artwork page for every record, a studio
 directory with a profile for every creator, a collection directory whose pages open on one of the
-collection's own works, and the seller studio illustrated at `/sell/studio` — an overview of one
-studio's records, its listings, a listing draft you can edit, and a profile preview. It is still a
-frontend build: there is no backend, no database, no authentication, no accounts, no storage, no
-payments and no real listings.
+collection's own works, the seller studio illustrated at `/sell/studio` — an overview of one
+studio's records, its listings, a listing draft you can edit, and a profile preview — and the
+commerce groundwork: a price shown only when a record genuinely carries one, a provenance section
+that states what is held and what is not, and a seller certificate shown as a design preview marked
+*not issued*. It is still a frontend build: there is no backend, no database, no authentication, no
+accounts, no storage, no payments, no checkout and no real listings.
 
 ---
 
@@ -30,6 +32,7 @@ payments and no real listings.
 - [The studio directory and profiles](#the-studio-directory-and-profiles)
 - [The collections directory and pages](#the-collections-directory-and-pages)
 - [The seller studio preview](#the-seller-studio-preview)
+- [Price, provenance and the certificate preview](#price-provenance-and-the-certificate-preview)
 - [Route architecture](#route-architecture)
 - [Project structure](#project-structure)
 - [Design system](#design-system)
@@ -151,14 +154,36 @@ listing tools and publication are all still to come.
 - Every workspace screen states what it is. Nothing in it claims a save, an upload, a publication,
   a verification or a sale, and no figure on it is invented.
 
+**Phase 9 — commerce and provenance, as presentation**
+
+- A price is shown only when a record carries a trustworthy amount *and* its ISO 4217 currency
+  code. No sample record does, so every artwork page states that no price has been provided instead
+  of showing a zero, a range, a “from” figure or a symbol on its own.
+- Nothing is converted between currencies and nothing assumes two of them are interchangeable:
+  amounts are written as `USD 2,400` — code first, always visible — and a value that cannot be
+  parsed is not displayed at all.
+- A **Price and provenance** section on every artwork page, built from what the catalogue holds:
+  the attribution as a catalogue record rather than an authentication, the collections the work is
+  held in, a plain statement that no verification, signature record, edition record or certificate
+  is held, and the honest line that no provenance statement has been provided.
+- The design preview of the **Seller Verification Certificate** at `/sell/studio/certificate`, with
+  the status `Preview — Not Issued` written by the model. The recipient and studio lines can be
+  typed into for the preview; the certificate ID and issue date can never be filled, and the space a
+  verification code would occupy is an empty framework that says no code is generated.
+- A price pair in the listing draft, validated together — an amount with no currency is reported as
+  incomplete, and a currency with no amount likewise — with hint text that says what the value is
+  not: published, converted, or buyable.
+
 ## What is deliberately not included
 
 Catalogue pagination, medium/size/material filters and indexed search; editorial curation tools;
-artwork commerce (prices, availability, certificates, purchase); seller accounts, sign-in, seller
+artwork commerce (real prices, availability, baskets, checkout, payment, orders or refunds); seller accounts, sign-in, seller
 verification and approval; file uploads, stored listings, drafts that outlive the tab,
-publication, orders, commissions and payouts. There is no backend, database, authentication,
+publication, orders, commissions and payouts; seller verification, issued certificates, certificate
+identifiers, QR endpoints and PDF generation. There is no backend, database, authentication,
 payment, storage or AI service anywhere in this repository, and no page simulates one — the seller
-workspace at `/sell/studio` is a frontend preview that says on every screen that it is one.
+workspace at `/sell/studio` and the certificate design at `/sell/studio/certificate` are frontend
+previews that say on every screen that they are.
 
 ## Stack
 
@@ -534,6 +559,49 @@ record into the practice, location, note and works that the public profile shows
 calls that same function instead of describing the profile a second time. Two descriptions would
 eventually disagree; one cannot.
 
+## Price, provenance and the certificate preview
+
+Three surfaces that make the same promise: show what the record holds, state what it does not, and
+never imply a capability that has not been built.
+
+**The price rules** live in `src/utils/pricing.ts`, and they are deliberately strict.
+
+| Rule | Why |
+| --- | --- |
+| An amount is never shown without its currency code | A number alone is not a price, and a symbol alone is ambiguous |
+| The code is always visible — `USD 2,400`, never `$2,400` | The reader should never have to infer which currency they are looking at |
+| Nothing is converted | There is no exchange rate anywhere in this build, and inventing one would be a lie told in figures |
+| Typed amounts are parsed strictly — digits, one decimal point, at most two places | `1,200` means different things in different places, so it is reported rather than guessed at |
+| An unusable value renders nothing at all | A placeholder amount is worse than a stated absence |
+
+The one amount in the repository, `USD 2,400`, belongs to no record: it exists on the
+design-system page so the display can be reviewed, and its label says in as many words that no
+record in the catalogue carries a price. The verification script asserts that no sample record has
+one, that every artwork page states the absence, and that the illustrative amount is attached to
+nothing.
+
+**Provenance** is `src/utils/provenance.ts`, and its whole job is to keep attribution and
+authentication apart. The attribution row names the studio the catalogue records and links to it;
+the authenticity row says that nothing has examined or verified the work; the documents row says
+that no signature record, edition record or certificate is held; the holding row comes from the
+collection relationship the rest of the site already reads. No statement is ever generated — a
+record without one shows the line that says so, and a record that genuinely carries one shows it
+verbatim with its source. The artwork pages are checked against a list of words that would invent a
+history: no “previously owned”, “acquired from”, “edition 1 of”, “exhibited at”, “signed by the
+artist” or “certificate of authenticity” appears on any of them.
+
+**The certificate preview** at `/sell/studio/certificate` draws the document a verified seller would
+eventually receive. What makes it a preview rather than a claim is structural, not decorative: the
+status `Preview — Not Issued` comes from the model and cannot be passed in; the certificate ID and
+the issue date are bracketed placeholders that no code path fills; a typed recipient or studio name
+lives in the tab and nowhere else; and the space for a future verification code is an empty dashed
+frame labelled *QR placeholder*, with a sentence beside it explaining that no code is generated, that
+nothing is scannable and that there is no endpoint to verify against. The document's fields are a
+definition list with visible labels, which is both its screen-reader equivalent and what survives
+printing. Printing drops the site header, the footer, the workspace navigation and the form
+controls, and keeps the document's own rules — the design reads on plain paper and never depends on
+a background printing.
+
 ## Route architecture
 
 | Route | Page component | Status |
@@ -541,7 +609,7 @@ eventually disagree; one cannot.
 | `/` | `HomePage` | Complete (Phase 2) — five editorial sections and the floating-art hero |
 | `/discover` | `DiscoverPage` | Complete (Phase 4) — live search, discipline filters, sorting, full catalogue, collections |
 | `/discover/:collectionId` | `CollectionDetailPage` | Complete (Phase 7) — editorial hero from its own work, description, its works only, route back to the directory |
-| `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5) — the work in full, its record, its studio, related works |
+| `/artwork/:artworkId` | `ArtworkDetailPage` | Complete (Phase 5, extended in Phase 9) — the work in full, its record, its studio, its price and provenance states, related works |
 | `/artists` | `ArtistsPage` | Complete (Phase 6) — studio directory, every creator record |
 | `/artists/:artistId` | `ArtistProfilePage` | Complete (Phase 6) — practice, location, note, own records |
 | `/collections` | `CollectionsPage` | Complete (Phase 7) — the directory of the groupings this build holds |
@@ -551,6 +619,7 @@ eventually disagree; one cannot.
 | `/sell/studio/listings/new` | `StudioListingEditorPage` | Preview (Phase 8) — a listing draft starting from nothing |
 | `/sell/studio/listings/:artworkId` | `StudioListingEditorPage` | Preview (Phase 8) — the same editor starting from that record's own values |
 | `/sell/studio/profile` | `StudioProfilePreviewPage` | Preview (Phase 8) — the public profile, and what a seller would eventually edit |
+| `/sell/studio/certificate` | `StudioCertificatePage` | Preview (Phase 9) — the seller verification certificate design, marked *Preview — Not Issued*, with placeholders the reader can fill for the preview only |
 | `/about` | `AboutPage` | Complete — what ArtVerse is and what has shipped |
 | `/search` | `SearchPage` | Foundation — direct destination for a search; Explore Art carries the fuller experience |
 | `/design-system` | `DesignSystemPage` | Complete — internal token and component reference |
@@ -776,8 +845,16 @@ Executed in this repository:
 | Lint | `npm run lint` | Passes, zero errors and zero warnings |
 | Production build | `npm run build` | Passes — `dist/` JS 415.85 kB (125.43 kB gzip), CSS 90.04 kB (14.52 kB gzip) |
 | Dev server | `npm run dev` | Serves on `0.0.0.0:5173`; all 24 swept URLs return HTTP 200 with the app shell — every destination, `/discover` with search, filter and sort parameters, all five workspace screens, and an unknown artwork, collection, artist or record id |
-| Route rendering | `npm run verify:routes` | 70 route cases (including every artwork, creator and collection id in the data layer, and every workspace screen), all assertions pass |
-| Internal links | included above | 940 links resolved against the route table and the data layer — no broken destinations |
+| Route rendering | `npm run verify:routes` | 71 route cases (including every artwork, creator and collection id in the data layer, and every seller workspace screen), all assertions pass |
+| Internal links | included above | 960 links resolved against the route table and the data layer — no broken destinations |
+| Price rules | included above | No sample record carries a price, and none is reported as carrying one; USD and INR format to different strings that each contain their own code; a symbol alone, a missing code, a non-numeric amount, a zero, a negative and a three-decimal amount all format to nothing |
+| Typed price handling | included above | An amount with no currency and a currency with no amount each fail on their own field; separators, symbols and over-precise amounts are reported rather than stripped; a complete price and an empty one are both valid |
+| Provenance rules | included above | For all 6 records: no statement is claimed, the attribution links to that work's own creator record or says none is recorded, the holding matches the collection relationship, and the authenticity and documents rows state what is not held |
+| Provenance vocabulary | included above | No artwork page contains an invented history — no `Previously owned`, `Acquired from`, `Edition 1 of`, `Exhibited at`, `Signed by the artist`, `Certificate of Authenticity`, `Authenticated` or `Verified authentic` |
+| Certificate status | included above | `/sell/studio/certificate` always renders `Preview — Not Issued`; the status is written by the model, is not a field, and cannot be set from the page |
+| Certificate placeholders | included above | The recipient and studio lines show bracketed placeholders until something is typed, then show what was typed; the certificate ID and the issue date are placeholders in every state, contain no digits, and are asserted never to be generated |
+| No scannable code | included above | The code space is an empty frame: the document renders no `svg`, no image and no embedded data, and no identifier or date pattern appears on the page |
+| No verification claim | included above | No certificate page contains `Verified Artist`, `Officially Verified`, `Verified Studio`, `Signature`, `Accredited` or any saved/published/uploaded claim |
 | Seller workspace | included above | All five workspace screens render with their preview notice; the overview's coverage figures and the studio's record count are recomputed from the raw data and must match; every section link resolves; nothing on any screen claims a save, an upload, a publication, a verification or a sale |
 | Listing draft model | included above | A blank draft reports exactly the five required fields; every one of the 6 records prepares a valid draft carrying its own title, discipline, medium, year and image; 15 invalid entries each fail on their own field; a record with nothing in it produces no invented values; editing clears only that field's message; checking, resetting and origin-switching all behave; each image option is a real file on a real record |
 | Wrong or missing record id | included above | `/sell/studio/listings/no-such-record` reaches the workspace's own "that record isn't in this build" state with a route to a new draft and to the listings, and it renders no image and no empty `src` |
@@ -825,13 +902,17 @@ Executed in this repository:
 | Artwork page loading | included above | Exactly one eager image per artwork page — the work itself; every related card is lazy |
 | Asset integrity | script over `src/data` | All 6 referenced image paths exist in `public/` |
 | CSS Module integrity | script over `src/**` | 53 modules, 602 `styles.*` references resolve; 17 further rules are variant tokens resolved through bracket access; 2 unused rules remain, both pre-existing in untouched files |
-| Heading outline | script over 29 routes | One `h1` per route, no skipped levels (265 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page and every workspace screen |
+| Heading outline | script over 29 routes | One `h1` per route, no skipped levels (275 headings) — including the empty state, a filtered catalogue, an artwork page, every collection page and every workspace screen |
 | Search and sort labelling | markup assertions | The search field and sort control are labelled, the result count is a polite live region, and each discipline tile exposes `aria-pressed` |
 | Layout geometry | computed from the stylesheets | Catalogue control-bar and detail-page arithmetic at 360/390/430/768/1024/1440px: everything fits its content box, no column below 115px, every control at least 44px, and no stacked image taller than 1000px |
 | Workspace layout | computed from the stylesheets | At 360/390/430px the shell is a single column with a scrolling nav row; from 1024px it is a 15rem sidebar beside the content with both the nav and the editor's preview sticky. Form columns run 1/1/1/2/2/2 and image tiles 1/1/1/2/2/2 across the six widths; the content box is 320px at the narrowest and every track is guarded by `minmax(0, …)` |
 | Workspace tokens | script over the new stylesheets | 392 `var()` references, all defined in `tokens.css` — no colour literal, no undeclared token, no silently-falling-back value |
-| Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset` |
+| Form labelling | markup assertions | Every rendered `input`, `textarea` and `select` on every workspace screen has an id and a `<label for>` that names it; the image chooser's legend, hint and error are linked from its `fieldset`, and the certificate's two preview inputs are labelled the same way |
+| Contrast | computed from the tokens | Every foreground/background pair the new price, provenance and certificate rules can produce clears 4.5:1 — the lowest is 4.70:1 — including the italic placeholder, the field notes and the status line |
+| Certificate geometry | computed from the stylesheets | At 360/390/430/768/1024/1440px the certificate's content box is 270/300/340/628/838/990px, its frame padding never drops below 24px, the code frame stays 120px and always fits, and the code note carries a minimum width so it wraps rather than squeezing the frame |
+| Print stylesheet | inspection of the modules | Six modules carry `@media print` rules: the site header, the footer, the workspace navigation, the certificate page's controls and the document itself are dropped or restated. No print rule depends on a background image, a gradient or `print-color-adjust`, and the document's borders carry the structure |
 | Image integrity | markup assertions | Every image on the workspace screens carries `width`, `height`, descriptive `alt` and an aspect-ratio frame; no screen emits an image without a `src`, and no element is wider than a 360px viewport |
+| Workspace price field | markup assertions | The listing editor renders a labelled price pair (`id`/`for` asserted for both), the preview column shows the draft's price with its code or states that none has been entered, and no price-shaped value is rendered anywhere on the workspace screens |
 | Collection layout | computed from the stylesheets | At the six widths the directory's grid runs 1/1/1/2/3/3 cards after a full-scale opening composition, the feature card splits at 768px only and with `minmax(0, …)` guards, cards stay 282px or wider, and every image on the collection pages is rendered inside an aspect-ratio frame — no page emits an image without a src, a size or alternative text |
 | Reduced motion | inspection of built CSS | Every animated selector is covered by a `prefers-reduced-motion` block |
 | Overflow audit | grep over layout CSS | No `100vw`, no fixed width wider than the smallest viewport, no unguarded `1fr` tracks |

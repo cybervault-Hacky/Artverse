@@ -1,0 +1,211 @@
+/*
+ * The certificate's surface. Every rule that carries meaning is a border or a
+ * type style rather than a colour or a texture, so the document still reads when
+ * printed in one colour, when a background image fails to load, and at the
+ * narrowest phone width. The single accent line is decoration on top of wording
+ * that already says what the document is.
+ */
+.certificate {
+  position: relative;
+  padding: clamp(1.5rem, 5vw, 3.5rem);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* A champagne hairline drawn by the wordmark itself: the only ornament here,
+   and it says nothing a reader needs. */
+.head {
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--color-accent);
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink);
+}
+
+.tagline {
+  margin-top: var(--space-1);
+  font-size: var(--text-meta);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.titleBlock {
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+  padding-top: var(--space-5);
+  border-top: var(--border-hairline);
+}
+
+.eyebrow {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-accent-ink);
+}
+
+.title {
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.25rem);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-ink);
+}
+
+.status {
+  margin-top: var(--space-4);
+}
+
+/*
+ * One column on phones — a label above its value reads as a document line at any
+ * width — and two columns from 768px, where there is room for the line to look
+ * like a certificate field rather than a form row.
+ */
+.fields {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-1) var(--space-5);
+  padding-block: var(--space-4);
+  border-bottom: var(--border-hairline);
+}
+
+.fieldLabel {
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.fieldValue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.valueText {
+  font-family: var(--font-display);
+  font-size: var(--text-lead);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+  overflow-wrap: break-word;
+}
+
+/*
+ * A placeholder is marked by its brackets, its muted ink and the note beneath —
+ * never by colour alone. The ink is the secondary grey rather than the faintest
+ * one: a bracketed value is still body text and has to clear 4.5:1.
+ */
+.placeholder {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+.fieldNote {
+  max-width: 46ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.codeBlock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4) var(--space-5);
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+/*
+ * The space a verification code would occupy. Empty on purpose: a drawn code
+ * would be a code, and there is nothing to point at. The frame is dashed so it
+ * reads as an outline rather than a filled mark.
+ */
+.codeFrame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 7.5rem;
+  height: 7.5rem;
+  padding: var(--space-3);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-xs);
+  text-align: center;
+}
+
+.codeLabel {
+  font-size: var(--text-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+}
+
+.codeNote {
+  flex: 1 1 16rem;
+  min-width: min(100%, 16rem);
+  max-width: 44ch;
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.issueNote {
+  margin-top: clamp(1.5rem, 4vw, 2.5rem);
+  padding-top: var(--space-5);
+  border-top: var(--border-strong);
+  max-width: 62ch;
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  color: var(--color-ink);
+}
+
+@media (min-width: 768px) {
+  .field {
+    grid-template-columns: 9rem minmax(0, 1fr);
+    align-items: baseline;
+  }
+}
+
+/*
+ * Printing. The document keeps its borders and loses its shadow and its tint, so
+ * it is legible on plain paper and does not depend on a background printing at
+ * all. Nothing here animates, so there is no reduced-motion case to handle.
+ */
+@media print {
+  .certificate {
+    border-color: var(--color-ink);
+    box-shadow: none;
+    background: none;
+    padding: 0;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .codeFrame {
+    border-color: var(--color-ink);
+  }
+
+  .title,
+  .brand,
+  .valueText,
+  .issueNote {
+    color: var(--color-ink);
+  }
+}

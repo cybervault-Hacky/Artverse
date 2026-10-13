@@ -213,8 +213,9 @@ export function StudioListingsPage() {
           )}
 
           <p className={styles.honesty}>
-            A listing in this preview is a form and a draft: there is no upload, no storage, no
-            availability and no price. Preparing one has no effect on any other page of ArtVerse.
+            A listing in this preview is a form and a draft: there is no upload and no storage, a
+            price prepared here is never published, and preparing one has no effect on any other
+            page of ArtVerse.
           </p>
         </PageContainer>
       </Section>

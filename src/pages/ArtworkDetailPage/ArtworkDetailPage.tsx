@@ -8,11 +8,15 @@ import { Button } from '@/components/Button/Button'
 import { NotFoundView } from '@/components/NotFoundView/NotFoundView'
 import { PageContainer } from '@/components/PageContainer/PageContainer'
 import { PhaseNote } from '@/components/PhaseNote/PhaseNote'
+import { PriceLine } from '@/components/PriceLine/PriceLine'
 import { Section } from '@/components/Section/Section'
 import { SectionHeading } from '@/components/SectionHeading/SectionHeading'
 import { TextLink } from '@/components/TextLink/TextLink'
 import { categoryLabel, getArtworkById, getCreatorForArtwork } from '@/data'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { PRICE_NOT_PROVIDED, PRICE_NOT_PURCHASABLE, artworkPrice } from '@/utils/pricing'
+import { NO_PROVENANCE_STATEMENT, buildProvenance } from '@/utils/provenance'
+import type { DetailRow } from '@/utils/artworkDetail'
 import {
   buildArtworkDetails,
   buildStudioDetail,
@@ -42,9 +46,15 @@ import styles from './ArtworkDetailPage.module.css'
  * 4. Related works are chosen by discipline, then by shared collections. That
  *    rule is stated on the page; nothing here claims a model chose them.
  *
- * There is no purchase, favourite or share control, and the closing note says
- * so plainly rather than dressing up an action that does not exist. The record
- * carries one image, so there is no gallery navigation to fake either.
+ * There is no purchase, favourite or share control, and the section below the
+ * record says so plainly rather than dressing up an action that does not exist.
+ * The record carries one image, so there is no gallery navigation to fake
+ * either.
+ *
+ * Phase 9 added the price and provenance section. It shows a price only when the
+ * record genuinely holds one with its currency, and otherwise states that none
+ * has been provided; provenance is described as far as the catalogue goes and no
+ * further, so attribution is never presented as authentication.
  */
 export function ArtworkDetailPage() {
   const { artworkId } = useParams()
@@ -65,6 +75,8 @@ export function ArtworkDetailPage() {
   const primaryCollection = getPrimaryCollection(artwork)
   const related = getRelatedArtworks(artwork)
   const imagePixels = imagePixelLabel(artwork)
+  const price = artworkPrice(artwork)
+  const provenance = buildProvenance(artwork, creator)
 
   const crumbs: Crumb[] = [
     { label: 'Home', to: NavRoutes.home },
@@ -146,40 +158,15 @@ export function ArtworkDetailPage() {
 
               {details.length > 0 ? (
                 <dl className={styles.meta}>
-                  {details.map((row) => {
-                    const links = row.links
-
-                    return (
-                      <div key={row.label} className={styles.metaRow}>
-                        <dt className={styles.metaLabel}>{row.label}</dt>
-                        <dd className={styles.metaValue}>
-                          {links ? (
-                            <span className={styles.linkList}>
-                              {links.map((link, index) => (
-                                <span key={link.to} className={styles.linkItem}>
-                                  <TextLink to={link.to}>{link.label}</TextLink>
-                                  {/* Trailing, so a wrapped line never starts with a separator. */}
-                                  {index < links.length - 1 ? (
-                                    <span className={styles.linkDivider} aria-hidden="true">
-                                      ·
-                                    </span>
-                                  ) : null}
-                                </span>
-                              ))}
-                            </span>
-                          ) : (
-                            row.value
-                          )}
-                        </dd>
-                      </div>
-                    )
-                  })}
+                  {details.map((row) => (
+                    <InfoRow key={row.label} row={row} />
+                  ))}
                 </dl>
               ) : null}
 
               <p className={styles.sampleNote}>
-                Illustrative sample record. There is no price, availability or provenance attached
-                to this entry, and no purchase flow exists yet.
+                Illustrative sample record — not a real listing. What the catalogue does and does
+                not hold for it, including its price and provenance, is set out below.
               </p>
             </div>
           </article>
@@ -192,6 +179,47 @@ export function ArtworkDetailPage() {
               All collections
             </Button>
           </div>
+        </PageContainer>
+      </Section>
+
+      <Section divided spacing="tight" ariaLabelledBy="info-title">
+        <PageContainer>
+          <SectionHeading
+            eyebrow="Record"
+            title="Price and provenance"
+            id="info-title"
+            description="Only what this catalogue holds. Where something has not been provided, this page says so rather than filling the gap."
+          />
+
+          <dl className={styles.meta}>
+            <div className={styles.metaRow}>
+              <dt className={styles.metaLabel}>Price</dt>
+              <dd className={styles.metaValue}>
+                {price ? (
+                  <PriceLine price={price} note={PRICE_NOT_PURCHASABLE} />
+                ) : (
+                  <span className={styles.absentValue}>{PRICE_NOT_PROVIDED}</span>
+                )}
+              </dd>
+            </div>
+            {provenance.rows.map((row) => (
+              <InfoRow key={row.label} row={row} />
+            ))}
+          </dl>
+
+          {provenance.statement ? (
+            <div className={styles.statement}>
+              <p className={styles.statementLabel}>Provenance statement</p>
+              <p className={styles.statementText}>{provenance.statement}</p>
+              {provenance.source ? (
+                <p className={styles.statementSource}>Source: {provenance.source}</p>
+              ) : null}
+            </div>
+          ) : (
+            <p className={styles.infoNote}>{NO_PROVENANCE_STATEMENT}</p>
+          )}
+
+          {price ? null : <p className={styles.infoNote}>{PRICE_NOT_PURCHASABLE}</p>}
         </PageContainer>
       </Section>
 
@@ -222,17 +250,53 @@ export function ArtworkDetailPage() {
         <PageContainer>
           <PhaseNote
             phase="Phase 12"
-            title="What this artwork page will become"
-            description="Commerce and provenance are the subjects of a later phase; nothing here pretends to offer them yet."
+            title="Still to come on this page"
+            description="The presentation is in place — the rules above say exactly what is shown and what is absent. Everything behind it has to come from a real seller, a real catalogue and a backend that does not exist yet."
             items={[
-              'Availability, pricing and currency handling.',
-              'Enquiry and purchase flows with shipping detail.',
-              'Certificates, edition records and provenance history.',
+              'A seller-supplied price, in the seller’s own currency, on records that are genuinely for sale.',
+              'Availability, and an enquiry or purchase flow with shipping and payment — none of which exists.',
+              'Verification, certificate issuance and edition records, which need a workflow before anything can be issued.',
               'Viewing the work at scale — the record carries one image today, so there is no gallery to navigate yet.',
             ]}
           />
         </PageContainer>
       </Section>
     </>
+  )
+}
+
+/**
+ * One labelled row: a value, or the links a row leads to.
+ *
+ * Shared by the record list and the provenance list so a row can only ever be
+ * rendered one way — and so a row that carries links renders them identically in
+ * both places.
+ */
+function InfoRow({ row }: { row: DetailRow }) {
+  const links = row.links
+
+  return (
+    <div className={styles.metaRow}>
+      <dt className={styles.metaLabel}>{row.label}</dt>
+      <dd className={styles.metaValue}>
+        {links ? (
+          <span className={styles.linkList}>
+            {links.map((link, index) => (
+              <span key={link.to} className={styles.linkItem}>
+                <TextLink to={link.to}>{link.label}</TextLink>
+                {/* Trailing, so a wrapped line never starts with a separator. */}
+                {index < links.length - 1 ? (
+                  <span className={styles.linkDivider} aria-hidden="true">
+                    ·
+                  </span>
+                ) : null}
+              </span>
+            ))}
+          </span>
+        ) : (
+          row.value
+        )}
+      </dd>
+    </div>
   )
 }

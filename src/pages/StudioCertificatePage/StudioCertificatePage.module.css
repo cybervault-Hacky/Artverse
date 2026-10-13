@@ -1,0 +1,101 @@
+/*
+ * The certificate page: the controls on one side, the document on the other.
+ * One column on phones — the form first, because the document is what it fills —
+ * and two columns from 1024px, where the document is wide enough to read as a
+ * document rather than as a narrower version of a page.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(1.75rem, 4vw, 3rem);
+  align-items: start;
+}
+
+.controls {
+  padding: var(--space-5);
+  border: var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-muted);
+}
+
+.controlsTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-heading);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-heading);
+  color: var(--color-ink);
+}
+
+.controlsNote {
+  max-width: 52ch;
+  margin-top: var(--space-3);
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.controlsFields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.controlsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
+.statusLine {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-hairline);
+  font-size: var(--text-meta);
+  line-height: var(--leading-body);
+  color: var(--color-ink-muted);
+}
+
+.statusValue {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  color: var(--color-ink);
+}
+
+.document {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .controls {
+    /* The form is a bench, not a panel to page through: it stays with the
+       document while the reader scrolls its four lines. */
+    position: sticky;
+    top: calc(var(--header-height) + var(--space-6));
+  }
+}
+
+/*
+ * Printing. This page is about a printed document, so the print view drops the
+ * controls, the header, the footer and the workspace navigation — the layout
+ * chrome carries its own print rules — and leaves the certificate. No rule here
+ * needs a background to print, which is why none is forced.
+ */
+@media print {
+  .controls {
+    display: none;
+  }
+
+  .layout {
+    display: block;
+  }
+
+  .document {
+    margin: 0;
+  }
+}

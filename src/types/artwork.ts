@@ -1,9 +1,16 @@
 /**
  * Shared ArtVerse domain types.
  *
- * Phase 1 only models the shapes needed by the foundation: artwork records,
- * collections and the illustrative creators behind the sample data. Selling,
- * orders, certificates and accounts are deliberately absent until their phases.
+ * The shapes the foundation needs: artwork records, collections and the
+ * illustrative creators behind the sample data, plus the two optional fields
+ * Phase 9 added so price and provenance can be *presented* honestly.
+ *
+ * Neither field is a marketplace feature. There are no listings, no accounts,
+ * no orders and no certificates anywhere in this build: `ArtworkPrice` exists
+ * so a genuinely priced record has somewhere to put its amount and its currency
+ * code, and `ArtworkProvenance` so a statement the catalogue really holds has
+ * somewhere to live. No record in `src/data/` carries either one, which is the
+ * honest state of a catalogue with nothing for sale.
  */
 
 /** Marketplace categories surfaced across ArtVerse. */
@@ -49,6 +56,38 @@ export interface Creator {
   illustrative: true
 }
 
+/**
+ * A price a record actually carries.
+ *
+ * Both fields are required, and that is the point: an amount without its
+ * currency code means nothing, and nothing in ArtVerse converts between
+ * currencies or assumes they are interchangeable. A record without this field
+ * is shown as having no price rather than as being free or “price on
+ * application”, either of which would be an invented claim.
+ */
+export interface ArtworkPrice {
+  /** The amount, in the units of `currency`. Never formatted or converted. */
+  amount: number
+  /** ISO 4217 code, e.g. `INR`. Shown beside the amount wherever it appears. */
+  currency: string
+}
+
+/**
+ * A provenance statement the catalogue genuinely holds.
+ *
+ * Optional, absent from every record this build ships, and deliberately not a
+ * verification: a statement is what a seller or catalogue says about a work's
+ * history, and it is presented as exactly that. Ownership chains, authenticity
+ * claims, signatures, edition numbers and certificate references are not
+ * modelled at all, because nothing in this build can support one.
+ */
+export interface ArtworkProvenance {
+  /** The statement, shown verbatim. Blank means “not provided”. */
+  statement?: string
+  /** Where the statement came from, e.g. the studio or a catalogue note. */
+  source?: string
+}
+
 export interface Artwork {
   id: string
   title: string
@@ -61,6 +100,17 @@ export interface Artwork {
   image: ArtworkImage
   aspect: ArtworkAspect
   creatorId: string
+  /**
+   * Set only when a trustworthy amount and its currency code are both known.
+   * No sample record carries one today.
+   */
+  price?: ArtworkPrice
+  /**
+   * Set only when the catalogue holds a real statement about the work's
+   * history. Absent here, and shown on the artwork page as “not provided”
+   * rather than filled in with a story.
+   */
+  provenance?: ArtworkProvenance
   /** Illustrative placeholder record — never a live marketplace listing. */
   sample: true
 }

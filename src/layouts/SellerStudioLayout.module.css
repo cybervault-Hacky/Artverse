@@ -187,3 +187,20 @@
     transition: none;
   }
 }
+
+@media print {
+  /* The workspace frame around a document is on screen only. */
+  .masthead,
+  .sidebar,
+  .sidebarFoot {
+    display: none;
+  }
+
+  .shell {
+    display: block;
+  }
+
+  .content {
+    min-width: 0;
+  }
+}

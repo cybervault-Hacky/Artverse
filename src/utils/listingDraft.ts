@@ -17,10 +17,20 @@
  *
  * Nothing here writes anywhere. A draft is held in the browser tab for the
  * length of the visit, and the workspace says so on every screen.
+ *
+ * Phase 9 added the price pair. It is optional, it is never published, and the
+ * amount and its currency are validated together — see `src/utils/pricing.ts`,
+ * which owns every rule about how an amount is written and what it means.
  */
 import type { Artwork, ArtworkCategory, Collection } from '@/types'
 import { ARTWORK_CATEGORIES, SAMPLE_ARTWORKS, SAMPLE_COLLECTIONS, categoryLabel } from '@/data'
 import { getPrimaryCollection } from '@/utils/artworkDetail'
+import {
+  CURRENCY_OPTIONS,
+  normaliseCurrencyCode,
+  parsePriceAmount,
+  priceAmountError,
+} from '@/utils/pricing'
 import { hasText, normaliseWhitespace } from '@/utils/text'
 
 /** The fields a listing draft carries. `discipline` maps to `Artwork.category`. */
@@ -30,6 +40,8 @@ export type ListingFieldName =
   | 'medium'
   | 'dimensions'
   | 'year'
+  | 'priceAmount'
+  | 'priceCurrency'
   | 'description'
   | 'collectionId'
   | 'imageId'
@@ -47,6 +59,13 @@ export interface ListingDraft {
   medium: string
   dimensions: string
   year: string
+  /**
+   * The amount as typed, digits only. Empty means “no price”, which is a valid
+   * state: a listing without one is not an error, and nothing fills it in.
+   */
+  priceAmount: string
+  /** An ISO 4217 code from `CURRENCY_OPTIONS`, or empty. Never inferred. */
+  priceCurrency: string
   description: string
   /** A collection id, or empty for “not in a collection”. */
   collectionId: string
@@ -64,6 +83,9 @@ export const LISTING_LIMITS = {
 } as const
 
 export const LISTING_YEAR_MIN = 1800
+
+/** The currency codes the price field offers, in the order it offers them. */
+export const LISTING_CURRENCY_OPTIONS = CURRENCY_OPTIONS
 
 /** A work cannot have been made after this year. */
 export const LISTING_YEAR_MAX = new Date().getFullYear()
@@ -119,6 +141,20 @@ export const LISTING_FIELDS: ListingFieldDefinition[] = [
     hint: `Optional. Four digits, between ${LISTING_YEAR_MIN} and ${LISTING_YEAR_MAX}.`,
   },
   {
+    name: 'priceAmount',
+    label: 'Price',
+    kind: 'text',
+    required: false,
+    hint: 'Optional. Digits only, e.g. 2400 or 2400.50. No currency symbol, and no thousands separators.',
+  },
+  {
+    name: 'priceCurrency',
+    label: 'Currency',
+    kind: 'select',
+    required: false,
+    hint: 'Optional, and required whenever an amount is given. Amounts are shown with this code and never converted.',
+  },
+  {
     name: 'description',
     label: 'Description',
     kind: 'textarea',
@@ -156,6 +192,8 @@ export function emptyListingDraft(): ListingDraft {
     medium: '',
     dimensions: '',
     year: '',
+    priceAmount: '',
+    priceCurrency: '',
     description: '',
     collectionId: '',
     imageId: '',
@@ -179,12 +217,20 @@ export function draftFromArtwork(artwork: Artwork): ListingDraft {
     : ''
   const primaryCollection = getPrimaryCollection(artwork)
 
+  // A price is carried across only when the record really holds one with its
+  // currency. No sample record does, so a draft prepared from one leaves both
+  // fields empty rather than guessing at either.
+  const recordAmount = parsePriceAmount(artwork.price?.amount)
+  const recordCurrency = recordAmount === undefined ? undefined : normaliseCurrencyCode(artwork.price?.currency)
+
   return {
     title: textOrEmpty(artwork.title),
     discipline: artwork.category ?? '',
     medium: textOrEmpty(artwork.medium),
     dimensions: textOrEmpty(artwork.dimensions),
     year,
+    priceAmount: recordAmount === undefined ? '' : String(recordAmount),
+    priceCurrency: recordCurrency ?? '',
     description: textOrEmpty(artwork.description),
     collectionId: primaryCollection?.id ?? '',
     imageId: hasText(artwork.image?.src) ? artwork.id : '',
@@ -275,6 +321,27 @@ export function validateListingDraft(draft: ListingDraft): ListingErrors {
       if (parsed < LISTING_YEAR_MIN || parsed > LISTING_YEAR_MAX)
         errors.year = `Enter a year between ${LISTING_YEAR_MIN} and ${LISTING_YEAR_MAX}.`
     }
+  }
+
+  /*
+   * The price pair. Both halves are checked together, because either one alone
+   * is not a price: an amount with no currency says nothing, and a currency with
+   * no amount says nothing either. Leaving both blank stays valid.
+   */
+  const amountTyped = hasText(draft.priceAmount)
+  const currencyTyped = hasText(draft.priceCurrency)
+  const currency = normaliseCurrencyCode(draft.priceCurrency)
+
+  if (amountTyped) {
+    const problem = priceAmountError(draft.priceAmount)
+    if (problem) errors.priceAmount = problem
+    if (!currency) errors.priceCurrency = 'Choose the currency this amount is in.'
+  } else if (currencyTyped) {
+    errors.priceAmount = 'Enter the amount, or clear the currency.'
+  }
+
+  if (currencyTyped && !currency) {
+    errors.priceCurrency = 'Choose a currency from the list.'
   }
 
   const description = normaliseWhitespace(draft.description ?? '')

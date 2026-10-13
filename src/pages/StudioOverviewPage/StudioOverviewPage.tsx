@@ -164,7 +164,7 @@ export function StudioOverviewPage() {
           <SectionHeading
             id="studio-sections"
             eyebrow="Inside the workspace"
-            title="Three sections, all of them previews"
+            title={`${STUDIO_SECTIONS.length} sections, all of them previews`}
             description="Each one is a real screen with real layout and real validation — and none of them is connected to anything that stores data."
           />
 
